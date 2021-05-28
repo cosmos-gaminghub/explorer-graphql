@@ -1,9 +1,9 @@
 package document
 
 import (
-	"graphql-go-example/orm"
 	"time"
 
+	"github.com/cosmos-gaminghub/exploder-graphql/orm"
 	"gopkg.in/mgo.v2/bson"
 )
 

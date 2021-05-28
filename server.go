@@ -1,10 +1,11 @@
 package main
 
 import (
-	"graphql-go-example/graph"
-	"graphql-go-example/graph/generated"
 	"log"
 	"net/http"
+
+	"github.com/cosmos-gaminghub/exploder-graphql/graph"
+	"github.com/cosmos-gaminghub/exploder-graphql/graph/generated"
 
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"

@@ -2,11 +2,10 @@ package document
 
 import (
 	"fmt"
-	"graphql-go-example/orm"
 	"time"
 
-	"graphql-go-example/client"
-
+	"github.com/cosmos-gaminghub/exploder-graphql/client"
+	"github.com/cosmos-gaminghub/exploder-graphql/orm"
 	"gopkg.in/mgo.v2/bson"
 	"gopkg.in/mgo.v2/txn"
 )

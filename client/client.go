@@ -3,8 +3,8 @@ package client
 import (
 	"encoding/json"
 	"fmt"
-	"graphql-go-example/conf"
-	"graphql-go-example/utils"
+	"github.com/cosmos-gaminghub/exploder-graphql/conf"
+	"github.com/cosmos-gaminghub/exploder-graphql/utils"
 	"log"
 )
 

@@ -3,9 +3,9 @@ package document
 import (
 	"encoding/json"
 	"fmt"
-	"graphql-go-example/graph/model"
-	"graphql-go-example/orm"
-	"graphql-go-example/utils"
+	"github.com/cosmos-gaminghub/exploder-graphql/graph/model"
+	"github.com/cosmos-gaminghub/exploder-graphql/orm"
+	"github.com/cosmos-gaminghub/exploder-graphql/utils"
 	"time"
 
 	"gopkg.in/mgo.v2/bson"

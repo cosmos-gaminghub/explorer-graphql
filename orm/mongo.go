@@ -3,10 +3,11 @@ package orm
 import (
 	"errors"
 	"fmt"
-	"graphql-go-example/conf"
 	"log"
 	"reflect"
 	"time"
+
+	"github.com/cosmos-gaminghub/exploder-graphql/conf"
 
 	"gopkg.in/mgo.v2/bson"
 	"gopkg.in/mgo.v2/txn"

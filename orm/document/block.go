@@ -3,10 +3,11 @@ package document
 import (
 	"encoding/base64"
 	"fmt"
-	"graphql-go-example/graph/model"
-	"graphql-go-example/orm"
 	"log"
 	"time"
+
+	"github.com/cosmos-gaminghub/exploder-graphql/graph/model"
+	"github.com/cosmos-gaminghub/exploder-graphql/orm"
 
 	"github.com/cosmos/cosmos-sdk/types/bech32"
 	"gopkg.in/mgo.v2/bson"

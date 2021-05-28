@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"log"
 
-	"graphql-go-example/orm"
+	"github.com/cosmos-gaminghub/exploder-graphql/orm"
 
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
