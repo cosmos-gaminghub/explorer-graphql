@@ -1,0 +1,128 @@
+type Block {
+	height: Int!
+	hash: String!
+	proposer_address: String!
+	num_txs: Int!
+	time: String!
+}
+
+type Validator {
+	moniker: String!
+	voting_power: Int!
+	cumulative_share: String! 
+	uptime: Int!
+	over_blocks: Int!
+	commission: Float!
+	operator_address: String!
+	acc_address: String!
+	jailed: Boolean!
+	status: String!
+	website: String!
+}
+
+type UptimeResult {
+	last_height: Int!
+	uptime: [Uptime!]!
+}
+type Uptime {
+	height: Int!
+	timestamp: String!
+}
+
+type PowerEvent {
+	height: Int!
+	tx_hash: String!
+	timestamp: String!
+	amount: Int!
+	type: String!
+}
+
+type Delegation {
+	moniker: String!
+	delegator_address: String!
+	validator_address: String!
+	amount: Int!
+}
+
+type Tx {
+	tx_hash: String!
+	status: Int!
+	fee: String!
+	height: Int!
+	timestamp: String!,
+	messages: String!
+	logs: String!,
+	memo: String!
+	gas_used: Int!
+	gas_wanted: Int!
+}
+
+type Proposal {
+	id: Int!
+	status: String!
+	voting_start: String!
+	voting_end: String!
+	submit_time: String!
+	deposit: [Deposit!]!
+	vote: [Vote!]!
+	tally: Tally!
+	content: Content!
+	proposer: String!
+}
+
+type Tally {
+	yes: String!
+	abstain: String!
+	no: String!
+	no_with_veto: String!
+}
+
+type Deposit {
+	proposal_id: String!
+	depositor: String!
+	amount: [Amount!]!
+}
+
+type Vote {
+	proposal_id: String!
+	voter: String!
+	option: String!
+}
+
+type Content {
+	title: String!
+	type: String!
+	description: String!
+	changes: [Change!]!
+}
+
+type Amount {
+	denom: String!
+	amount: String!
+}
+
+type Change {
+	key:      String!
+	value:    String!
+	subspace: String!
+}
+
+type Query {
+  blocks(offset: Int, size: Int): [Block!]!
+  block_detail(height: Int): Block!
+  block_txs(height: Int): [Tx!]!
+
+  txs(size: Int): [Tx!]!
+  tx_detail(tx_hash: String): Tx!
+
+  validators: [Validator!]!
+  uptimes(operator_address: String): UptimeResult!
+  proposed_blocks(offset: Int, size: Int, operator_address: String): [Block!]!
+  power_events(offset: Int, size: Int, operator_address: String!): [PowerEvent!]!
+  delegations(acc_address: String): [Delegation!]!
+
+  account_transactions(acc_address: String): [Tx!]!
+
+  proposals: [Proposal!]!
+  proposal_detail(proposal_id: Int!): Proposal!
+}
