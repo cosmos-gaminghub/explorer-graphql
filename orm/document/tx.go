@@ -3,10 +3,11 @@ package document
 import (
 	"encoding/json"
 	"fmt"
+	"time"
+
 	"github.com/cosmos-gaminghub/exploder-graphql/graph/model"
 	"github.com/cosmos-gaminghub/exploder-graphql/orm"
 	"github.com/cosmos-gaminghub/exploder-graphql/utils"
-	"time"
 
 	"gopkg.in/mgo.v2/bson"
 )
@@ -613,4 +614,24 @@ func FilterUnknownTxs(query bson.M) bson.M {
 		}
 	}
 	return query
+}
+
+func (_ CommonTx) GetCountTxs() (int, error) {
+	result := []bson.M{}
+	var query = orm.NewQuery()
+	defer query.Release()
+	query.SetResult(&result).
+		SetCollection(CollectionNmCommonTx).
+		PipeQuery(
+			[]bson.M{
+				{"$group": bson.M{
+					"_id":   "",
+					"count": bson.M{"$sum": 1},
+				}},
+			},
+		)
+	if len(result) == 0 {
+		return 0, nil
+	}
+	return result[0]["count"].(int), nil
 }

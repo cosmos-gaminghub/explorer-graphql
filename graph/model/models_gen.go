@@ -62,6 +62,12 @@ type Proposal struct {
 	Proposer    string     `json:"proposer"`
 }
 
+type Status struct {
+	BlockHeight  int `json:"block_height"`
+	TotalTxsNum  int `json:"total_txs_num"`
+	BondedTokens int `json:"bonded_tokens"`
+}
+
 type Tally struct {
 	Yes        string `json:"yes"`
 	Abstain    string `json:"abstain"`

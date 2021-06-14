@@ -427,6 +427,34 @@ func (_ Validator) GetListMapOperatorAndMoniker(delegationResult client.Delegati
 	return mapList
 }
 
+func (_ Validator) GetSumBondedToken() (int64, error) {
+	result := []bson.M{}
+	var query = orm.NewQuery()
+	defer query.Release()
+
+	selector := bson.M{ValidatorFieldStatus: 1, ValidatorFieldTokens: 1}
+	condition := bson.M{
+		ValidatorFieldJailed: false,
+		ValidatorFieldStatus: Bonded,
+	}
+	query.SetResult(&result).
+		SetCollection(CollectionNmValidator).
+		SetSelector(selector).
+		PipeQuery(
+			[]bson.M{
+				{"$match": condition},
+				{"$group": bson.M{
+					"_id":   "",
+					"total": bson.M{"$sum": "$tokens"},
+				}},
+			},
+		)
+	if len(result) == 0 {
+		return 0, nil
+	}
+	return result[0]["total"].(int64), nil
+}
+
 // func getValUpTime(fromHeight int64, toHeight int64) map[string]int {
 // 	var result []MissedBlock
 // 	var upTimeMap = make(map[string]int)
