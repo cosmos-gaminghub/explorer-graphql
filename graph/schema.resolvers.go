@@ -195,6 +195,29 @@ func (r *queryResolver) ProposalDetail(ctx context.Context, proposalID int) (*mo
 	return document.Proposal{}.FormatProposalForModel(proposal)
 }
 
+func (r *queryResolver) Status(ctx context.Context) (*model.Status, error) {
+	lastBlock, err := document.Block{}.QueryOneBlockOrderByHeightDesc()
+	if err != nil {
+		return &model.Status{}, nil
+	}
+
+	bondedToken, err := document.Validator{}.GetSumBondedToken()
+	if err != nil {
+		return &model.Status{}, nil
+	}
+
+	totalNumTxs, err := document.CommonTx{}.GetCountTxs()
+	if err != nil {
+		return &model.Status{}, nil
+	}
+
+	return &model.Status{
+		BlockHeight:  int(lastBlock.Height),
+		BondedTokens: int(bondedToken),
+		TotalTxsNum:  totalNumTxs,
+	}, nil
+}
+
 // Query returns generated.QueryResolver implementation.
 func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 
