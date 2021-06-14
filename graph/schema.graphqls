@@ -109,8 +109,17 @@ type Change {
 
 type Status {
 	block_height: Int!
+	block_time: String!,
 	total_txs_num: Int!
 	bonded_tokens: Int!
+	total_supply_tokens: TotalSupplyTokens
+}
+type TotalSupplyTokens {
+	supply: [Supply!]!
+}
+type Supply {
+	denom: String,
+	amount: String,
 }
 
 type Query {
@@ -132,5 +141,5 @@ type Query {
   proposals: [Proposal!]!
   proposal_detail(proposal_id: Int!): Proposal!
 
-  Status: Status!
+  status: Status!
 }

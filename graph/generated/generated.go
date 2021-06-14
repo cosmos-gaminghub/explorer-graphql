@@ -120,9 +120,16 @@ type ComplexityRoot struct {
 	}
 
 	Status struct {
-		BlockHeight  func(childComplexity int) int
-		BondedTokens func(childComplexity int) int
-		TotalTxsNum  func(childComplexity int) int
+		BlockHeight       func(childComplexity int) int
+		BlockTime         func(childComplexity int) int
+		BondedTokens      func(childComplexity int) int
+		TotalSupplyTokens func(childComplexity int) int
+		TotalTxsNum       func(childComplexity int) int
+	}
+
+	Supply struct {
+		Amount func(childComplexity int) int
+		Denom  func(childComplexity int) int
 	}
 
 	Tally struct {
@@ -130,6 +137,10 @@ type ComplexityRoot struct {
 		No         func(childComplexity int) int
 		NoWithVeto func(childComplexity int) int
 		Yes        func(childComplexity int) int
+	}
+
+	TotalSupplyTokens struct {
+		Supply func(childComplexity int) int
 	}
 
 	Tx struct {
@@ -563,7 +574,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.ProposedBlocks(childComplexity, args["offset"].(*int), args["size"].(*int), args["operator_address"].(*string)), true
 
-	case "Query.Status":
+	case "Query.status":
 		if e.complexity.Query.Status == nil {
 			break
 		}
@@ -620,6 +631,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Status.BlockHeight(childComplexity), true
 
+	case "Status.block_time":
+		if e.complexity.Status.BlockTime == nil {
+			break
+		}
+
+		return e.complexity.Status.BlockTime(childComplexity), true
+
 	case "Status.bonded_tokens":
 		if e.complexity.Status.BondedTokens == nil {
 			break
@@ -627,12 +645,33 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Status.BondedTokens(childComplexity), true
 
+	case "Status.total_supply_tokens":
+		if e.complexity.Status.TotalSupplyTokens == nil {
+			break
+		}
+
+		return e.complexity.Status.TotalSupplyTokens(childComplexity), true
+
 	case "Status.total_txs_num":
 		if e.complexity.Status.TotalTxsNum == nil {
 			break
 		}
 
 		return e.complexity.Status.TotalTxsNum(childComplexity), true
+
+	case "Supply.amount":
+		if e.complexity.Supply.Amount == nil {
+			break
+		}
+
+		return e.complexity.Supply.Amount(childComplexity), true
+
+	case "Supply.denom":
+		if e.complexity.Supply.Denom == nil {
+			break
+		}
+
+		return e.complexity.Supply.Denom(childComplexity), true
 
 	case "Tally.abstain":
 		if e.complexity.Tally.Abstain == nil {
@@ -661,6 +700,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Tally.Yes(childComplexity), true
+
+	case "TotalSupplyTokens.supply":
+		if e.complexity.TotalSupplyTokens.Supply == nil {
+			break
+		}
+
+		return e.complexity.TotalSupplyTokens.Supply(childComplexity), true
 
 	case "Tx.fee":
 		if e.complexity.Tx.Fee == nil {
@@ -1019,8 +1065,17 @@ type Change {
 
 type Status {
 	block_height: Int!
+	block_time: String!,
 	total_txs_num: Int!
 	bonded_tokens: Int!
+	total_supply_tokens: TotalSupplyTokens
+}
+type TotalSupplyTokens {
+	supply: [Supply!]!
+}
+type Supply {
+	denom: String,
+	amount: String,
 }
 
 type Query {
@@ -1042,7 +1097,7 @@ type Query {
   proposals: [Proposal!]!
   proposal_detail(proposal_id: Int!): Proposal!
 
-  Status: Status!
+  status: Status!
 }`, BuiltIn: false},
 }
 var parsedSchema = gqlparser.MustLoadSchema(sources...)
@@ -3106,7 +3161,7 @@ func (ec *executionContext) _Query_proposal_detail(ctx context.Context, field gr
 	return ec.marshalNProposal2ᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐProposal(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Query_Status(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+func (ec *executionContext) _Query_status(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -3247,6 +3302,41 @@ func (ec *executionContext) _Status_block_height(ctx context.Context, field grap
 	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _Status_block_time(ctx context.Context, field graphql.CollectedField, obj *model.Status) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Status",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.BlockTime, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Status_total_txs_num(ctx context.Context, field graphql.CollectedField, obj *model.Status) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -3315,6 +3405,102 @@ func (ec *executionContext) _Status_bonded_tokens(ctx context.Context, field gra
 	res := resTmp.(int)
 	fc.Result = res
 	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Status_total_supply_tokens(ctx context.Context, field graphql.CollectedField, obj *model.Status) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Status",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.TotalSupplyTokens, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.TotalSupplyTokens)
+	fc.Result = res
+	return ec.marshalOTotalSupplyTokens2ᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐTotalSupplyTokens(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Supply_denom(ctx context.Context, field graphql.CollectedField, obj *model.Supply) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Supply",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Denom, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Supply_amount(ctx context.Context, field graphql.CollectedField, obj *model.Supply) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Supply",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Amount, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Tally_yes(ctx context.Context, field graphql.CollectedField, obj *model.Tally) (ret graphql.Marshaler) {
@@ -3455,6 +3641,41 @@ func (ec *executionContext) _Tally_no_with_veto(ctx context.Context, field graph
 	res := resTmp.(string)
 	fc.Result = res
 	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _TotalSupplyTokens_supply(ctx context.Context, field graphql.CollectedField, obj *model.TotalSupplyTokens) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "TotalSupplyTokens",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Supply, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Supply)
+	fc.Result = res
+	return ec.marshalNSupply2ᚕᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐSupplyᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Tx_tx_hash(ctx context.Context, field graphql.CollectedField, obj *model.Tx) (ret graphql.Marshaler) {
@@ -6085,7 +6306,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 				}
 				return res
 			})
-		case "Status":
+		case "status":
 			field := field
 			out.Concurrently(i, func() (res graphql.Marshaler) {
 				defer func() {
@@ -6093,7 +6314,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Query_Status(ctx, field)
+				res = ec._Query_status(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}
@@ -6130,6 +6351,11 @@ func (ec *executionContext) _Status(ctx context.Context, sel ast.SelectionSet, o
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
+		case "block_time":
+			out.Values[i] = ec._Status_block_time(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "total_txs_num":
 			out.Values[i] = ec._Status_total_txs_num(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -6140,6 +6366,34 @@ func (ec *executionContext) _Status(ctx context.Context, sel ast.SelectionSet, o
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
+		case "total_supply_tokens":
+			out.Values[i] = ec._Status_total_supply_tokens(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var supplyImplementors = []string{"Supply"}
+
+func (ec *executionContext) _Supply(ctx context.Context, sel ast.SelectionSet, obj *model.Supply) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, supplyImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Supply")
+		case "denom":
+			out.Values[i] = ec._Supply_denom(ctx, field, obj)
+		case "amount":
+			out.Values[i] = ec._Supply_amount(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -6179,6 +6433,33 @@ func (ec *executionContext) _Tally(ctx context.Context, sel ast.SelectionSet, ob
 			}
 		case "no_with_veto":
 			out.Values[i] = ec._Tally_no_with_veto(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var totalSupplyTokensImplementors = []string{"TotalSupplyTokens"}
+
+func (ec *executionContext) _TotalSupplyTokens(ctx context.Context, sel ast.SelectionSet, obj *model.TotalSupplyTokens) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, totalSupplyTokensImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("TotalSupplyTokens")
+		case "supply":
+			out.Values[i] = ec._TotalSupplyTokens_supply(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
@@ -7109,6 +7390,53 @@ func (ec *executionContext) marshalNString2string(ctx context.Context, sel ast.S
 	return res
 }
 
+func (ec *executionContext) marshalNSupply2ᚕᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐSupplyᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Supply) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNSupply2ᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐSupply(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+	return ret
+}
+
+func (ec *executionContext) marshalNSupply2ᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐSupply(ctx context.Context, sel ast.SelectionSet, v *model.Supply) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._Supply(ctx, sel, v)
+}
+
 func (ec *executionContext) marshalNTally2ᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐTally(ctx context.Context, sel ast.SelectionSet, v *model.Tally) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -7615,6 +7943,13 @@ func (ec *executionContext) marshalOString2ᚖstring(ctx context.Context, sel as
 		return graphql.Null
 	}
 	return graphql.MarshalString(*v)
+}
+
+func (ec *executionContext) marshalOTotalSupplyTokens2ᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐTotalSupplyTokens(ctx context.Context, sel ast.SelectionSet, v *model.TotalSupplyTokens) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._TotalSupplyTokens(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalO__EnumValue2ᚕgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐEnumValueᚄ(ctx context.Context, sel ast.SelectionSet, v []introspection.EnumValue) graphql.Marshaler {

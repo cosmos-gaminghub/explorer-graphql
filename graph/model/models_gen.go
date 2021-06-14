@@ -63,9 +63,16 @@ type Proposal struct {
 }
 
 type Status struct {
-	BlockHeight  int `json:"block_height"`
-	TotalTxsNum  int `json:"total_txs_num"`
-	BondedTokens int `json:"bonded_tokens"`
+	BlockHeight       int                `json:"block_height"`
+	BlockTime         string             `json:"block_time"`
+	TotalTxsNum       int                `json:"total_txs_num"`
+	BondedTokens      int                `json:"bonded_tokens"`
+	TotalSupplyTokens *TotalSupplyTokens `json:"total_supply_tokens"`
+}
+
+type Supply struct {
+	Denom  *string `json:"denom"`
+	Amount *string `json:"amount"`
 }
 
 type Tally struct {
@@ -73,6 +80,10 @@ type Tally struct {
 	Abstain    string `json:"abstain"`
 	No         string `json:"no"`
 	NoWithVeto string `json:"no_with_veto"`
+}
+
+type TotalSupplyTokens struct {
+	Supply []*Supply `json:"supply"`
 }
 
 type Tx struct {
