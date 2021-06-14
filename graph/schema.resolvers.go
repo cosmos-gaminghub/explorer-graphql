@@ -211,10 +211,16 @@ func (r *queryResolver) Status(ctx context.Context) (*model.Status, error) {
 		return &model.Status{}, nil
 	}
 
+	totalSupplyToken, err := client.GetSupply()
+	if err != nil {
+		return &model.Status{}, nil
+	}
 	return &model.Status{
-		BlockHeight:  int(lastBlock.Height),
-		BondedTokens: int(bondedToken),
-		TotalTxsNum:  totalNumTxs,
+		BlockHeight:       int(lastBlock.Height),
+		BlockTime:         lastBlock.Time.String(),
+		BondedTokens:      int(bondedToken),
+		TotalTxsNum:       totalNumTxs,
+		TotalSupplyTokens: totalSupplyToken,
 	}, nil
 }
 

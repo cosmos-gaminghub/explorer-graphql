@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	CollectionNmCommonTx = "transaction"
+	CollectionNmCommonTx = "txs"
 	TxStatusSuccess      = "success"
 	TxStatusFail         = "fail"
 
