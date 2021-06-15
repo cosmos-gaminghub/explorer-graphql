@@ -90,6 +90,7 @@ func (_ Block) GetBlockListByOffsetAndSize(offset, size int) ([]bson.M, error) {
 		{
 			"$limit": size,
 		},
+		{"$sort": bson.M{Block_Field_Height: -1}},
 	}
 
 	results := []bson.M{}
