@@ -84,13 +84,13 @@ func (_ Block) GetBlockListByOffsetAndSize(offset, size int) ([]bson.M, error) {
 				"proposer": 1,
 			},
 		},
+		{"$sort": bson.M{Block_Field_Height: -1}},
 		{
 			"$skip": offset,
 		},
 		{
 			"$limit": size,
 		},
-		{"$sort": bson.M{Block_Field_Height: -1}},
 	}
 
 	results := []bson.M{}
