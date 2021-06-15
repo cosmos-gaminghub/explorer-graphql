@@ -48,11 +48,12 @@ type ComplexityRoot struct {
 	}
 
 	Block struct {
-		Hash            func(childComplexity int) int
-		Height          func(childComplexity int) int
-		NumTxs          func(childComplexity int) int
-		ProposerAddress func(childComplexity int) int
-		Time            func(childComplexity int) int
+		Hash         func(childComplexity int) int
+		Height       func(childComplexity int) int
+		Moniker      func(childComplexity int) int
+		NumTxs       func(childComplexity int) int
+		ProposerAddr func(childComplexity int) int
+		Time         func(childComplexity int) int
 	}
 
 	Change struct {
@@ -247,6 +248,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Block.Height(childComplexity), true
 
+	case "Block.moniker":
+		if e.complexity.Block.Moniker == nil {
+			break
+		}
+
+		return e.complexity.Block.Moniker(childComplexity), true
+
 	case "Block.num_txs":
 		if e.complexity.Block.NumTxs == nil {
 			break
@@ -254,12 +262,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Block.NumTxs(childComplexity), true
 
-	case "Block.proposer_address":
-		if e.complexity.Block.ProposerAddress == nil {
+	case "Block.proposer_addr":
+		if e.complexity.Block.ProposerAddr == nil {
 			break
 		}
 
-		return e.complexity.Block.ProposerAddress(childComplexity), true
+		return e.complexity.Block.ProposerAddr(childComplexity), true
 
 	case "Block.time":
 		if e.complexity.Block.Time == nil {
@@ -957,9 +965,10 @@ var sources = []*ast.Source{
 	{Name: "graph/schema.graphqls", Input: `type Block {
 	height: Int!
 	hash: String!
-	proposer_address: String!
+	proposer_addr: String!
 	num_txs: Int!
 	time: String!
+	moniker: String!
 }
 
 type Validator {
@@ -1509,7 +1518,7 @@ func (ec *executionContext) _Block_hash(ctx context.Context, field graphql.Colle
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Block_proposer_address(ctx context.Context, field graphql.CollectedField, obj *model.Block) (ret graphql.Marshaler) {
+func (ec *executionContext) _Block_proposer_addr(ctx context.Context, field graphql.CollectedField, obj *model.Block) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -1527,7 +1536,7 @@ func (ec *executionContext) _Block_proposer_address(ctx context.Context, field g
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.ProposerAddress, nil
+		return obj.ProposerAddr, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1598,6 +1607,41 @@ func (ec *executionContext) _Block_time(ctx context.Context, field graphql.Colle
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Time, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Block_moniker(ctx context.Context, field graphql.CollectedField, obj *model.Block) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Block",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Moniker, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -5806,8 +5850,8 @@ func (ec *executionContext) _Block(ctx context.Context, sel ast.SelectionSet, ob
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "proposer_address":
-			out.Values[i] = ec._Block_proposer_address(ctx, field, obj)
+		case "proposer_addr":
+			out.Values[i] = ec._Block_proposer_addr(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
@@ -5818,6 +5862,11 @@ func (ec *executionContext) _Block(ctx context.Context, sel ast.SelectionSet, ob
 			}
 		case "time":
 			out.Values[i] = ec._Block_time(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "moniker":
+			out.Values[i] = ec._Block_moniker(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}

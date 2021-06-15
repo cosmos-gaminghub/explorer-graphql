@@ -1,9 +1,10 @@
 type Block {
 	height: Int!
 	hash: String!
-	proposer_address: String!
+	proposer_addr: String!
 	num_txs: Int!
 	time: String!
+	moniker: String!
 }
 
 type Validator {

@@ -15,11 +15,11 @@ import (
 )
 
 func (r *queryResolver) Blocks(ctx context.Context, offset *int, size *int) ([]*model.Block, error) {
-	blocks, err := document.Block{}.GetBlockListByOffsetAndSize(*offset, *size)
+	results, err := document.Block{}.GetBlockListByOffsetAndSize(*offset, *size)
 	if err != nil {
 		return []*model.Block{}, nil
 	}
-	return document.Block{}.FormatListBlockForModel(blocks)
+	return document.Block{}.FormatBsonMForModel(results)
 }
 
 func (r *queryResolver) BlockDetail(ctx context.Context, height *int) (*model.Block, error) {
@@ -28,11 +28,11 @@ func (r *queryResolver) BlockDetail(ctx context.Context, height *int) (*model.Bl
 		return &model.Block{}, nil
 	}
 	return &model.Block{
-		Height:          int(block.Height),
-		Hash:            block.Hash,
-		Time:            block.Time.String(),
-		ProposerAddress: block.ProposalAddr,
-		NumTxs:          int(block.NumTxs)}, nil
+		Height:       int(block.Height),
+		Hash:         block.Hash,
+		Time:         block.Time.String(),
+		ProposerAddr: block.ProposalAddr,
+		NumTxs:       int(block.NumTxs)}, nil
 }
 
 func (r *queryResolver) BlockTxs(ctx context.Context, height *int) ([]*model.Tx, error) {
