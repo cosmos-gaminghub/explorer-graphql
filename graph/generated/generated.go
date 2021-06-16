@@ -82,6 +82,10 @@ type ComplexityRoot struct {
 		ProposalID func(childComplexity int) int
 	}
 
+	Inflation struct {
+		Inflation func(childComplexity int) int
+	}
+
 	PowerEvent struct {
 		Amount    func(childComplexity int) int
 		Height    func(childComplexity int) int
@@ -109,6 +113,7 @@ type ComplexityRoot struct {
 		BlockTxs            func(childComplexity int, height *int) int
 		Blocks              func(childComplexity int, offset *int, size *int) int
 		Delegations         func(childComplexity int, accAddress *string) int
+		Inflation           func(childComplexity int) int
 		PowerEvents         func(childComplexity int, offset *int, size *int, operatorAddress string) int
 		ProposalDetail      func(childComplexity int, proposalID int) int
 		Proposals           func(childComplexity int) int
@@ -205,6 +210,7 @@ type QueryResolver interface {
 	Proposals(ctx context.Context) ([]*model.Proposal, error)
 	ProposalDetail(ctx context.Context, proposalID int) (*model.Proposal, error)
 	Status(ctx context.Context) (*model.Status, error)
+	Inflation(ctx context.Context) (*model.Inflation, error)
 }
 
 type executableSchema struct {
@@ -376,6 +382,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Deposit.ProposalID(childComplexity), true
 
+	case "Inflation.inflation":
+		if e.complexity.Inflation.Inflation == nil {
+			break
+		}
+
+		return e.complexity.Inflation.Inflation(childComplexity), true
+
 	case "PowerEvent.amount":
 		if e.complexity.PowerEvent.Amount == nil {
 			break
@@ -540,6 +553,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.Delegations(childComplexity, args["acc_address"].(*string)), true
+
+	case "Query.inflation":
+		if e.complexity.Query.Inflation == nil {
+			break
+		}
+
+		return e.complexity.Query.Inflation(childComplexity), true
 
 	case "Query.power_events":
 		if e.complexity.Query.PowerEvents == nil {
@@ -1101,6 +1121,10 @@ type Supply {
 	amount: String,
 }
 
+type Inflation {
+	inflation: String!
+}
+
 type Query {
   blocks(offset: Int, size: Int): [Block!]!
   block_detail(height: Int): Block!
@@ -1122,6 +1146,7 @@ type Query {
   proposal_detail(proposal_id: Int!): Proposal!
 
   status: Status!
+  inflation: Inflation!
 }`, BuiltIn: false},
 }
 var parsedSchema = gqlparser.MustLoadSchema(sources...)
@@ -2176,6 +2201,41 @@ func (ec *executionContext) _Deposit_amount(ctx context.Context, field graphql.C
 	res := resTmp.([]*model.Amount)
 	fc.Result = res
 	return ec.marshalNAmount2ᚕᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐAmountᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Inflation_inflation(ctx context.Context, field graphql.CollectedField, obj *model.Inflation) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Inflation",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Inflation, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _PowerEvent_height(ctx context.Context, field graphql.CollectedField, obj *model.PowerEvent) (ret graphql.Marshaler) {
@@ -3310,6 +3370,41 @@ func (ec *executionContext) _Query_status(ctx context.Context, field graphql.Col
 	res := resTmp.(*model.Status)
 	fc.Result = res
 	return ec.marshalNStatus2ᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐStatus(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_inflation(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().Inflation(rctx)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Inflation)
+	fc.Result = res
+	return ec.marshalNInflation2ᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐInflation(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query___type(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -6111,6 +6206,33 @@ func (ec *executionContext) _Deposit(ctx context.Context, sel ast.SelectionSet, 
 	return out
 }
 
+var inflationImplementors = []string{"Inflation"}
+
+func (ec *executionContext) _Inflation(ctx context.Context, sel ast.SelectionSet, obj *model.Inflation) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, inflationImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Inflation")
+		case "inflation":
+			out.Values[i] = ec._Inflation_inflation(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
 var powerEventImplementors = []string{"PowerEvent"}
 
 func (ec *executionContext) _PowerEvent(ctx context.Context, sel ast.SelectionSet, obj *model.PowerEvent) graphql.Marshaler {
@@ -6450,6 +6572,20 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_status(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
+		case "inflation":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_inflation(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}
@@ -7381,6 +7517,20 @@ func (ec *executionContext) marshalNFloat2float64(ctx context.Context, sel ast.S
 		}
 	}
 	return res
+}
+
+func (ec *executionContext) marshalNInflation2githubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐInflation(ctx context.Context, sel ast.SelectionSet, v model.Inflation) graphql.Marshaler {
+	return ec._Inflation(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNInflation2ᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐInflation(ctx context.Context, sel ast.SelectionSet, v *model.Inflation) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._Inflation(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNInt2int(ctx context.Context, v interface{}) (int, error) {

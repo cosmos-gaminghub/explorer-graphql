@@ -123,6 +123,10 @@ type Supply {
 	amount: String,
 }
 
+type Inflation {
+	inflation: String!
+}
+
 type Query {
   blocks(offset: Int, size: Int): [Block!]!
   block_detail(height: Int): Block!
@@ -144,4 +148,5 @@ type Query {
   proposal_detail(proposal_id: Int!): Proposal!
 
   status: Status!
+  inflation: Inflation!
 }
