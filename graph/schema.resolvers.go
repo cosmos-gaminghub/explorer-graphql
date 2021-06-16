@@ -90,6 +90,27 @@ func (r *queryResolver) Validators(ctx context.Context) ([]*model.Validator, err
 	return listValidator, nil
 }
 
+func (r *queryResolver) ValidatorDetail(ctx context.Context, operatorAddress *string) (*model.Validator, error) {
+	validator, err := document.Validator{}.QueryValidatorDetailByOperatorAddr(*operatorAddress)
+	if err != nil {
+		return &model.Validator{}, nil
+	}
+	upTimeCount, overBlocks := document.MissedBlock{}.GetMissedBlockCount([]string{validator.OperatorAddr})
+	commision, _ := utils.ParseStringToFloat(validator.Commission.CommissionRate.Rate)
+	return &model.Validator{
+		Moniker:         validator.Description.Moniker,
+		OperatorAddress: validator.OperatorAddr,
+		AccAddress:      validator.AccountAddr,
+		VotingPower:     int(validator.Tokens),
+		Commission:      commision,
+		Jailed:          validator.Jailed,
+		Status:          validator.Status,
+		Uptime:          upTimeCount[validator.OperatorAddr],
+		OverBlocks:      overBlocks,
+		Website:         validator.Description.Website,
+	}, nil
+}
+
 func (r *queryResolver) Uptimes(ctx context.Context, operatorAddress *string) (*model.UptimeResult, error) {
 	block, err := document.Block{}.QueryLatestBlockFromDB()
 	if err != nil {
@@ -99,7 +120,6 @@ func (r *queryResolver) Uptimes(ctx context.Context, operatorAddress *string) (*
 	if err != nil {
 		return &model.UptimeResult{}, nil
 	}
-	fmt.Println(missedBlocks)
 	var uptimeList []*model.Uptime
 	for _, missedBlock := range missedBlocks {
 		uptimeList = append(uptimeList, &model.Uptime{

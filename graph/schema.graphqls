@@ -132,6 +132,7 @@ type Query {
   tx_detail(tx_hash: String): Tx!
 
   validators: [Validator!]!
+  validator_detail(operator_address: String): Validator!
   uptimes(operator_address: String): UptimeResult!
   proposed_blocks(offset: Int, size: Int, operator_address: String): [Block!]!
   power_events(offset: Int, size: Int, operator_address: String!): [PowerEvent!]!
