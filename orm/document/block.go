@@ -16,15 +16,16 @@ import (
 const (
 	CollectionNmBlock = "block"
 
-	Block_Field_Height          = "height"
-	Block_Field_Hash            = "block_hash"
-	Block_Field_Time            = "timestamp"
-	Block_Field_NumTxs          = "num_txs"
-	Block_Field_Meta            = "meta"
-	Block_Field_Block           = "block"
-	Block_Field_Validators      = "validators"
-	Block_Field_ProposalAddress = "proposer"
-	Block_Field_Moniker         = "moniker"
+	Block_Field_Height           = "height"
+	Block_Field_Hash             = "block_hash"
+	Block_Field_Time             = "timestamp"
+	Block_Field_NumTxs           = "num_txs"
+	Block_Field_Meta             = "meta"
+	Block_Field_Block            = "block"
+	Block_Field_Validators       = "validators"
+	Block_Field_ProposalAddress  = "proposer"
+	Block_Field_Moniker          = "moniker"
+	Block_Field_Operator_Address = "operator_address"
 )
 
 type Block struct {
@@ -86,8 +87,9 @@ func (_ Block) GetBlockListByOffsetAndSize(offset, size int) ([]bson.M, error) {
 		},
 		{
 			"$project": bson.M{
-				"moniker": "$" + Block_Field_Validators + ".description.moniker",
-				"height":  1, "timestamp": 1, "num_txs": 1, "block_hash": 1,
+				"moniker":          "$" + Block_Field_Validators + ".description.moniker",
+				"operator_address": "$" + Block_Field_Validators + "." + ValidatorFieldOperatorAddress,
+				"height":           1, "timestamp": 1, "num_txs": 1, "block_hash": 1,
 				"proposer": 1,
 			},
 		},
@@ -231,12 +233,13 @@ func (_ Block) FormatBsonMForModel(results []bson.M) ([]*model.Block, error) {
 	var listBlock []*model.Block
 	for _, block := range results {
 		t := &model.Block{
-			Height:       int(block[Block_Field_Height].(int64)),
-			Hash:         fmt.Sprintf("%v", block[Block_Field_Hash]),
-			ProposerAddr: fmt.Sprintf("%v", block[Block_Field_ProposalAddress]),
-			NumTxs:       int(block[Block_Field_NumTxs].(int64)),
-			Time:         fmt.Sprintf("%v", block[Block_Field_Time]),
-			Moniker:      fmt.Sprintf("%v", block[Block_Field_Moniker]),
+			Height:          int(block[Block_Field_Height].(int64)),
+			Hash:            fmt.Sprintf("%v", block[Block_Field_Hash]),
+			ProposerAddr:    fmt.Sprintf("%v", block[Block_Field_ProposalAddress]),
+			NumTxs:          int(block[Block_Field_NumTxs].(int64)),
+			Time:            fmt.Sprintf("%v", block[Block_Field_Time]),
+			Moniker:         fmt.Sprintf("%v", block[Block_Field_Moniker]),
+			OperatorAddress: fmt.Sprintf("%v", block[Block_Field_Operator_Address]),
 		}
 		listBlock = append(listBlock, t)
 	}

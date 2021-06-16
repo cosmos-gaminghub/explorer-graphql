@@ -8,12 +8,13 @@ type Amount struct {
 }
 
 type Block struct {
-	Height       int    `json:"height"`
-	Hash         string `json:"hash"`
-	ProposerAddr string `json:"proposer_addr"`
-	NumTxs       int    `json:"num_txs"`
-	Time         string `json:"time"`
-	Moniker      string `json:"moniker"`
+	Height          int    `json:"height"`
+	Hash            string `json:"hash"`
+	ProposerAddr    string `json:"proposer_addr"`
+	NumTxs          int    `json:"num_txs"`
+	Time            string `json:"time"`
+	Moniker         string `json:"moniker"`
+	OperatorAddress string `json:"operator_address"`
 }
 
 type Change struct {
