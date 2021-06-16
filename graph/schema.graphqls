@@ -5,6 +5,7 @@ type Block {
 	num_txs: Int!
 	time: String!
 	moniker: String!
+	operator_address: String!
 }
 
 type Validator {
