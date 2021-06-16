@@ -67,6 +67,13 @@ func (_ Block) GetBlockListByOffsetAndSize(offset, size int) ([]bson.M, error) {
 
 	var condition = []bson.M{
 		{
+			"$skip": offset,
+		},
+		{
+			"$limit": size,
+		},
+		{"$sort": bson.M{Block_Field_Height: -1}},
+		{
 			"$lookup": bson.M{
 				"from":         CollectionNmValidator,
 				"localField":   Block_Field_ProposalAddress,
@@ -83,13 +90,6 @@ func (_ Block) GetBlockListByOffsetAndSize(offset, size int) ([]bson.M, error) {
 				"height":  1, "timestamp": 1, "num_txs": 1, "block_hash": 1,
 				"proposer": 1,
 			},
-		},
-		{"$sort": bson.M{Block_Field_Height: -1}},
-		{
-			"$skip": offset,
-		},
-		{
-			"$limit": size,
 		},
 	}
 
