@@ -66,13 +66,13 @@ func (_ Block) GetBlockListByOffsetAndSize(offset, size int) ([]bson.M, error) {
 	defer query.Release()
 
 	var condition = []bson.M{
+		{"$sort": bson.M{Block_Field_Height: -1}},
 		{
 			"$skip": offset,
 		},
 		{
 			"$limit": size,
 		},
-		{"$sort": bson.M{Block_Field_Height: -1}},
 		{
 			"$lookup": bson.M{
 				"from":         CollectionNmValidator,
