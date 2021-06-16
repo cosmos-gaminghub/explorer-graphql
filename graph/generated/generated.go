@@ -117,6 +117,7 @@ type ComplexityRoot struct {
 		TxDetail            func(childComplexity int, txHash *string) int
 		Txs                 func(childComplexity int, size *int) int
 		Uptimes             func(childComplexity int, operatorAddress *string) int
+		ValidatorDetail     func(childComplexity int, operatorAddress *string) int
 		Validators          func(childComplexity int) int
 	}
 
@@ -195,6 +196,7 @@ type QueryResolver interface {
 	Txs(ctx context.Context, size *int) ([]*model.Tx, error)
 	TxDetail(ctx context.Context, txHash *string) (*model.Tx, error)
 	Validators(ctx context.Context) ([]*model.Validator, error)
+	ValidatorDetail(ctx context.Context, operatorAddress *string) (*model.Validator, error)
 	Uptimes(ctx context.Context, operatorAddress *string) (*model.UptimeResult, error)
 	ProposedBlocks(ctx context.Context, offset *int, size *int, operatorAddress *string) ([]*model.Block, error)
 	PowerEvents(ctx context.Context, offset *int, size *int, operatorAddress string) ([]*model.PowerEvent, error)
@@ -624,6 +626,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.Uptimes(childComplexity, args["operator_address"].(*string)), true
+
+	case "Query.validator_detail":
+		if e.complexity.Query.ValidatorDetail == nil {
+			break
+		}
+
+		args, err := ec.field_Query_validator_detail_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.ValidatorDetail(childComplexity, args["operator_address"].(*string)), true
 
 	case "Query.validators":
 		if e.complexity.Query.Validators == nil {
@@ -1096,6 +1110,7 @@ type Query {
   tx_detail(tx_hash: String): Tx!
 
   validators: [Validator!]!
+  validator_detail(operator_address: String): Validator!
   uptimes(operator_address: String): UptimeResult!
   proposed_blocks(offset: Int, size: Int, operator_address: String): [Block!]!
   power_events(offset: Int, size: Int, operator_address: String!): [PowerEvent!]!
@@ -1326,6 +1341,21 @@ func (ec *executionContext) field_Query_txs_args(ctx context.Context, rawArgs ma
 }
 
 func (ec *executionContext) field_Query_uptimes_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *string
+	if tmp, ok := rawArgs["operator_address"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("operator_address"))
+		arg0, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["operator_address"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_validator_detail_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
 	var arg0 *string
@@ -2916,6 +2946,48 @@ func (ec *executionContext) _Query_validators(ctx context.Context, field graphql
 	res := resTmp.([]*model.Validator)
 	fc.Result = res
 	return ec.marshalNValidator2ᚕᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐValidatorᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_validator_detail(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_validator_detail_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().ValidatorDetail(rctx, args["operator_address"].(*string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Validator)
+	fc.Result = res
+	return ec.marshalNValidator2ᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐValidator(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_uptimes(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -6257,6 +6329,20 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 				}
 				return res
 			})
+		case "validator_detail":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_validator_detail(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
 		case "uptimes":
 			field := field
 			out.Concurrently(i, func() (res graphql.Marshaler) {
@@ -7606,6 +7692,10 @@ func (ec *executionContext) marshalNUptimeResult2ᚖgithubᚗcomᚋcosmosᚑgami
 		return graphql.Null
 	}
 	return ec._UptimeResult(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNValidator2githubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐValidator(ctx context.Context, sel ast.SelectionSet, v model.Validator) graphql.Marshaler {
+	return ec._Validator(ctx, sel, &v)
 }
 
 func (ec *executionContext) marshalNValidator2ᚕᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐValidatorᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Validator) graphql.Marshaler {
