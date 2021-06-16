@@ -244,6 +244,10 @@ func (r *queryResolver) Status(ctx context.Context) (*model.Status, error) {
 	}, nil
 }
 
+func (r *queryResolver) Inflation(ctx context.Context) (*model.Inflation, error) {
+	return client.GetInflation()
+}
+
 // Query returns generated.QueryResolver implementation.
 func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 

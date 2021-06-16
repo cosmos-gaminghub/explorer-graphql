@@ -42,6 +42,10 @@ type Deposit struct {
 	Amount     []*Amount `json:"amount"`
 }
 
+type Inflation struct {
+	Inflation string `json:"inflation"`
+}
+
 type PowerEvent struct {
 	Height    int    `json:"height"`
 	TxHash    string `json:"tx_hash"`
