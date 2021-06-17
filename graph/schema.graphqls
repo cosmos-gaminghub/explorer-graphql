@@ -20,6 +20,7 @@ type Validator {
 	jailed: Boolean!
 	status: String!
 	website: String!
+	rank: Int!
 }
 
 type UptimeResult {
