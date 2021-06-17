@@ -102,12 +102,24 @@ type Validator struct {
 
 func (v Validator) GetValidatorList() ([]Validator, error) {
 	var validatorsDocArr []Validator
+	var query = orm.NewQuery()
+	defer query.Release()
+
 	var selector = bson.M{"description.moniker": 1, "operator_address": 1, "tokens": 1, "commission": 1, "jailed": 1, "status": 1}
-	// condition := bson.M{
-	// 	ValidatorFieldJailed: false,
-	// 	ValidatorFieldStatus: Bonded,
-	// }
-	err := queryAll(CollectionNmValidator, selector, nil, desc(ValidatorFieldTokens), 0, &validatorsDocArr)
+	var condition = []bson.M{
+		{
+			"$sort": bson.M{
+				ValidatorFieldStatus: 1,
+				ValidatorFieldTokens: -1,
+			},
+		},
+	}
+	err := query.SetResult(&validatorsDocArr).
+		SetSelector(selector).
+		SetCollection(CollectionNmValidator).
+		PipeQuery(
+			condition,
+		)
 	return validatorsDocArr, err
 }
 
@@ -453,6 +465,21 @@ func (_ Validator) GetSumBondedToken() (int64, error) {
 		return 0, nil
 	}
 	return result[0]["total"].(int64), nil
+}
+
+func (_ Validator) FormatListValidator(validators []Validator) (result []Validator) {
+	for _, item := range validators {
+		if item.Jailed == false {
+			result = append(result, item)
+		}
+	}
+
+	for _, item := range validators {
+		if item.Jailed == true {
+			result = append(result, item)
+		}
+	}
+	return result
 }
 
 // func getValUpTime(fromHeight int64, toHeight int64) map[string]int {
