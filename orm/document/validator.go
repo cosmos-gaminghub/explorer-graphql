@@ -103,11 +103,11 @@ type Validator struct {
 func (v Validator) GetValidatorList() ([]Validator, error) {
 	var validatorsDocArr []Validator
 	var selector = bson.M{"description.moniker": 1, "operator_address": 1, "tokens": 1, "commission": 1, "jailed": 1, "status": 1}
-	condition := bson.M{
-		ValidatorFieldJailed: false,
-		ValidatorFieldStatus: Bonded,
-	}
-	err := queryAll(CollectionNmValidator, selector, condition, desc(ValidatorFieldTokens), DefaultValidatorLimit, &validatorsDocArr)
+	// condition := bson.M{
+	// 	ValidatorFieldJailed: false,
+	// 	ValidatorFieldStatus: Bonded,
+	// }
+	err := queryAll(CollectionNmValidator, selector, nil, desc(ValidatorFieldTokens), 0, &validatorsDocArr)
 	return validatorsDocArr, err
 }
 
