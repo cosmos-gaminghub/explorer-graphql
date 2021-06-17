@@ -482,6 +482,15 @@ func (_ Validator) FormatListValidator(validators []Validator) (result []Validat
 	return result
 }
 
+func (_ Validator) GetIndexFromFormatListValidator(validators []Validator, operator_address string) (rank int) {
+	for index, item := range validators {
+		if item.OperatorAddr == operator_address {
+			return index + 1
+		}
+	}
+	return rank
+}
+
 // func getValUpTime(fromHeight int64, toHeight int64) map[string]int {
 // 	var result []MissedBlock
 // 	var upTimeMap = make(map[string]int)

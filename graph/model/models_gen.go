@@ -128,6 +128,7 @@ type Validator struct {
 	Status          string  `json:"status"`
 	Website         string  `json:"website"`
 	Rank            int     `json:"rank"`
+	Details         string  `json:"details"`
 }
 
 type Vote struct {

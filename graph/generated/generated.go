@@ -178,6 +178,7 @@ type ComplexityRoot struct {
 		AccAddress      func(childComplexity int) int
 		Commission      func(childComplexity int) int
 		CumulativeShare func(childComplexity int) int
+		Details         func(childComplexity int) int
 		Jailed          func(childComplexity int) int
 		Moniker         func(childComplexity int) int
 		OperatorAddress func(childComplexity int) int
@@ -878,6 +879,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Validator.CumulativeShare(childComplexity), true
 
+	case "Validator.details":
+		if e.complexity.Validator.Details == nil {
+			break
+		}
+
+		return e.complexity.Validator.Details(childComplexity), true
+
 	case "Validator.jailed":
 		if e.complexity.Validator.Jailed == nil {
 			break
@@ -1035,6 +1043,7 @@ type Validator {
 	status: String!
 	website: String!
 	rank: Int!
+	details: String!
 }
 
 type UptimeResult {
@@ -4852,6 +4861,41 @@ func (ec *executionContext) _Validator_rank(ctx context.Context, field graphql.C
 	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _Validator_details(ctx context.Context, field graphql.CollectedField, obj *model.Validator) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Validator",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Details, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Vote_proposal_id(ctx context.Context, field graphql.CollectedField, obj *model.Vote) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -7042,6 +7086,11 @@ func (ec *executionContext) _Validator(ctx context.Context, sel ast.SelectionSet
 			}
 		case "rank":
 			out.Values[i] = ec._Validator_rank(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "details":
+			out.Values[i] = ec._Validator_details(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}

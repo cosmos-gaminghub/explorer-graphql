@@ -21,6 +21,7 @@ type Validator {
 	status: String!
 	website: String!
 	rank: Int!
+	details: String!
 }
 
 type UptimeResult {

@@ -100,6 +100,13 @@ func (r *queryResolver) ValidatorDetail(ctx context.Context, operatorAddress *st
 	}
 	upTimeCount, overBlocks := document.MissedBlock{}.GetMissedBlockCount([]string{validator.OperatorAddr})
 	commision, _ := utils.ParseStringToFloat(validator.Commission.CommissionRate.Rate)
+
+	var rank int
+	validators, err := document.Validator{}.GetValidatorList()
+	if err == nil {
+		validatorFormat := document.Validator{}.FormatListValidator(validators)
+		rank = document.Validator{}.GetIndexFromFormatListValidator(validatorFormat, validator.OperatorAddr)
+	}
 	return &model.Validator{
 		Moniker:         validator.Description.Moniker,
 		OperatorAddress: validator.OperatorAddr,
@@ -111,6 +118,8 @@ func (r *queryResolver) ValidatorDetail(ctx context.Context, operatorAddress *st
 		Uptime:          upTimeCount[validator.OperatorAddr],
 		OverBlocks:      overBlocks,
 		Website:         validator.Description.Website,
+		Details:         validator.Description.Details,
+		Rank:            rank,
 	}, nil
 }
 
