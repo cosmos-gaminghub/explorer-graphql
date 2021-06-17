@@ -71,7 +71,7 @@ func (r *queryResolver) Validators(ctx context.Context) ([]*model.Validator, err
 	listOperatorAddress := document.Validator{}.GetListOperatorAdress(validators)
 	upTimeCount, overBlocks := document.MissedBlock{}.GetMissedBlockCount(listOperatorAddress)
 	var listValidator []*model.Validator
-	for _, validator := range validators {
+	for index, validator := range validators {
 		commision, _ := utils.ParseStringToFloat(validator.Commission.CommissionRate.Rate)
 		t := &model.Validator{
 			Moniker:         validator.Description.Moniker,
@@ -84,6 +84,7 @@ func (r *queryResolver) Validators(ctx context.Context) ([]*model.Validator, err
 			Uptime:          upTimeCount[validator.OperatorAddr],
 			OverBlocks:      overBlocks,
 			Website:         validator.Description.Website,
+			Rank:            index + 1,
 		}
 		listValidator = append(listValidator, t)
 	}
