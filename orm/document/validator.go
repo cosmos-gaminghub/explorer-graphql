@@ -106,20 +106,7 @@ func (v Validator) GetValidatorList() ([]Validator, error) {
 	defer query.Release()
 
 	var selector = bson.M{"description.moniker": 1, "operator_address": 1, "tokens": 1, "commission": 1, "jailed": 1, "status": 1}
-	var condition = []bson.M{
-		{
-			"$sort": bson.M{
-				ValidatorFieldStatus: 1,
-				ValidatorFieldTokens: -1,
-			},
-		},
-	}
-	err := query.SetResult(&validatorsDocArr).
-		SetSelector(selector).
-		SetCollection(CollectionNmValidator).
-		PipeQuery(
-			condition,
-		)
+	err := queryAll(CollectionNmValidator, selector, nil, desc(ValidatorFieldTokens), 0, &validatorsDocArr)
 	return validatorsDocArr, err
 }
 
