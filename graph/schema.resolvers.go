@@ -70,8 +70,10 @@ func (r *queryResolver) Validators(ctx context.Context) ([]*model.Validator, err
 
 	listOperatorAddress := document.Validator{}.GetListOperatorAdress(validators)
 	upTimeCount, overBlocks := document.MissedBlock{}.GetMissedBlockCount(listOperatorAddress)
+
+	validatorFormat := document.Validator{}.FormatListValidator(validators)
 	var listValidator []*model.Validator
-	for index, validator := range validators {
+	for index, validator := range validatorFormat {
 		commision, _ := utils.ParseStringToFloat(validator.Commission.CommissionRate.Rate)
 		t := &model.Validator{
 			Moniker:         validator.Description.Moniker,
