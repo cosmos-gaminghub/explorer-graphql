@@ -55,6 +55,7 @@ type ComplexityRoot struct {
 		OperatorAddress func(childComplexity int) int
 		ProposerAddr    func(childComplexity int) int
 		Time            func(childComplexity int) int
+		TotalRecords    func(childComplexity int) int
 	}
 
 	Change struct {
@@ -88,11 +89,12 @@ type ComplexityRoot struct {
 	}
 
 	PowerEvent struct {
-		Amount    func(childComplexity int) int
-		Height    func(childComplexity int) int
-		Timestamp func(childComplexity int) int
-		TxHash    func(childComplexity int) int
-		Type      func(childComplexity int) int
+		Amount       func(childComplexity int) int
+		Height       func(childComplexity int) int
+		Timestamp    func(childComplexity int) int
+		TotalRecords func(childComplexity int) int
+		TxHash       func(childComplexity int) int
+		Type         func(childComplexity int) int
 	}
 
 	Proposal struct {
@@ -115,10 +117,10 @@ type ComplexityRoot struct {
 		Blocks              func(childComplexity int, offset *int, size *int) int
 		Delegations         func(childComplexity int, accAddress *string) int
 		Inflation           func(childComplexity int) int
-		PowerEvents         func(childComplexity int, offset *int, size *int, operatorAddress string) int
+		PowerEvents         func(childComplexity int, before *int, size *int, operatorAddress string) int
 		ProposalDetail      func(childComplexity int, proposalID int) int
 		Proposals           func(childComplexity int) int
-		ProposedBlocks      func(childComplexity int, offset *int, size *int, operatorAddress *string) int
+		ProposedBlocks      func(childComplexity int, before *int, size *int, operatorAddress string) int
 		Status              func(childComplexity int) int
 		TxDetail            func(childComplexity int, txHash *string) int
 		Txs                 func(childComplexity int, size *int) int
@@ -206,8 +208,8 @@ type QueryResolver interface {
 	Validators(ctx context.Context) ([]*model.Validator, error)
 	ValidatorDetail(ctx context.Context, operatorAddress *string) (*model.Validator, error)
 	Uptimes(ctx context.Context, operatorAddress *string) (*model.UptimeResult, error)
-	ProposedBlocks(ctx context.Context, offset *int, size *int, operatorAddress *string) ([]*model.Block, error)
-	PowerEvents(ctx context.Context, offset *int, size *int, operatorAddress string) ([]*model.PowerEvent, error)
+	ProposedBlocks(ctx context.Context, before *int, size *int, operatorAddress string) ([]*model.Block, error)
+	PowerEvents(ctx context.Context, before *int, size *int, operatorAddress string) ([]*model.PowerEvent, error)
 	Delegations(ctx context.Context, accAddress *string) ([]*model.Delegation, error)
 	AccountTransactions(ctx context.Context, accAddress *string) ([]*model.Tx, error)
 	Proposals(ctx context.Context) ([]*model.Proposal, error)
@@ -293,6 +295,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Block.Time(childComplexity), true
+
+	case "Block.total_records":
+		if e.complexity.Block.TotalRecords == nil {
+			break
+		}
+
+		return e.complexity.Block.TotalRecords(childComplexity), true
 
 	case "Change.key":
 		if e.complexity.Change.Key == nil {
@@ -419,6 +428,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.PowerEvent.Timestamp(childComplexity), true
+
+	case "PowerEvent.total_records":
+		if e.complexity.PowerEvent.TotalRecords == nil {
+			break
+		}
+
+		return e.complexity.PowerEvent.TotalRecords(childComplexity), true
 
 	case "PowerEvent.tx_hash":
 		if e.complexity.PowerEvent.TxHash == nil {
@@ -581,7 +597,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.PowerEvents(childComplexity, args["offset"].(*int), args["size"].(*int), args["operator_address"].(string)), true
+		return e.complexity.Query.PowerEvents(childComplexity, args["before"].(*int), args["size"].(*int), args["operator_address"].(string)), true
 
 	case "Query.proposal_detail":
 		if e.complexity.Query.ProposalDetail == nil {
@@ -612,7 +628,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.ProposedBlocks(childComplexity, args["offset"].(*int), args["size"].(*int), args["operator_address"].(*string)), true
+		return e.complexity.Query.ProposedBlocks(childComplexity, args["before"].(*int), args["size"].(*int), args["operator_address"].(string)), true
 
 	case "Query.status":
 		if e.complexity.Query.Status == nil {
@@ -1028,6 +1044,7 @@ var sources = []*ast.Source{
 	time: String!
 	moniker: String!
 	operator_address: String!
+	total_records: Int!
 }
 
 type Validator {
@@ -1061,6 +1078,7 @@ type PowerEvent {
 	timestamp: String!
 	amount: Int!
 	type: String!
+	total_records: Int!
 }
 
 type Delegation {
@@ -1163,8 +1181,8 @@ type Query {
   validators: [Validator!]!
   validator_detail(operator_address: String): Validator!
   uptimes(operator_address: String): UptimeResult!
-  proposed_blocks(offset: Int, size: Int, operator_address: String): [Block!]!
-  power_events(offset: Int, size: Int, operator_address: String!): [PowerEvent!]!
+  proposed_blocks(before: Int, size: Int, operator_address: String!): [Block!]!
+  power_events(before: Int, size: Int, operator_address: String!): [PowerEvent!]!
   delegations(acc_address: String): [Delegation!]!
 
   account_transactions(acc_address: String): [Tx!]!
@@ -1285,14 +1303,14 @@ func (ec *executionContext) field_Query_power_events_args(ctx context.Context, r
 	var err error
 	args := map[string]interface{}{}
 	var arg0 *int
-	if tmp, ok := rawArgs["offset"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("offset"))
+	if tmp, ok := rawArgs["before"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("before"))
 		arg0, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["offset"] = arg0
+	args["before"] = arg0
 	var arg1 *int
 	if tmp, ok := rawArgs["size"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("size"))
@@ -1333,14 +1351,14 @@ func (ec *executionContext) field_Query_proposed_blocks_args(ctx context.Context
 	var err error
 	args := map[string]interface{}{}
 	var arg0 *int
-	if tmp, ok := rawArgs["offset"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("offset"))
+	if tmp, ok := rawArgs["before"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("before"))
 		arg0, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["offset"] = arg0
+	args["before"] = arg0
 	var arg1 *int
 	if tmp, ok := rawArgs["size"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("size"))
@@ -1350,10 +1368,10 @@ func (ec *executionContext) field_Query_proposed_blocks_args(ctx context.Context
 		}
 	}
 	args["size"] = arg1
-	var arg2 *string
+	var arg2 string
 	if tmp, ok := rawArgs["operator_address"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("operator_address"))
-		arg2, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
+		arg2, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -1773,6 +1791,41 @@ func (ec *executionContext) _Block_operator_address(ctx context.Context, field g
 	res := resTmp.(string)
 	fc.Result = res
 	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Block_total_records(ctx context.Context, field graphql.CollectedField, obj *model.Block) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Block",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.TotalRecords, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Change_key(ctx context.Context, field graphql.CollectedField, obj *model.Change) (ret graphql.Marshaler) {
@@ -2473,6 +2526,41 @@ func (ec *executionContext) _PowerEvent_type(ctx context.Context, field graphql.
 	res := resTmp.(string)
 	fc.Result = res
 	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _PowerEvent_total_records(ctx context.Context, field graphql.CollectedField, obj *model.PowerEvent) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "PowerEvent",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.TotalRecords, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Proposal_id(ctx context.Context, field graphql.CollectedField, obj *model.Proposal) (ret graphql.Marshaler) {
@@ -3179,7 +3267,7 @@ func (ec *executionContext) _Query_proposed_blocks(ctx context.Context, field gr
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().ProposedBlocks(rctx, args["offset"].(*int), args["size"].(*int), args["operator_address"].(*string))
+		return ec.resolvers.Query().ProposedBlocks(rctx, args["before"].(*int), args["size"].(*int), args["operator_address"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -3221,7 +3309,7 @@ func (ec *executionContext) _Query_power_events(ctx context.Context, field graph
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().PowerEvents(rctx, args["offset"].(*int), args["size"].(*int), args["operator_address"].(string))
+		return ec.resolvers.Query().PowerEvents(rctx, args["before"].(*int), args["size"].(*int), args["operator_address"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -6174,6 +6262,11 @@ func (ec *executionContext) _Block(ctx context.Context, sel ast.SelectionSet, ob
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
+		case "total_records":
+			out.Values[i] = ec._Block_total_records(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -6403,6 +6496,11 @@ func (ec *executionContext) _PowerEvent(ctx context.Context, sel ast.SelectionSe
 			}
 		case "type":
 			out.Values[i] = ec._PowerEvent_type(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "total_records":
+			out.Values[i] = ec._PowerEvent_total_records(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}

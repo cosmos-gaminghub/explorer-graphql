@@ -108,7 +108,7 @@ func (_ Block) GetBlockListByOffsetAndSize(offset, size int) ([]bson.M, error) {
 	return results, err
 }
 
-func (_ Block) GetBlockListByOffsetAndSizeByOperatorAddress(offset, size int, operatorAddress string) ([]Block, error) {
+func (_ Block) GetBlockListByOffsetAndSizeByOperatorAddress(before int, size int, operatorAddress string) ([]Block, error) {
 	validator, err := Validator{}.QueryValidatorDetailByOperatorAddr(operatorAddress)
 	if err != nil {
 		return []Block{}, err
@@ -119,13 +119,19 @@ func (_ Block) GetBlockListByOffsetAndSizeByOperatorAddress(offset, size int, op
 		Block_Field_ProposalAddress: ProposerAddress,
 	}
 
+	if before != 0 {
+		condition[Block_Field_Height] = bson.M{
+			"$lt": before,
+		}
+	}
+
 	var selector = bson.M{"height": 1, "timestamp": 1, "num_txs": 1, "block_hash": 1, "validators.pub_key": 1, "validators.address": 1,
 		"validators.voting_power": 1, "block.last_commit.precommits.validator_address": 1, "meta.header.total_txs": 1, "proposer": 1}
 	var blocks []Block
 
 	sort := desc(Block_Field_Height)
 
-	err = querylistByOffsetAndSize(CollectionNmBlock, selector, condition, sort, offset, size, &blocks)
+	err = querylistByOffsetAndSize(CollectionNmBlock, selector, condition, sort, 0, size, &blocks)
 
 	return blocks, err
 }
@@ -220,6 +226,7 @@ func (_ Block) QueryValidatorsByHeightList(hArr []int64) ([]Block, error) {
 
 func (_ Block) FormatListBlockForModel(blocks []Block) ([]*model.Block, error) {
 	var listBlock []*model.Block
+	totalRecord, _ := Block{}.GetCountBlock()
 	for _, block := range blocks {
 		t := &model.Block{
 			Height:       int(block.Height),
@@ -227,6 +234,7 @@ func (_ Block) FormatListBlockForModel(blocks []Block) ([]*model.Block, error) {
 			ProposerAddr: block.ProposalAddr,
 			NumTxs:       int(block.NumTxs),
 			Time:         block.Time.String(),
+			TotalRecords: totalRecord,
 		}
 		listBlock = append(listBlock, t)
 	}
@@ -249,6 +257,26 @@ func (_ Block) FormatBsonMForModel(results []bson.M) ([]*model.Block, error) {
 		listBlock = append(listBlock, t)
 	}
 	return listBlock, nil
+}
+
+func (_ Block) GetCountBlock() (int, error) {
+	result := []bson.M{}
+	var query = orm.NewQuery()
+	defer query.Release()
+	query.SetResult(&result).
+		SetCollection(CollectionNmBlock).
+		PipeQuery(
+			[]bson.M{
+				{"$group": bson.M{
+					"_id":   "",
+					"count": bson.M{"$sum": 1},
+				}},
+			},
+		)
+	if len(result) == 0 {
+		return 0, nil
+	}
+	return result[0]["count"].(int), nil
 }
 
 type BlockMeta struct {

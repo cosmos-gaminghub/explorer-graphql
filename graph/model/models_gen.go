@@ -15,6 +15,7 @@ type Block struct {
 	Time            string `json:"time"`
 	Moniker         string `json:"moniker"`
 	OperatorAddress string `json:"operator_address"`
+	TotalRecords    int    `json:"total_records"`
 }
 
 type Change struct {
@@ -48,11 +49,12 @@ type Inflation struct {
 }
 
 type PowerEvent struct {
-	Height    int    `json:"height"`
-	TxHash    string `json:"tx_hash"`
-	Timestamp string `json:"timestamp"`
-	Amount    int    `json:"amount"`
-	Type      string `json:"type"`
+	Height       int    `json:"height"`
+	TxHash       string `json:"tx_hash"`
+	Timestamp    string `json:"timestamp"`
+	Amount       int    `json:"amount"`
+	Type         string `json:"type"`
+	TotalRecords int    `json:"total_records"`
 }
 
 type Proposal struct {
