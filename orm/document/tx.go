@@ -146,15 +146,20 @@ func (_ CommonTx) GetListTxBy(size int) ([]CommonTx, error) {
 	return data, err
 }
 
-func (_ CommonTx) GetListTxByAddress(offset int, size int, operatorAddress string) ([]CommonTx, error) {
+func (_ CommonTx) GetListTxByAddress(before int, size int, operatorAddress string) ([]CommonTx, error) {
 	var data []CommonTx
 	query := bson.M{Tx_Field_Value: operatorAddress}
 	typeArr := []string{TypeDelegate, TypeUnBond, TypeReDelegate}
 	query[Tx_Field_Type] = bson.M{
 		"$in": typeArr,
 	}
+	if before != 0 {
+		query[Tx_Field_Height] = bson.M{
+			"$lt": before,
+		}
+	}
 
-	err := querylistByOffsetAndSize(CollectionNmCommonTx, nil, query, desc(Tx_Field_Height), offset, size, &data)
+	err := querylistByOffsetAndSize(CollectionNmCommonTx, nil, query, desc(Tx_Field_Height), 0, size, &data)
 	return data, err
 }
 
@@ -199,6 +204,30 @@ func (_ CommonTx) GetTypeTextFromLogs(logs []Log, operatorAddress string) string
 		}
 	}
 	return typeText
+}
+
+func (_ CommonTx) FormatListTxsForModelPowerEvent(txs []CommonTx, operatorAddress string) ([]*model.PowerEvent, error) {
+	query := bson.M{Tx_Field_Value: operatorAddress}
+	typeArr := []string{TypeDelegate, TypeUnBond, TypeReDelegate}
+	query[Tx_Field_Type] = bson.M{
+		"$in": typeArr,
+	}
+	totalRecord, _ := CommonTx{}.GetCountTxs(query)
+
+	var listTx []*model.PowerEvent
+	for _, tx := range txs {
+		bytes, _ := tx.Timestamp.MarshalText()
+		t := &model.PowerEvent{
+			TxHash:       tx.TxHash,
+			Height:       int(tx.Height),
+			Timestamp:    string(bytes),
+			Amount:       int(CommonTx{}.GetAmountFromLogs(tx.Logs, operatorAddress)),
+			Type:         CommonTx{}.GetTypeTextFromLogs(tx.Logs, operatorAddress),
+			TotalRecords: totalRecord,
+		}
+		listTx = append(listTx, t)
+	}
+	return listTx, nil
 }
 
 func (_ CommonTx) FormatListTxsForModel(txs []CommonTx) ([]*model.Tx, error) {
@@ -617,7 +646,7 @@ func FilterUnknownTxs(query bson.M) bson.M {
 	return query
 }
 
-func (_ CommonTx) GetCountTxs() (int, error) {
+func (_ CommonTx) GetCountTxs(condition bson.M) (int, error) {
 	result := []bson.M{}
 	var query = orm.NewQuery()
 	defer query.Release()
@@ -625,6 +654,9 @@ func (_ CommonTx) GetCountTxs() (int, error) {
 		SetCollection(CollectionNmCommonTx).
 		PipeQuery(
 			[]bson.M{
+				{
+					"$match": condition,
+				},
 				{"$group": bson.M{
 					"_id":   "",
 					"count": bson.M{"$sum": 1},

@@ -148,33 +148,20 @@ func (r *queryResolver) Uptimes(ctx context.Context, operatorAddress *string) (*
 	return uptime, nil
 }
 
-func (r *queryResolver) ProposedBlocks(ctx context.Context, offset *int, size *int, operatorAddress *string) ([]*model.Block, error) {
-	blocks, err := document.Block{}.GetBlockListByOffsetAndSizeByOperatorAddress(*offset, *size, *operatorAddress)
+func (r *queryResolver) ProposedBlocks(ctx context.Context, before *int, size *int, operatorAddress string) ([]*model.Block, error) {
+	blocks, err := document.Block{}.GetBlockListByOffsetAndSizeByOperatorAddress(*before, *size, operatorAddress)
 	if err != nil {
 		return []*model.Block{}, nil
 	}
 	return document.Block{}.FormatListBlockForModel(blocks)
 }
 
-func (r *queryResolver) PowerEvents(ctx context.Context, offset *int, size *int, operatorAddress string) ([]*model.PowerEvent, error) {
-	txs, err := document.CommonTx{}.GetListTxByAddress(*offset, *size, operatorAddress)
+func (r *queryResolver) PowerEvents(ctx context.Context, before *int, size *int, operatorAddress string) ([]*model.PowerEvent, error) {
+	txs, err := document.CommonTx{}.GetListTxByAddress(*before, *size, operatorAddress)
 	if err != nil {
 		return []*model.PowerEvent{}, nil
 	}
-
-	var listTx []*model.PowerEvent
-	for _, tx := range txs {
-		bytes, _ := tx.Timestamp.MarshalText()
-		t := &model.PowerEvent{
-			TxHash:    tx.TxHash,
-			Height:    int(tx.Height),
-			Timestamp: string(bytes),
-			Amount:    int(document.CommonTx{}.GetAmountFromLogs(tx.Logs, operatorAddress)),
-			Type:      document.CommonTx{}.GetTypeTextFromLogs(tx.Logs, operatorAddress),
-		}
-		listTx = append(listTx, t)
-	}
-	return listTx, nil
+	return document.CommonTx{}.FormatListTxsForModelPowerEvent(txs, operatorAddress)
 }
 
 func (r *queryResolver) Delegations(ctx context.Context, accAddress *string) ([]*model.Delegation, error) {
@@ -241,7 +228,7 @@ func (r *queryResolver) Status(ctx context.Context) (*model.Status, error) {
 		return &model.Status{}, nil
 	}
 
-	totalNumTxs, err := document.CommonTx{}.GetCountTxs()
+	totalNumTxs, err := document.CommonTx{}.GetCountTxs(nil)
 	if err != nil {
 		return &model.Status{}, nil
 	}
