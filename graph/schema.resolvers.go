@@ -27,10 +27,11 @@ func (r *queryResolver) BlockDetail(ctx context.Context, height *int) (*model.Bl
 	if err != nil {
 		return &model.Block{}, nil
 	}
+	bytes, _ := block.Time.MarshalText()
 	return &model.Block{
 		Height:       int(block.Height),
 		Hash:         block.Hash,
-		Time:         block.Time.String(),
+		Time:         string(bytes),
 		ProposerAddr: block.ProposalAddr,
 		NumTxs:       int(block.NumTxs)}, nil
 }
@@ -134,9 +135,10 @@ func (r *queryResolver) Uptimes(ctx context.Context, operatorAddress *string) (*
 	}
 	var uptimeList []*model.Uptime
 	for _, missedBlock := range missedBlocks {
+		bytes, _ := missedBlock.Timestamp.MarshalText()
 		uptimeList = append(uptimeList, &model.Uptime{
 			Height:    int(missedBlock.Height),
-			Timestamp: missedBlock.Timestamp.String(),
+			Timestamp: string(bytes),
 		})
 	}
 	uptime := &model.UptimeResult{
@@ -247,9 +249,11 @@ func (r *queryResolver) Status(ctx context.Context) (*model.Status, error) {
 	if err != nil {
 		return &model.Status{}, nil
 	}
+
+	bytes, _ := lastBlock.Time.MarshalText()
 	return &model.Status{
 		BlockHeight:       int(lastBlock.Height),
-		BlockTime:         lastBlock.Time.String(),
+		BlockTime:         string(bytes),
 		BondedTokens:      int(bondedToken),
 		TotalTxsNum:       totalNumTxs,
 		TotalSupplyTokens: totalSupplyToken,
