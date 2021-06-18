@@ -26,6 +26,7 @@ const (
 	Block_Field_ProposalAddress  = "proposer"
 	Block_Field_Moniker          = "moniker"
 	Block_Field_Operator_Address = "operator_address"
+	Block_Field_Date_Time        = "date_time"
 )
 
 type Block struct {
@@ -91,6 +92,9 @@ func (_ Block) GetBlockListByOffsetAndSize(offset, size int) ([]bson.M, error) {
 				"operator_address": "$" + Block_Field_Validators + "." + ValidatorFieldOperatorAddress,
 				"height":           1, "timestamp": 1, "num_txs": 1, "block_hash": 1,
 				"proposer": 1,
+				Block_Field_Date_Time: bson.M{
+					"$dateToString": bson.M{"format": "%G-%m-%dT%H:%M:%SZ", "date": "$timestamp"},
+				},
 			},
 		},
 	}
@@ -232,12 +236,13 @@ func (_ Block) FormatListBlockForModel(blocks []Block) ([]*model.Block, error) {
 func (_ Block) FormatBsonMForModel(results []bson.M) ([]*model.Block, error) {
 	var listBlock []*model.Block
 	for _, block := range results {
+
 		t := &model.Block{
 			Height:          int(block[Block_Field_Height].(int64)),
 			Hash:            fmt.Sprintf("%v", block[Block_Field_Hash]),
 			ProposerAddr:    fmt.Sprintf("%v", block[Block_Field_ProposalAddress]),
 			NumTxs:          int(block[Block_Field_NumTxs].(int64)),
-			Time:            fmt.Sprintf("%v", block[Block_Field_Time]),
+			Time:            fmt.Sprintf("%v", block[Block_Field_Date_Time]),
 			Moniker:         fmt.Sprintf("%v", block[Block_Field_Moniker]),
 			OperatorAddress: fmt.Sprintf("%v", block[Block_Field_Operator_Address]),
 		}
