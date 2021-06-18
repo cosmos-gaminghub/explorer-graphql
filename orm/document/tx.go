@@ -91,7 +91,7 @@ type CommonTx struct {
 	Memo       string     `bson:"memo"`
 	GasWanted  int64      `bson:"gas_wanted"`
 	GasUsed    int64      `bson:"gas_used"`
-	Timestamp  string     `bson:"timestamp"`
+	Timestamp  time.Time  `bson:"timestamp"`
 	Logs       []Log      `bson:"logs" json:"logs"`
 	Fee        Fee        `bson:"fee" json:"fee"`
 	Signatures []string   `bson:"signatures" json:"signatures"`
@@ -225,10 +225,11 @@ func (_ CommonTx) FormatTxForModel(tx CommonTx) (*model.Tx, error) {
 	if err != nil {
 		logs = []byte{}
 	}
+	bytes, _ := tx.Timestamp.MarshalText()
 	t := &model.Tx{
 		TxHash:    tx.TxHash,
 		Height:    int(tx.Height),
-		Timestamp: tx.Timestamp,
+		Timestamp: string(bytes),
 		Status:    int(tx.Code),
 		Fee:       string(fee),
 		Messages:  string(messages),

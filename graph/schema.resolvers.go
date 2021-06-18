@@ -164,10 +164,11 @@ func (r *queryResolver) PowerEvents(ctx context.Context, offset *int, size *int,
 
 	var listTx []*model.PowerEvent
 	for _, tx := range txs {
+		bytes, _ := tx.Timestamp.MarshalText()
 		t := &model.PowerEvent{
 			TxHash:    tx.TxHash,
 			Height:    int(tx.Height),
-			Timestamp: tx.Timestamp,
+			Timestamp: string(bytes),
 			Amount:    int(document.CommonTx{}.GetAmountFromLogs(tx.Logs, operatorAddress)),
 			Type:      document.CommonTx{}.GetTypeTextFromLogs(tx.Logs, operatorAddress),
 		}
