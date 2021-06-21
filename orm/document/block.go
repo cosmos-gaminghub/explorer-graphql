@@ -228,12 +228,13 @@ func (_ Block) FormatListBlockForModel(blocks []Block) ([]*model.Block, error) {
 	var listBlock []*model.Block
 	totalRecord, _ := Block{}.GetCountBlock()
 	for _, block := range blocks {
+		bytes, _ := block.Time.MarshalText()
 		t := &model.Block{
 			Height:       int(block.Height),
 			Hash:         block.Hash,
 			ProposerAddr: block.ProposalAddr,
 			NumTxs:       int(block.NumTxs),
-			Time:         block.Time.String(),
+			Time:         string(bytes),
 			TotalRecords: totalRecord,
 		}
 		listBlock = append(listBlock, t)
