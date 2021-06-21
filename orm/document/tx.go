@@ -85,17 +85,17 @@ type ActualFee struct {
 }
 
 type CommonTx struct {
-	Height     int64      `bson:"height"`
-	TxHash     string     `bson:"txhash"`
-	Code       uint32     `bson:"code"`
-	Memo       string     `bson:"memo"`
-	GasWanted  int64      `bson:"gas_wanted"`
-	GasUsed    int64      `bson:"gas_used"`
-	Timestamp  time.Time  `bson:"timestamp"`
-	Logs       []Log      `bson:"logs" json:"logs"`
-	Fee        Fee        `bson:"fee" json:"fee"`
-	Signatures []string   `bson:"signatures" json:"signatures"`
-	Messages   []Messages `bson:"messages" json:"messages"`
+	Height     int64     `bson:"height"`
+	TxHash     string    `bson:"txhash"`
+	Code       uint32    `bson:"code"`
+	Memo       string    `bson:"memo"`
+	GasWanted  int64     `bson:"gas_wanted"`
+	GasUsed    int64     `bson:"gas_used"`
+	Timestamp  time.Time `bson:"timestamp"`
+	Logs       []Log     `bson:"logs" json:"logs"`
+	Fee        Fee       `bson:"fee" json:"fee"`
+	Signatures []string  `bson:"signatures" json:"signatures"`
+	Messages   string    `bson:"messages" json:"messages"`
 }
 
 type Fee struct {
@@ -240,11 +240,6 @@ func (_ CommonTx) FormatListTxsForModel(txs []CommonTx) ([]*model.Tx, error) {
 }
 
 func (_ CommonTx) FormatTxForModel(tx CommonTx) (*model.Tx, error) {
-	messages, err := json.Marshal(tx.Messages)
-	if err != nil {
-		messages = []byte{}
-	}
-
 	fee, err := json.Marshal(tx.Fee)
 	if err != nil {
 		fee = []byte{}
@@ -261,7 +256,7 @@ func (_ CommonTx) FormatTxForModel(tx CommonTx) (*model.Tx, error) {
 		Timestamp: string(bytes),
 		Status:    int(tx.Code),
 		Fee:       string(fee),
-		Messages:  string(messages),
+		Messages:  tx.Messages,
 		Logs:      string(logs),
 		GasUsed:   int(tx.GasUsed),
 		GasWanted: int(tx.GasWanted),
