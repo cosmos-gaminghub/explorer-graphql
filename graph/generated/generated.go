@@ -47,6 +47,15 @@ type ComplexityRoot struct {
 		Denom  func(childComplexity int) int
 	}
 
+	Balance struct {
+		Amount func(childComplexity int) int
+		Denom  func(childComplexity int) int
+	}
+
+	Balances struct {
+		Balances func(childComplexity int) int
+	}
+
 	Block struct {
 		Hash            func(childComplexity int) int
 		Height          func(childComplexity int) int
@@ -112,6 +121,7 @@ type ComplexityRoot struct {
 
 	Query struct {
 		AccountTransactions func(childComplexity int, accAddress *string) int
+		Balances            func(childComplexity int, accAddress string) int
 		BlockDetail         func(childComplexity int, height *int) int
 		BlockTxs            func(childComplexity int, height *int) int
 		Blocks              func(childComplexity int, offset *int, size *int) int
@@ -216,6 +226,7 @@ type QueryResolver interface {
 	ProposalDetail(ctx context.Context, proposalID int) (*model.Proposal, error)
 	Status(ctx context.Context) (*model.Status, error)
 	Inflation(ctx context.Context) (*model.Inflation, error)
+	Balances(ctx context.Context, accAddress string) (*model.Balances, error)
 }
 
 type executableSchema struct {
@@ -246,6 +257,27 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Amount.Denom(childComplexity), true
+
+	case "Balance.amount":
+		if e.complexity.Balance.Amount == nil {
+			break
+		}
+
+		return e.complexity.Balance.Amount(childComplexity), true
+
+	case "Balance.denom":
+		if e.complexity.Balance.Denom == nil {
+			break
+		}
+
+		return e.complexity.Balance.Denom(childComplexity), true
+
+	case "Balances.balances":
+		if e.complexity.Balances.Balances == nil {
+			break
+		}
+
+		return e.complexity.Balances.Balances(childComplexity), true
 
 	case "Block.hash":
 		if e.complexity.Block.Hash == nil {
@@ -531,6 +563,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.AccountTransactions(childComplexity, args["acc_address"].(*string)), true
+
+	case "Query.balances":
+		if e.complexity.Query.Balances == nil {
+			break
+		}
+
+		args, err := ec.field_Query_balances_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.Balances(childComplexity, args["acc_address"].(string)), true
 
 	case "Query.block_detail":
 		if e.complexity.Query.BlockDetail == nil {
@@ -1170,6 +1214,15 @@ type Inflation {
 	inflation: String!
 }
 
+type Balance {
+	denom: String!,
+	amount: String!
+}
+
+type Balances {
+	balances: [Balance!]!
+}
+
 type Query {
   blocks(offset: Int, size: Int): [Block!]!
   block_detail(height: Int): Block!
@@ -1192,6 +1245,11 @@ type Query {
 
   status: Status!
   inflation: Inflation!
+
+	"""
+		Get avaiable in account detail
+	"""
+  balances(acc_address: String!):  Balances!
 }`, BuiltIn: false},
 }
 var parsedSchema = gqlparser.MustLoadSchema(sources...)
@@ -1222,6 +1280,21 @@ func (ec *executionContext) field_Query_account_transactions_args(ctx context.Co
 	if tmp, ok := rawArgs["acc_address"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("acc_address"))
 		arg0, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["acc_address"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_balances_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["acc_address"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("acc_address"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -1546,6 +1619,111 @@ func (ec *executionContext) _Amount_amount(ctx context.Context, field graphql.Co
 	res := resTmp.(string)
 	fc.Result = res
 	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Balance_denom(ctx context.Context, field graphql.CollectedField, obj *model.Balance) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Balance",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Denom, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Balance_amount(ctx context.Context, field graphql.CollectedField, obj *model.Balance) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Balance",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Amount, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Balances_balances(ctx context.Context, field graphql.CollectedField, obj *model.Balances) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Balances",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Balances, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Balance)
+	fc.Result = res
+	return ec.marshalNBalance2ᚕᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐBalanceᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Block_height(ctx context.Context, field graphql.CollectedField, obj *model.Block) (ret graphql.Marshaler) {
@@ -3555,6 +3733,48 @@ func (ec *executionContext) _Query_inflation(ctx context.Context, field graphql.
 	res := resTmp.(*model.Inflation)
 	fc.Result = res
 	return ec.marshalNInflation2ᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐInflation(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_balances(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_balances_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().Balances(rctx, args["acc_address"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Balances)
+	fc.Result = res
+	return ec.marshalNBalances2ᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐBalances(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query___type(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -6216,6 +6436,65 @@ func (ec *executionContext) _Amount(ctx context.Context, sel ast.SelectionSet, o
 	return out
 }
 
+var balanceImplementors = []string{"Balance"}
+
+func (ec *executionContext) _Balance(ctx context.Context, sel ast.SelectionSet, obj *model.Balance) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, balanceImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Balance")
+		case "denom":
+			out.Values[i] = ec._Balance_denom(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "amount":
+			out.Values[i] = ec._Balance_amount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var balancesImplementors = []string{"Balances"}
+
+func (ec *executionContext) _Balances(ctx context.Context, sel ast.SelectionSet, obj *model.Balances) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, balancesImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Balances")
+		case "balances":
+			out.Values[i] = ec._Balances_balances(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
 var blockImplementors = []string{"Block"}
 
 func (ec *executionContext) _Block(ctx context.Context, sel ast.SelectionSet, obj *model.Block) graphql.Marshaler {
@@ -6821,6 +7100,20 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_inflation(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
+		case "balances":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_balances(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}
@@ -7530,6 +7823,67 @@ func (ec *executionContext) marshalNAmount2ᚖgithubᚗcomᚋcosmosᚑgaminghub�
 		return graphql.Null
 	}
 	return ec._Amount(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNBalance2ᚕᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐBalanceᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Balance) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNBalance2ᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐBalance(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+	return ret
+}
+
+func (ec *executionContext) marshalNBalance2ᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐBalance(ctx context.Context, sel ast.SelectionSet, v *model.Balance) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._Balance(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNBalances2githubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐBalances(ctx context.Context, sel ast.SelectionSet, v model.Balances) graphql.Marshaler {
+	return ec._Balances(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNBalances2ᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐBalances(ctx context.Context, sel ast.SelectionSet, v *model.Balances) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._Balances(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNBlock2githubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐBlock(ctx context.Context, sel ast.SelectionSet, v model.Block) graphql.Marshaler {
