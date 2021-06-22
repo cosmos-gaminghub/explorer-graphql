@@ -147,6 +147,7 @@ type RewardInfo{
 }
 
 type Reward {
+	validator_address: String!
 	reward: [RewardInfo!]!
 }
 
