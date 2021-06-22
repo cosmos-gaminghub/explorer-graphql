@@ -131,12 +131,26 @@ type ComplexityRoot struct {
 		ProposalDetail      func(childComplexity int, proposalID int) int
 		Proposals           func(childComplexity int) int
 		ProposedBlocks      func(childComplexity int, before *int, size *int, operatorAddress string) int
+		Rewards             func(childComplexity int, accAddress string) int
 		Status              func(childComplexity int) int
 		TxDetail            func(childComplexity int, txHash *string) int
 		Txs                 func(childComplexity int, size *int) int
 		Uptimes             func(childComplexity int, operatorAddress *string) int
 		ValidatorDetail     func(childComplexity int, operatorAddress *string) int
 		Validators          func(childComplexity int) int
+	}
+
+	Reward struct {
+		Reward func(childComplexity int) int
+	}
+
+	RewardInfo struct {
+		Amount func(childComplexity int) int
+		Denom  func(childComplexity int) int
+	}
+
+	Rewards struct {
+		Rewards func(childComplexity int) int
 	}
 
 	Status struct {
@@ -227,6 +241,7 @@ type QueryResolver interface {
 	Status(ctx context.Context) (*model.Status, error)
 	Inflation(ctx context.Context) (*model.Inflation, error)
 	Balances(ctx context.Context, accAddress string) (*model.Balances, error)
+	Rewards(ctx context.Context, accAddress string) (*model.Rewards, error)
 }
 
 type executableSchema struct {
@@ -674,6 +689,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.ProposedBlocks(childComplexity, args["before"].(*int), args["size"].(*int), args["operator_address"].(string)), true
 
+	case "Query.rewards":
+		if e.complexity.Query.Rewards == nil {
+			break
+		}
+
+		args, err := ec.field_Query_rewards_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.Rewards(childComplexity, args["acc_address"].(string)), true
+
 	case "Query.status":
 		if e.complexity.Query.Status == nil {
 			break
@@ -735,6 +762,34 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.Validators(childComplexity), true
+
+	case "Reward.reward":
+		if e.complexity.Reward.Reward == nil {
+			break
+		}
+
+		return e.complexity.Reward.Reward(childComplexity), true
+
+	case "RewardInfo.amount":
+		if e.complexity.RewardInfo.Amount == nil {
+			break
+		}
+
+		return e.complexity.RewardInfo.Amount(childComplexity), true
+
+	case "RewardInfo.denom":
+		if e.complexity.RewardInfo.Denom == nil {
+			break
+		}
+
+		return e.complexity.RewardInfo.Denom(childComplexity), true
+
+	case "Rewards.rewards":
+		if e.complexity.Rewards.Rewards == nil {
+			break
+		}
+
+		return e.complexity.Rewards.Rewards(childComplexity), true
 
 	case "Status.block_height":
 		if e.complexity.Status.BlockHeight == nil {
@@ -1223,6 +1278,19 @@ type Balances {
 	balances: [Balance!]!
 }
 
+type RewardInfo{
+	denom: String!,
+	amount: String!
+}
+
+type Reward {
+	reward: [RewardInfo!]!
+}
+
+type Rewards {
+	rewards: [Reward!]!
+}
+
 type Query {
   blocks(offset: Int, size: Int): [Block!]!
   block_detail(height: Int): Block!
@@ -1250,6 +1318,11 @@ type Query {
 		Get avaiable in account detail
 	"""
   balances(acc_address: String!):  Balances!
+
+  """
+		Get avaiable in account detail
+	"""
+  rewards(acc_address: String!):  Rewards!
 }`, BuiltIn: false},
 }
 var parsedSchema = gqlparser.MustLoadSchema(sources...)
@@ -1450,6 +1523,21 @@ func (ec *executionContext) field_Query_proposed_blocks_args(ctx context.Context
 		}
 	}
 	args["operator_address"] = arg2
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_rewards_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["acc_address"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("acc_address"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["acc_address"] = arg0
 	return args, nil
 }
 
@@ -3777,6 +3865,48 @@ func (ec *executionContext) _Query_balances(ctx context.Context, field graphql.C
 	return ec.marshalNBalances2ᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐBalances(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _Query_rewards(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_rewards_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().Rewards(rctx, args["acc_address"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Rewards)
+	fc.Result = res
+	return ec.marshalNRewards2ᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐRewards(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Query___type(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -3846,6 +3976,146 @@ func (ec *executionContext) _Query___schema(ctx context.Context, field graphql.C
 	res := resTmp.(*introspection.Schema)
 	fc.Result = res
 	return ec.marshalO__Schema2ᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐSchema(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Reward_reward(ctx context.Context, field graphql.CollectedField, obj *model.Reward) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Reward",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Reward, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.RewardInfo)
+	fc.Result = res
+	return ec.marshalNRewardInfo2ᚕᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐRewardInfoᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _RewardInfo_denom(ctx context.Context, field graphql.CollectedField, obj *model.RewardInfo) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "RewardInfo",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Denom, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _RewardInfo_amount(ctx context.Context, field graphql.CollectedField, obj *model.RewardInfo) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "RewardInfo",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Amount, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Rewards_rewards(ctx context.Context, field graphql.CollectedField, obj *model.Rewards) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Rewards",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Rewards, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Reward)
+	fc.Result = res
+	return ec.marshalNReward2ᚕᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐRewardᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Status_block_height(ctx context.Context, field graphql.CollectedField, obj *model.Status) (ret graphql.Marshaler) {
@@ -7119,10 +7389,110 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 				}
 				return res
 			})
+		case "rewards":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_rewards(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
 		case "__type":
 			out.Values[i] = ec._Query___type(ctx, field)
 		case "__schema":
 			out.Values[i] = ec._Query___schema(ctx, field)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var rewardImplementors = []string{"Reward"}
+
+func (ec *executionContext) _Reward(ctx context.Context, sel ast.SelectionSet, obj *model.Reward) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, rewardImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Reward")
+		case "reward":
+			out.Values[i] = ec._Reward_reward(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var rewardInfoImplementors = []string{"RewardInfo"}
+
+func (ec *executionContext) _RewardInfo(ctx context.Context, sel ast.SelectionSet, obj *model.RewardInfo) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, rewardInfoImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("RewardInfo")
+		case "denom":
+			out.Values[i] = ec._RewardInfo_denom(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "amount":
+			out.Values[i] = ec._RewardInfo_amount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var rewardsImplementors = []string{"Rewards"}
+
+func (ec *executionContext) _Rewards(ctx context.Context, sel ast.SelectionSet, obj *model.Rewards) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, rewardsImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Rewards")
+		case "rewards":
+			out.Values[i] = ec._Rewards_rewards(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -8243,6 +8613,114 @@ func (ec *executionContext) marshalNProposal2ᚖgithubᚗcomᚋcosmosᚑgaminghu
 		return graphql.Null
 	}
 	return ec._Proposal(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNReward2ᚕᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐRewardᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Reward) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNReward2ᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐReward(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+	return ret
+}
+
+func (ec *executionContext) marshalNReward2ᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐReward(ctx context.Context, sel ast.SelectionSet, v *model.Reward) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._Reward(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNRewardInfo2ᚕᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐRewardInfoᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.RewardInfo) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNRewardInfo2ᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐRewardInfo(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+	return ret
+}
+
+func (ec *executionContext) marshalNRewardInfo2ᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐRewardInfo(ctx context.Context, sel ast.SelectionSet, v *model.RewardInfo) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._RewardInfo(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNRewards2githubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐRewards(ctx context.Context, sel ast.SelectionSet, v model.Rewards) graphql.Marshaler {
+	return ec._Rewards(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNRewards2ᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐRewards(ctx context.Context, sel ast.SelectionSet, v *model.Rewards) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._Rewards(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNStatus2githubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐStatus(ctx context.Context, sel ast.SelectionSet, v model.Status) graphql.Marshaler {
