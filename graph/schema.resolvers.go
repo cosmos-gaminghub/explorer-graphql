@@ -158,35 +158,6 @@ func (r *queryResolver) PowerEvents(ctx context.Context, before *int, size *int,
 	return document.CommonTx{}.FormatListTxsForModelPowerEvent(txs, operatorAddress)
 }
 
-func (r *queryResolver) Delegations(ctx context.Context, accAddress *string) ([]*model.Delegation, error) {
-	delegationResult, err := client.GetDelegation(*accAddress)
-	if err != nil {
-		return []*model.Delegation{}, nil
-	}
-
-	var listDelegation []*model.Delegation
-	var mapOperatorMoniker = document.Validator{}.GetListMapOperatorAndMoniker(delegationResult)
-	for _, delegation := range delegationResult.DelegationResponses {
-		amount, err := utils.ParseIntBase(delegation.Balance.Amount)
-		if !err {
-			fmt.Println("Can not parse amount delegations from string to int")
-			amount = 0
-		}
-		var moniker string
-		if v, ok := mapOperatorMoniker[delegation.Delegation.ValidatorAddress]; ok {
-			moniker = v
-		}
-		t := &model.Delegation{
-			DelegatorAddress: delegation.Delegation.DelegatorAdrress,
-			ValidatorAddress: delegation.Delegation.ValidatorAddress,
-			Amount:           amount,
-			Moniker:          moniker,
-		}
-		listDelegation = append(listDelegation, t)
-	}
-	return listDelegation, nil
-}
-
 func (r *queryResolver) AccountTransactions(ctx context.Context, accAddress *string) ([]*model.Tx, error) {
 	txs, err := document.CommonTx{}.GetListTxByAccountAddress(*accAddress)
 	if err != nil {
@@ -254,7 +225,50 @@ func (r *queryResolver) Rewards(ctx context.Context, accAddress string) (*model.
 	return client.GetRewards(accAddress)
 }
 
+func (r *queryResolver) Commission(ctx context.Context, operatorAddress string) (*model.Commission, error) {
+	panic(fmt.Errorf("not implemented"))
+}
+
+func (r *queryResolver) Delegations(ctx context.Context, accAddress *string) ([]*model.Delegation, error) {
+	delegationResult, err := client.GetDelegation(*accAddress)
+	if err != nil {
+		return []*model.Delegation{}, nil
+	}
+
+	var listDelegation []*model.Delegation
+	var mapOperatorMoniker = document.Validator{}.GetListMapOperatorAndMoniker(delegationResult)
+	for _, delegation := range delegationResult.DelegationResponses {
+		amount, err := utils.ParseIntBase(delegation.Balance.Amount)
+		if !err {
+			fmt.Println("Can not parse amount delegations from string to int")
+			amount = 0
+		}
+		var moniker string
+		if v, ok := mapOperatorMoniker[delegation.Delegation.ValidatorAddress]; ok {
+			moniker = v
+		}
+		t := &model.Delegation{
+			DelegatorAddress: delegation.Delegation.DelegatorAdrress,
+			ValidatorAddress: delegation.Delegation.ValidatorAddress,
+			Amount:           amount,
+			Moniker:          moniker,
+		}
+		listDelegation = append(listDelegation, t)
+	}
+	return listDelegation, nil
+}
+
 // Query returns generated.QueryResolver implementation.
 func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 
 type queryResolver struct{ *Resolver }
+
+// !!! WARNING !!!
+// The code below was going to be deleted when updating resolvers. It has been copied here so you have
+// one last chance to move it out of harms way if you want. There are two reasons this happens:
+//  - When renaming or deleting a resolver the old code will be put in here. You can safely delete
+//    it when you're done.
+//  - You have helper methods in this file. Move them out to keep these resolver files clean.
+func (r *queryResolver) Commissions(ctx context.Context, operatorAddress string) (*model.Commission, error) {
+	return client.GetCommission(operatorAddress)
+}

@@ -105,3 +105,19 @@ func GetRewards(accAddress string) (result *model.Rewards, err error) {
 
 	return result, nil
 }
+
+func GetCommission(operatorAddress string) (result *model.Commission, err error) {
+	url := fmt.Sprintf(CommissionUrl, conf.Get().LcdUrl, operatorAddress)
+	resBytes, err := utils.Get(url)
+	if err != nil {
+		log.Fatalln("Get commision error")
+		return result, err
+	}
+
+	if err := json.Unmarshal(resBytes, &result); err != nil {
+		log.Fatalln("Unmarshal commision error")
+		return result, err
+	}
+
+	return result, nil
+}
