@@ -23,17 +23,11 @@ func (r *queryResolver) Blocks(ctx context.Context, offset *int, size *int) ([]*
 }
 
 func (r *queryResolver) BlockDetail(ctx context.Context, height *int) (*model.Block, error) {
-	block, err := document.Block{}.QueryBlockByHeight(int64(*height))
+	result, err := document.Block{}.QueryBlockByHeight(int64(*height))
 	if err != nil {
 		return &model.Block{}, nil
 	}
-	bytes, _ := block.Time.MarshalText()
-	return &model.Block{
-		Height:       int(block.Height),
-		Hash:         block.Hash,
-		Time:         string(bytes),
-		ProposerAddr: block.ProposalAddr,
-		NumTxs:       int(block.NumTxs)}, nil
+	return document.Block{}.FormatBsonMForModelBlockDetail(result)
 }
 
 func (r *queryResolver) BlockTxs(ctx context.Context, height *int) ([]*model.Tx, error) {
