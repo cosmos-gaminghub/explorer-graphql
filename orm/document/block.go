@@ -80,6 +80,7 @@ func (_ Block) QueryBlockByHeight(height int64) (bson.M, error) {
 				Block_Field_Date_Time: bson.M{
 					"$dateToString": bson.M{"format": "%G-%m-%dT%H:%M:%SZ", "date": "$timestamp"},
 				},
+				"operator_address": "$" + Block_Field_Validators + "." + ValidatorFieldOperatorAddress,
 			},
 		},
 	}
