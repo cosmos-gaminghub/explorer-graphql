@@ -93,7 +93,8 @@ type Proposal struct {
 }
 
 type Reward struct {
-	Reward []*RewardInfo `json:"reward"`
+	ValidatorAddress string        `json:"validator_address"`
+	Reward           []*RewardInfo `json:"reward"`
 }
 
 type RewardInfo struct {
