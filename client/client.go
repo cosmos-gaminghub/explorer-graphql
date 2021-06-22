@@ -73,3 +73,19 @@ func GetInflation() (*model.Inflation, error) {
 
 	return result, nil
 }
+
+func GetBalances(accAddress string) (result *model.Balances, err error) {
+	url := fmt.Sprintf(BalanceUrl, conf.Get().LcdUrl, accAddress)
+	resBytes, err := utils.Get(url)
+	if err != nil {
+		log.Fatalln("Get balances error")
+		return result, err
+	}
+
+	if err := json.Unmarshal(resBytes, &result); err != nil {
+		log.Fatalln("Unmarshal balances error")
+		return result, err
+	}
+
+	return result, nil
+}

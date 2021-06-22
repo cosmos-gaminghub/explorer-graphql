@@ -132,6 +132,15 @@ type Inflation {
 	inflation: String!
 }
 
+type Balance {
+	denom: String!,
+	amount: String!
+}
+
+type Balances {
+	balances: [Balance!]!
+}
+
 type Query {
   blocks(offset: Int, size: Int): [Block!]!
   block_detail(height: Int): Block!
@@ -154,4 +163,9 @@ type Query {
 
   status: Status!
   inflation: Inflation!
+
+	"""
+		Get avaiable in account detail
+	"""
+  balances(acc_address: String!):  Balances!
 }

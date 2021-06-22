@@ -246,6 +246,10 @@ func (r *queryResolver) Inflation(ctx context.Context) (*model.Inflation, error)
 	return client.GetInflation()
 }
 
+func (r *queryResolver) Balances(ctx context.Context, accAddress string) (*model.Balances, error) {
+	return client.GetBalances(accAddress)
+}
+
 // Query returns generated.QueryResolver implementation.
 func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 

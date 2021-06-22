@@ -7,6 +7,15 @@ type Amount struct {
 	Amount string `json:"amount"`
 }
 
+type Balance struct {
+	Denom  string `json:"denom"`
+	Amount string `json:"amount"`
+}
+
+type Balances struct {
+	Balances []*Balance `json:"balances"`
+}
+
 type Block struct {
 	Height          int    `json:"height"`
 	Hash            string `json:"hash"`
