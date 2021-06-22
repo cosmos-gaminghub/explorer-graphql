@@ -141,6 +141,19 @@ type Balances {
 	balances: [Balance!]!
 }
 
+type RewardInfo{
+	denom: String!,
+	amount: String!
+}
+
+type Reward {
+	reward: [RewardInfo!]!
+}
+
+type Rewards {
+	rewards: [Reward!]!
+}
+
 type Query {
   blocks(offset: Int, size: Int): [Block!]!
   block_detail(height: Int): Block!
@@ -168,4 +181,9 @@ type Query {
 		Get avaiable in account detail
 	"""
   balances(acc_address: String!):  Balances!
+
+  """
+		Get avaiable in account detail
+	"""
+  rewards(acc_address: String!):  Rewards!
 }

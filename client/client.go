@@ -89,3 +89,19 @@ func GetBalances(accAddress string) (result *model.Balances, err error) {
 
 	return result, nil
 }
+
+func GetRewards(accAddress string) (result *model.Rewards, err error) {
+	url := fmt.Sprintf(RewardUrl, conf.Get().LcdUrl, accAddress)
+	resBytes, err := utils.Get(url)
+	if err != nil {
+		log.Fatalln("Get rewards error")
+		return result, err
+	}
+
+	if err := json.Unmarshal(resBytes, &result); err != nil {
+		log.Fatalln("Unmarshal rewards error")
+		return result, err
+	}
+
+	return result, nil
+}

@@ -79,6 +79,19 @@ type Proposal struct {
 	Proposer    string     `json:"proposer"`
 }
 
+type Reward struct {
+	Reward []*RewardInfo `json:"reward"`
+}
+
+type RewardInfo struct {
+	Denom  string `json:"denom"`
+	Amount string `json:"amount"`
+}
+
+type Rewards struct {
+	Rewards []*Reward `json:"rewards"`
+}
+
 type Status struct {
 	BlockHeight       int                `json:"block_height"`
 	BlockTime         string             `json:"block_time"`

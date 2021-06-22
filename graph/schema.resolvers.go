@@ -250,6 +250,10 @@ func (r *queryResolver) Balances(ctx context.Context, accAddress string) (*model
 	return client.GetBalances(accAddress)
 }
 
+func (r *queryResolver) Rewards(ctx context.Context, accAddress string) (*model.Rewards, error) {
+	return client.GetRewards(accAddress)
+}
+
 // Query returns generated.QueryResolver implementation.
 func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 
