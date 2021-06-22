@@ -154,6 +154,19 @@ type Rewards {
 	rewards: [Reward!]!
 }
 
+type CommissionInfo {
+	denom: String!,
+	amount: String!
+}
+
+type Commissions {
+	commission: [CommissionInfo!]!
+}
+
+type Commission {
+	commission: Commissions
+}
+
 type Query {
   blocks(offset: Int, size: Int): [Block!]!
   block_detail(height: Int): Block!
@@ -167,7 +180,7 @@ type Query {
   uptimes(operator_address: String): UptimeResult!
   proposed_blocks(before: Int, size: Int, operator_address: String!): [Block!]!
   power_events(before: Int, size: Int, operator_address: String!): [PowerEvent!]!
-  delegations(acc_address: String): [Delegation!]!
+  
 
   account_transactions(acc_address: String): [Tx!]!
 
@@ -182,8 +195,18 @@ type Query {
 	"""
   balances(acc_address: String!):  Balances!
 
-  """
-		Get avaiable in account detail
+  	"""
+		Get rewardss in account detail
 	"""
   rewards(acc_address: String!):  Rewards!
+
+  	"""
+		Get commisions in account detail
+	"""
+  commission(operator_address: String!):  Commission!
+
+	"""
+		Get delegate in account detail
+	"""
+  delegations(acc_address: String): [Delegation!]!
 }

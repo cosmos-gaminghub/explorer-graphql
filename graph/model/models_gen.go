@@ -33,6 +33,19 @@ type Change struct {
 	Subspace string `json:"subspace"`
 }
 
+type Commission struct {
+	Commission *Commissions `json:"commission"`
+}
+
+type CommissionInfo struct {
+	Denom  string `json:"denom"`
+	Amount string `json:"amount"`
+}
+
+type Commissions struct {
+	Commission []*CommissionInfo `json:"commission"`
+}
+
 type Content struct {
 	Title       string    `json:"title"`
 	Type        string    `json:"type"`
