@@ -226,7 +226,7 @@ func (r *queryResolver) Rewards(ctx context.Context, accAddress string) (*model.
 }
 
 func (r *queryResolver) Commission(ctx context.Context, operatorAddress string) (*model.Commission, error) {
-	panic(fmt.Errorf("not implemented"))
+	return client.GetCommission(operatorAddress)
 }
 
 func (r *queryResolver) Delegations(ctx context.Context, accAddress *string) ([]*model.Delegation, error) {
@@ -258,11 +258,16 @@ func (r *queryResolver) Delegations(ctx context.Context, accAddress *string) ([]
 	return listDelegation, nil
 }
 
+func (r *queryResolver) Unbonding(ctx context.Context, accAddress *string) (*model.Unbonding, error) {
+	return client.GetUnbonding(*accAddress)
+}
+
 func (r *queryResolver) Deposit(ctx context.Context, before *int, size *int, proposalID int) ([]*model.Deposit, error) {
 	item, _ := document.CommonTx{}.QueryProposalDeposit(*before, *size, proposalID)
 	fmt.Println(item)
 	return []*model.Deposit{}, nil
 }
+
 
 // Query returns generated.QueryResolver implementation.
 func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }

@@ -68,6 +68,13 @@ type Deposit struct {
 	Time       string    `json:"time"`
 }
 
+type Entry struct {
+	CreationHeight *string `json:"creation_height"`
+	CompletionTime *string `json:"completion_time"`
+	InitialBalance *string `json:"initial_balance"`
+	Balance        *string `json:"balance"`
+}
+
 type Inflation struct {
 	Inflation string `json:"inflation"`
 }
@@ -141,6 +148,16 @@ type Tx struct {
 	Memo      string `json:"memo"`
 	GasUsed   int    `json:"gas_used"`
 	GasWanted int    `json:"gas_wanted"`
+}
+
+type Unbonding struct {
+	UnbondingResponses []*UnbondingResponse `json:"unbonding_responses"`
+}
+
+type UnbondingResponse struct {
+	DelegatorAddress *string  `json:"delegator_address"`
+	ValidatorAddress *string  `json:"validator_address"`
+	Entries          []*Entry `json:"entries"`
 }
 
 type Uptime struct {
