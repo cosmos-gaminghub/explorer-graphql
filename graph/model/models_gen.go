@@ -186,7 +186,8 @@ type Validator struct {
 }
 
 type Vote struct {
-	ProposalID string `json:"proposal_id"`
-	Voter      string `json:"voter"`
-	Option     string `json:"option"`
+	Voter  string `json:"voter"`
+	Option string `json:"option"`
+	TxHash string `json:"tx_hash"`
+	Time   string `json:"time"`
 }

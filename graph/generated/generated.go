@@ -160,6 +160,7 @@ type ComplexityRoot struct {
 		Uptimes             func(childComplexity int, operatorAddress *string) int
 		ValidatorDetail     func(childComplexity int, operatorAddress *string) int
 		Validators          func(childComplexity int) int
+		Vote                func(childComplexity int, before *int, size *int, proposalID int) int
 	}
 
 	Reward struct {
@@ -250,9 +251,10 @@ type ComplexityRoot struct {
 	}
 
 	Vote struct {
-		Option     func(childComplexity int) int
-		ProposalID func(childComplexity int) int
-		Voter      func(childComplexity int) int
+		Option func(childComplexity int) int
+		Time   func(childComplexity int) int
+		TxHash func(childComplexity int) int
+		Voter  func(childComplexity int) int
 	}
 }
 
@@ -278,6 +280,7 @@ type QueryResolver interface {
 	Delegations(ctx context.Context, accAddress *string) ([]*model.Delegation, error)
 	Unbonding(ctx context.Context, accAddress *string) (*model.Unbonding, error)
 	Deposit(ctx context.Context, before *int, size *int, proposalID int) ([]*model.Deposit, error)
+	Vote(ctx context.Context, before *int, size *int, proposalID int) ([]*model.Vote, error)
 }
 
 type executableSchema struct {
@@ -884,6 +887,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.Validators(childComplexity), true
 
+	case "Query.vote":
+		if e.complexity.Query.Vote == nil {
+			break
+		}
+
+		args, err := ec.field_Query_vote_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.Vote(childComplexity, args["before"].(*int), args["size"].(*int), args["proposal_id"].(int)), true
+
 	case "Reward.reward":
 		if e.complexity.Reward.Reward == nil {
 			break
@@ -1227,12 +1242,19 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Vote.Option(childComplexity), true
 
-	case "Vote.proposal_id":
-		if e.complexity.Vote.ProposalID == nil {
+	case "Vote.time":
+		if e.complexity.Vote.Time == nil {
 			break
 		}
 
-		return e.complexity.Vote.ProposalID(childComplexity), true
+		return e.complexity.Vote.Time(childComplexity), true
+
+	case "Vote.tx_hash":
+		if e.complexity.Vote.TxHash == nil {
+			break
+		}
+
+		return e.complexity.Vote.TxHash(childComplexity), true
 
 	case "Vote.voter":
 		if e.complexity.Vote.Voter == nil {
@@ -1382,9 +1404,10 @@ type Deposit {
 }
 
 type Vote {
-	proposal_id: String!
 	voter: String!
 	option: String!
+	tx_hash: String!,
+	time: String!
 }
 
 type Content {
@@ -1526,6 +1549,7 @@ type Query {
   unbonding(acc_address: String): Unbonding!
 
   deposit(before: Int, size: Int, proposal_id: Int!): [Deposit!]!
+  vote(before: Int, size: Int, proposal_id: Int!): [Vote!]!
 }`, BuiltIn: false},
 }
 var parsedSchema = gqlparser.MustLoadSchema(sources...)
@@ -1864,6 +1888,39 @@ func (ec *executionContext) field_Query_validator_detail_args(ctx context.Contex
 		}
 	}
 	args["operator_address"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_vote_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *int
+	if tmp, ok := rawArgs["before"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("before"))
+		arg0, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["before"] = arg0
+	var arg1 *int
+	if tmp, ok := rawArgs["size"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("size"))
+		arg1, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["size"] = arg1
+	var arg2 int
+	if tmp, ok := rawArgs["proposal_id"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("proposal_id"))
+		arg2, err = ec.unmarshalNInt2int(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["proposal_id"] = arg2
 	return args, nil
 }
 
@@ -4526,6 +4583,48 @@ func (ec *executionContext) _Query_deposit(ctx context.Context, field graphql.Co
 	return ec.marshalNDeposit2ᚕᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐDepositᚄ(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _Query_vote(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_vote_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().Vote(rctx, args["before"].(*int), args["size"].(*int), args["proposal_id"].(int))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Vote)
+	fc.Result = res
+	return ec.marshalNVote2ᚕᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐVoteᚄ(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Query___type(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -6262,41 +6361,6 @@ func (ec *executionContext) _Validator_details(ctx context.Context, field graphq
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Vote_proposal_id(ctx context.Context, field graphql.CollectedField, obj *model.Vote) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "Vote",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   false,
-		IsResolver: false,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.ProposalID, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
 func (ec *executionContext) _Vote_voter(ctx context.Context, field graphql.CollectedField, obj *model.Vote) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -6351,6 +6415,76 @@ func (ec *executionContext) _Vote_option(ctx context.Context, field graphql.Coll
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Option, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Vote_tx_hash(ctx context.Context, field graphql.CollectedField, obj *model.Vote) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Vote",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.TxHash, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Vote_time(ctx context.Context, field graphql.CollectedField, obj *model.Vote) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Vote",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Time, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -8338,6 +8472,20 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 				}
 				return res
 			})
+		case "vote":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_vote(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
 		case "__type":
 			out.Values[i] = ec._Query___type(ctx, field)
 		case "__schema":
@@ -8875,11 +9023,6 @@ func (ec *executionContext) _Vote(ctx context.Context, sel ast.SelectionSet, obj
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Vote")
-		case "proposal_id":
-			out.Values[i] = ec._Vote_proposal_id(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
 		case "voter":
 			out.Values[i] = ec._Vote_voter(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -8887,6 +9030,16 @@ func (ec *executionContext) _Vote(ctx context.Context, sel ast.SelectionSet, obj
 			}
 		case "option":
 			out.Values[i] = ec._Vote_option(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "tx_hash":
+			out.Values[i] = ec._Vote_tx_hash(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "time":
+			out.Values[i] = ec._Vote_time(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
@@ -10090,6 +10243,53 @@ func (ec *executionContext) marshalNValidator2ᚖgithubᚗcomᚋcosmosᚑgamingh
 		return graphql.Null
 	}
 	return ec._Validator(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNVote2ᚕᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐVoteᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Vote) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNVote2ᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐVote(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+	return ret
+}
+
+func (ec *executionContext) marshalNVote2ᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐVote(ctx context.Context, sel ast.SelectionSet, v *model.Vote) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._Vote(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalN__Directive2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐDirective(ctx context.Context, sel ast.SelectionSet, v introspection.Directive) graphql.Marshaler {
