@@ -17,26 +17,29 @@ const (
 	TxStatusSuccess      = "success"
 	TxStatusFail         = "fail"
 
-	Tx_Field_Time       = "time"
-	Tx_Field_Height     = "height"
-	Tx_Field_Hash       = "txhash"
-	Tx_Field_From       = "from"
-	Tx_Field_To         = "to"
-	Tx_Field_Signers    = "signers"
-	Tx_Field_Amount     = "amount"
-	Tx_Field_Type       = "logs.events.type"
-	Tx_Field_Value      = "logs.events.attributes.value"
-	Tx_Field_Fee        = "fee"
-	Tx_Field_Memo       = "memo"
-	Tx_Field_Status     = "status"
-	Tx_Field_Code       = "code"
-	Tx_Field_Log        = "log"
-	Tx_Field_GasUsed    = "gas_used"
-	Tx_Field_GasPrice   = "gas_price"
-	Tx_Field_ActualFee  = "actual_fee"
-	Tx_Field_ProposalId = "proposal_id"
-	Tx_Field_Tags       = "tags"
-	Tx_Field_Msgs       = "msgs"
+	Tx_Field_Time        = "timestamp"
+	Tx_Field_Height      = "height"
+	Tx_Field_Hash        = "txhash"
+	Tx_Field_From        = "from"
+	Tx_Field_To          = "to"
+	Tx_Field_Signers     = "signers"
+	Tx_Field_Amount      = "amount"
+	Tx_Field_Type        = "logs.events.type"
+	Tx_Field_Value       = "logs.events.attributes.value"
+	Tx_Field_Event_Type  = "logs.events.type"
+	Tx_Field_Event_Value = "logs.events.attributes.value"
+	Tx_Field_Event_Key   = "logs.events.attributes.key"
+	Tx_Field_Fee         = "fee"
+	Tx_Field_Memo        = "memo"
+	Tx_Field_Status      = "status"
+	Tx_Field_Code        = "code"
+	Tx_Field_Log         = "log"
+	Tx_Field_GasUsed     = "gas_used"
+	Tx_Field_GasPrice    = "gas_price"
+	Tx_Field_ActualFee   = "actual_fee"
+	Tx_Field_ProposalId  = "proposal_id"
+	Tx_Field_Tags        = "tags"
+	Tx_Field_Msgs        = "msgs"
 
 	Tx_Field_Msgs_UdInfo         = "msgs.msg.ud_info.source"
 	Tx_Field_Msgs_Moniker        = "msgs.msg.moniker"
@@ -55,6 +58,8 @@ const (
 	TypeUnBond     = "unbond"
 	TypeDelegate   = "delegate"
 	TypeReDelegate = "redelegate"
+
+	TypeForDeposit = "proposal_deposit"
 )
 
 type Signer struct {
@@ -475,13 +480,47 @@ func (_ CommonTx) QueryProposalTxListById(idArr []uint64) ([]CommonTx, error) {
 	return txs, err
 }
 
-func (_ CommonTx) QueryProposalInitAmountTxById(id int) (CommonTx, error) {
-	selector := bson.M{Tx_Field_Amount: 1, Tx_Field_ProposalId: 1}
-	condition := bson.M{Tx_Field_Type: "SubmitProposal", Tx_Field_Status: "success", Tx_Field_ProposalId: id}
-	condition = FilterUnknownTxs(condition)
-	var txs CommonTx
+func (_ CommonTx) QueryProposalDeposit(before int, size int, id int) ([]CommonTx, error) {
+	// var query = orm.NewQuery()
+	// defer query.Release()
 
-	err := queryOne(CollectionNmCommonTx, selector, condition, &txs)
+	// condition := []bson.M{
+	// 	// {"$sort": bson.M{Tx_Field_Height: -1}},
+	// }
+
+	// if before != 0 {
+	// 	// condition = append(condition, bson.M{
+	// 	// 	"$lt": before,
+	// 	// })
+	// }
+
+	// condition = append(condition,
+	// 	// bson.M{
+	// 	// 	"$limit": size,
+	// 	// },
+	// 	bson.M{
+	// 		"$match": bson.M{
+	// 			Tx_Field_Event_Key:   "proposal_id",
+	// 			Tx_Field_Event_Value: string(id),
+	// 			Tx_Field_Event_Type:  TypeForDeposit,
+	// 		},
+	// 	})
+
+	// result := []CommonTx{}
+	// err := query.SetResult(&result).
+	// 	SetCollection(CollectionNmCommonTx).
+	// 	PipeQuery(
+	// 		condition,
+	// 	)
+	condition := bson.M{Tx_Field_Event_Key: "proposal_id",
+		Tx_Field_Event_Value: id,
+		Tx_Field_Event_Type:  TypeForDeposit,
+	}
+	var txs []CommonTx
+	condition = FilterUnknownTxs(condition)
+
+	err := queryAll(CollectionNmCommonTx, nil, condition, desc(Tx_Field_Time), 0, &txs)
+
 	return txs, err
 }
 
