@@ -258,6 +258,10 @@ func (r *queryResolver) Delegations(ctx context.Context, accAddress *string) ([]
 	return listDelegation, nil
 }
 
+func (r *queryResolver) Unbonding(ctx context.Context, accAddress *string) (*model.Unbonding, error) {
+	return client.GetUnbonding(*accAddress)
+}
+
 // Query returns generated.QueryResolver implementation.
 func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 

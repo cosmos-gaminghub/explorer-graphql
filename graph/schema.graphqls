@@ -168,6 +168,23 @@ type Commission {
 	commission: Commissions
 }
 
+type UnbondingResponse {
+	delegator_address: String,
+	validator_address: String,
+	entries: [Entry!]!
+}
+
+type Unbonding {
+	unbonding_responses: [UnbondingResponse!]!
+}
+
+type Entry {
+	creation_height: String,
+	completion_time: String,
+	initial_balance: String,
+	balance: String
+}
+
 type Query {
   blocks(offset: Int, size: Int): [Block!]!
   block_detail(height: Int): Block!
@@ -210,4 +227,9 @@ type Query {
 		Get delegate in account detail
 	"""
   delegations(acc_address: String): [Delegation!]!
+
+  	"""
+		Get unbonding in account detail
+	"""
+  unbonding(acc_address: String): Unbonding!
 }

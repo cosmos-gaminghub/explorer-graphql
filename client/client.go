@@ -121,3 +121,19 @@ func GetCommission(operatorAddress string) (result *model.Commission, err error)
 
 	return result, nil
 }
+
+func GetUnbonding(accAddress string) (result *model.Unbonding, err error) {
+	url := fmt.Sprintf(UnbondingDelegationUrl, conf.Get().LcdUrl, accAddress)
+	resBytes, err := utils.Get(url)
+	if err != nil {
+		log.Fatalln("Get unbonding error")
+		return result, err
+	}
+
+	if err := json.Unmarshal(resBytes, &result); err != nil {
+		log.Fatalln("Unmarshal unbonding error")
+		return result, err
+	}
+
+	return result, nil
+}

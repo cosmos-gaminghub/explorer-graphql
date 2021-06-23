@@ -106,6 +106,13 @@ type ComplexityRoot struct {
 		ProposalID func(childComplexity int) int
 	}
 
+	Entry struct {
+		Balance        func(childComplexity int) int
+		CompletionTime func(childComplexity int) int
+		CreationHeight func(childComplexity int) int
+		InitialBalance func(childComplexity int) int
+	}
+
 	Inflation struct {
 		Inflation func(childComplexity int) int
 	}
@@ -149,6 +156,7 @@ type ComplexityRoot struct {
 		Status              func(childComplexity int) int
 		TxDetail            func(childComplexity int, txHash *string) int
 		Txs                 func(childComplexity int, size *int) int
+		Unbonding           func(childComplexity int, accAddress *string) int
 		Uptimes             func(childComplexity int, operatorAddress *string) int
 		ValidatorDetail     func(childComplexity int, operatorAddress *string) int
 		Validators          func(childComplexity int) int
@@ -205,6 +213,16 @@ type ComplexityRoot struct {
 		TxHash    func(childComplexity int) int
 	}
 
+	Unbonding struct {
+		UnbondingResponses func(childComplexity int) int
+	}
+
+	UnbondingResponse struct {
+		DelegatorAddress func(childComplexity int) int
+		Entries          func(childComplexity int) int
+		ValidatorAddress func(childComplexity int) int
+	}
+
 	Uptime struct {
 		Height    func(childComplexity int) int
 		Timestamp func(childComplexity int) int
@@ -258,6 +276,7 @@ type QueryResolver interface {
 	Rewards(ctx context.Context, accAddress string) (*model.Rewards, error)
 	Commission(ctx context.Context, operatorAddress string) (*model.Commission, error)
 	Delegations(ctx context.Context, accAddress *string) ([]*model.Delegation, error)
+	Unbonding(ctx context.Context, accAddress *string) (*model.Unbonding, error)
 }
 
 type executableSchema struct {
@@ -491,6 +510,34 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Deposit.ProposalID(childComplexity), true
+
+	case "Entry.balance":
+		if e.complexity.Entry.Balance == nil {
+			break
+		}
+
+		return e.complexity.Entry.Balance(childComplexity), true
+
+	case "Entry.completion_time":
+		if e.complexity.Entry.CompletionTime == nil {
+			break
+		}
+
+		return e.complexity.Entry.CompletionTime(childComplexity), true
+
+	case "Entry.creation_height":
+		if e.complexity.Entry.CreationHeight == nil {
+			break
+		}
+
+		return e.complexity.Entry.CreationHeight(childComplexity), true
+
+	case "Entry.initial_balance":
+		if e.complexity.Entry.InitialBalance == nil {
+			break
+		}
+
+		return e.complexity.Entry.InitialBalance(childComplexity), true
 
 	case "Inflation.inflation":
 		if e.complexity.Inflation.Inflation == nil {
@@ -788,6 +835,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.Txs(childComplexity, args["size"].(*int)), true
 
+	case "Query.unbonding":
+		if e.complexity.Query.Unbonding == nil {
+			break
+		}
+
+		args, err := ec.field_Query_unbonding_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.Unbonding(childComplexity, args["acc_address"].(*string)), true
+
 	case "Query.uptimes":
 		if e.complexity.Query.Uptimes == nil {
 			break
@@ -1007,6 +1066,34 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Tx.TxHash(childComplexity), true
+
+	case "Unbonding.unbonding_responses":
+		if e.complexity.Unbonding.UnbondingResponses == nil {
+			break
+		}
+
+		return e.complexity.Unbonding.UnbondingResponses(childComplexity), true
+
+	case "UnbondingResponse.delegator_address":
+		if e.complexity.UnbondingResponse.DelegatorAddress == nil {
+			break
+		}
+
+		return e.complexity.UnbondingResponse.DelegatorAddress(childComplexity), true
+
+	case "UnbondingResponse.entries":
+		if e.complexity.UnbondingResponse.Entries == nil {
+			break
+		}
+
+		return e.complexity.UnbondingResponse.Entries(childComplexity), true
+
+	case "UnbondingResponse.validator_address":
+		if e.complexity.UnbondingResponse.ValidatorAddress == nil {
+			break
+		}
+
+		return e.complexity.UnbondingResponse.ValidatorAddress(childComplexity), true
 
 	case "Uptime.height":
 		if e.complexity.Uptime.Height == nil {
@@ -1368,6 +1455,23 @@ type Commission {
 	commission: Commissions
 }
 
+type UnbondingResponse {
+	delegator_address: String,
+	validator_address: String,
+	entries: [Entry!]!
+}
+
+type Unbonding {
+	unbonding_responses: [UnbondingResponse!]!
+}
+
+type Entry {
+	creation_height: String,
+	completion_time: String,
+	initial_balance: String,
+	balance: String
+}
+
 type Query {
   blocks(offset: Int, size: Int): [Block!]!
   block_detail(height: Int): Block!
@@ -1410,6 +1514,11 @@ type Query {
 		Get delegate in account detail
 	"""
   delegations(acc_address: String): [Delegation!]!
+
+  	"""
+		Get unbonding in account detail
+	"""
+  unbonding(acc_address: String): Unbonding!
 }`, BuiltIn: false},
 }
 var parsedSchema = gqlparser.MustLoadSchema(sources...)
@@ -1670,6 +1779,21 @@ func (ec *executionContext) field_Query_txs_args(ctx context.Context, rawArgs ma
 		}
 	}
 	args["size"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_unbonding_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *string
+	if tmp, ok := rawArgs["acc_address"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("acc_address"))
+		arg0, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["acc_address"] = arg0
 	return args, nil
 }
 
@@ -2821,6 +2945,134 @@ func (ec *executionContext) _Deposit_amount(ctx context.Context, field graphql.C
 	res := resTmp.([]*model.Amount)
 	fc.Result = res
 	return ec.marshalNAmount2ᚕᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐAmountᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Entry_creation_height(ctx context.Context, field graphql.CollectedField, obj *model.Entry) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Entry",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CreationHeight, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Entry_completion_time(ctx context.Context, field graphql.CollectedField, obj *model.Entry) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Entry",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CompletionTime, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Entry_initial_balance(ctx context.Context, field graphql.CollectedField, obj *model.Entry) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Entry",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.InitialBalance, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Entry_balance(ctx context.Context, field graphql.CollectedField, obj *model.Entry) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Entry",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Balance, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Inflation_inflation(ctx context.Context, field graphql.CollectedField, obj *model.Inflation) (ret graphql.Marshaler) {
@@ -4188,6 +4440,48 @@ func (ec *executionContext) _Query_delegations(ctx context.Context, field graphq
 	return ec.marshalNDelegation2ᚕᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐDelegationᚄ(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _Query_unbonding(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_unbonding_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().Unbonding(rctx, args["acc_address"].(*string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Unbonding)
+	fc.Result = res
+	return ec.marshalNUnbonding2ᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐUnbonding(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Query___type(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -5193,6 +5487,140 @@ func (ec *executionContext) _Tx_gas_wanted(ctx context.Context, field graphql.Co
 	res := resTmp.(int)
 	fc.Result = res
 	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Unbonding_unbonding_responses(ctx context.Context, field graphql.CollectedField, obj *model.Unbonding) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Unbonding",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.UnbondingResponses, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.UnbondingResponse)
+	fc.Result = res
+	return ec.marshalNUnbondingResponse2ᚕᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐUnbondingResponseᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _UnbondingResponse_delegator_address(ctx context.Context, field graphql.CollectedField, obj *model.UnbondingResponse) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "UnbondingResponse",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.DelegatorAddress, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _UnbondingResponse_validator_address(ctx context.Context, field graphql.CollectedField, obj *model.UnbondingResponse) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "UnbondingResponse",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ValidatorAddress, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _UnbondingResponse_entries(ctx context.Context, field graphql.CollectedField, obj *model.UnbondingResponse) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "UnbondingResponse",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Entries, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Entry)
+	fc.Result = res
+	return ec.marshalNEntry2ᚕᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐEntryᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Uptime_height(ctx context.Context, field graphql.CollectedField, obj *model.Uptime) (ret graphql.Marshaler) {
@@ -7384,6 +7812,36 @@ func (ec *executionContext) _Deposit(ctx context.Context, sel ast.SelectionSet, 
 	return out
 }
 
+var entryImplementors = []string{"Entry"}
+
+func (ec *executionContext) _Entry(ctx context.Context, sel ast.SelectionSet, obj *model.Entry) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, entryImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Entry")
+		case "creation_height":
+			out.Values[i] = ec._Entry_creation_height(ctx, field, obj)
+		case "completion_time":
+			out.Values[i] = ec._Entry_completion_time(ctx, field, obj)
+		case "initial_balance":
+			out.Values[i] = ec._Entry_initial_balance(ctx, field, obj)
+		case "balance":
+			out.Values[i] = ec._Entry_balance(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
 var inflationImplementors = []string{"Inflation"}
 
 func (ec *executionContext) _Inflation(ctx context.Context, sel ast.SelectionSet, obj *model.Inflation) graphql.Marshaler {
@@ -7816,6 +8274,20 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 				}
 				return res
 			})
+		case "unbonding":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_unbonding(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
 		case "__type":
 			out.Values[i] = ec._Query___type(ctx, field)
 		case "__schema":
@@ -8119,6 +8591,64 @@ func (ec *executionContext) _Tx(ctx context.Context, sel ast.SelectionSet, obj *
 			}
 		case "gas_wanted":
 			out.Values[i] = ec._Tx_gas_wanted(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var unbondingImplementors = []string{"Unbonding"}
+
+func (ec *executionContext) _Unbonding(ctx context.Context, sel ast.SelectionSet, obj *model.Unbonding) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, unbondingImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Unbonding")
+		case "unbonding_responses":
+			out.Values[i] = ec._Unbonding_unbonding_responses(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var unbondingResponseImplementors = []string{"UnbondingResponse"}
+
+func (ec *executionContext) _UnbondingResponse(ctx context.Context, sel ast.SelectionSet, obj *model.UnbondingResponse) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, unbondingResponseImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("UnbondingResponse")
+		case "delegator_address":
+			out.Values[i] = ec._UnbondingResponse_delegator_address(ctx, field, obj)
+		case "validator_address":
+			out.Values[i] = ec._UnbondingResponse_validator_address(ctx, field, obj)
+		case "entries":
+			out.Values[i] = ec._UnbondingResponse_entries(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
@@ -8952,6 +9482,53 @@ func (ec *executionContext) marshalNDeposit2ᚖgithubᚗcomᚋcosmosᚑgaminghub
 	return ec._Deposit(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalNEntry2ᚕᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐEntryᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Entry) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNEntry2ᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐEntry(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+	return ret
+}
+
+func (ec *executionContext) marshalNEntry2ᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐEntry(ctx context.Context, sel ast.SelectionSet, v *model.Entry) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._Entry(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalNFloat2float64(ctx context.Context, v interface{}) (float64, error) {
 	res, err := graphql.UnmarshalFloat(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -9337,6 +9914,67 @@ func (ec *executionContext) marshalNTx2ᚖgithubᚗcomᚋcosmosᚑgaminghubᚋex
 		return graphql.Null
 	}
 	return ec._Tx(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNUnbonding2githubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐUnbonding(ctx context.Context, sel ast.SelectionSet, v model.Unbonding) graphql.Marshaler {
+	return ec._Unbonding(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNUnbonding2ᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐUnbonding(ctx context.Context, sel ast.SelectionSet, v *model.Unbonding) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._Unbonding(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNUnbondingResponse2ᚕᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐUnbondingResponseᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.UnbondingResponse) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNUnbondingResponse2ᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐUnbondingResponse(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+	return ret
+}
+
+func (ec *executionContext) marshalNUnbondingResponse2ᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐUnbondingResponse(ctx context.Context, sel ast.SelectionSet, v *model.UnbondingResponse) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._UnbondingResponse(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNUptime2ᚕᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐUptimeᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Uptime) graphql.Marshaler {
