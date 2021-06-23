@@ -61,9 +61,10 @@ type Delegation struct {
 }
 
 type Deposit struct {
-	ProposalID string    `json:"proposal_id"`
-	Depositor  string    `json:"depositor"`
-	Amount     []*Amount `json:"amount"`
+	Depositor string  `json:"depositor"`
+	Amount    *string `json:"amount"`
+	TxHash    string  `json:"tx_hash"`
+	Time      string  `json:"time"`
 }
 
 type Entry struct {
@@ -87,16 +88,14 @@ type PowerEvent struct {
 }
 
 type Proposal struct {
-	ID          int        `json:"id"`
-	Status      string     `json:"status"`
-	VotingStart string     `json:"voting_start"`
-	VotingEnd   string     `json:"voting_end"`
-	SubmitTime  string     `json:"submit_time"`
-	Deposit     []*Deposit `json:"deposit"`
-	Vote        []*Vote    `json:"vote"`
-	Tally       *Tally     `json:"tally"`
-	Content     *Content   `json:"content"`
-	Proposer    string     `json:"proposer"`
+	ID          int      `json:"id"`
+	Status      string   `json:"status"`
+	VotingStart string   `json:"voting_start"`
+	VotingEnd   string   `json:"voting_end"`
+	SubmitTime  string   `json:"submit_time"`
+	Tally       *Tally   `json:"tally"`
+	Content     *Content `json:"content"`
+	Proposer    string   `json:"proposer"`
 }
 
 type Reward struct {
@@ -187,7 +186,8 @@ type Validator struct {
 }
 
 type Vote struct {
-	ProposalID string `json:"proposal_id"`
-	Voter      string `json:"voter"`
-	Option     string `json:"option"`
+	Voter  string `json:"voter"`
+	Option string `json:"option"`
+	TxHash string `json:"tx_hash"`
+	Time   string `json:"time"`
 }

@@ -262,6 +262,42 @@ func (r *queryResolver) Unbonding(ctx context.Context, accAddress *string) (*mod
 	return client.GetUnbonding(*accAddress)
 }
 
+func (r *queryResolver) Deposit(ctx context.Context, before *int, size *int, proposalID int) ([]*model.Deposit, error) {
+	txs, _ := document.CommonTx{}.QueryProposalDeposit(*before, *size, proposalID)
+	var listDeposit []*model.Deposit
+	for _, item := range txs {
+		bytes, _ := item.Timestamp.MarshalText()
+		amount := document.CommonTx{}.GetValueOfLog(item.Logs, "transfer", "amount")
+		depositor := document.CommonTx{}.GetValueOfLog(item.Logs, "transfer", "sender")
+		t := &model.Deposit{
+			TxHash:    item.TxHash,
+			Time:      string(bytes),
+			Amount:    &amount,
+			Depositor: depositor,
+		}
+		listDeposit = append(listDeposit, t)
+	}
+	return listDeposit, nil
+}
+
+func (r *queryResolver) Vote(ctx context.Context, before *int, size *int, proposalID int) ([]*model.Vote, error) {
+	txs, _ := document.CommonTx{}.QueryProposalVote(*before, *size, proposalID)
+	var listVote []*model.Vote
+	for _, item := range txs {
+		bytes, _ := item.Timestamp.MarshalText()
+		option := document.CommonTx{}.GetValueOfLog(item.Logs, "proposal_vote", "option")
+		voter := document.CommonTx{}.GetValueOfLog(item.Logs, "message", "sender")
+		t := &model.Vote{
+			TxHash: item.TxHash,
+			Time:   string(bytes),
+			Option: option,
+			Voter:  voter,
+		}
+		listVote = append(listVote, t)
+	}
+	return listVote, nil
+}
+
 // Query returns generated.QueryResolver implementation.
 func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 

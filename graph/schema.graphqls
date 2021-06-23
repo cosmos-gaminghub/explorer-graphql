@@ -69,8 +69,6 @@ type Proposal {
 	voting_start: String!
 	voting_end: String!
 	submit_time: String!
-	deposit: [Deposit!]!
-	vote: [Vote!]!
 	tally: Tally!
 	content: Content!
 	proposer: String!
@@ -84,15 +82,17 @@ type Tally {
 }
 
 type Deposit {
-	proposal_id: String!
 	depositor: String!
-	amount: [Amount!]!
+	amount: String
+	tx_hash: String!,
+	time: String!
 }
 
 type Vote {
-	proposal_id: String!
 	voter: String!
 	option: String!
+	tx_hash: String!,
+	time: String!
 }
 
 type Content {
@@ -232,4 +232,7 @@ type Query {
 		Get unbonding in account detail
 	"""
   unbonding(acc_address: String): Unbonding!
+
+  deposit(before: Int, size: Int, proposal_id: Int!): [Deposit!]!
+  vote(before: Int, size: Int, proposal_id: Int!): [Vote!]!
 }

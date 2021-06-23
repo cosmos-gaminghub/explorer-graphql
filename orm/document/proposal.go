@@ -23,8 +23,6 @@ type Proposal struct {
 	VotingEndTime    time.Time        `bson:"voting_end_time"`
 	VotingStartTime  time.Time        `bson:"voting_start_time"`
 	Proposer         string           `bson:"proposer"`
-	Deposit          []Deposit        `bson:"deposit"`
-	Vote             []ProposalVote   `bson:"vote"`
 }
 
 type Content struct {
@@ -43,23 +41,6 @@ type FinalTallyResult struct {
 	Abstain    string `bson:"abstain"`
 	No         string `bson:"no"`
 	NoWithVeto string `bson:"no_with_veto"`
-}
-
-type Deposit struct {
-	ProposalID string   `bson:"proposal_id"`
-	Depositor  string   `bson:"depositor"`
-	Amount     []Amount `bson:"amount"`
-}
-
-type ProposalVote struct {
-	ProposalId string `bson:"proposal_id"`
-	Voter      string `bson:"voter"`
-	Option     string `bson:"option"`
-}
-
-type Amount struct {
-	Denom  string `bson:"denom"`
-	Amount string `bson:"amount"`
 }
 
 func (_ Proposal) GetList() ([]Proposal, error) {
@@ -92,8 +73,6 @@ func (_ Proposal) FormatProposalForModel(proposal Proposal) (listProposal *model
 		Status:      proposal.ProposalStatus,
 		VotingStart: proposal.VotingStartTime.String(),
 		VotingEnd:   proposal.VotingEndTime.String(),
-		Deposit:     formatDepositForModel(proposal),
-		Vote:        formatVoteForModel(proposal),
 		Content: &model.Content{
 			Title:       proposal.Content.Title,
 			Description: proposal.Content.Description,
@@ -125,34 +104,34 @@ func formatChangesForModel(content Content) (listChange []*model.Change) {
 	return listChange
 }
 
-func formatDepositForModel(proposal Proposal) (listDeposit []*model.Deposit) {
-	if len(proposal.Deposit) > 0 {
-		for _, item := range proposal.Deposit {
-			d := &model.Deposit{
-				ProposalID: item.ProposalID,
-				Depositor:  item.Depositor,
-				Amount:     []*model.Amount{},
-			}
-			d.Amount = formatAmountForModel(item)
-			listDeposit = append(listDeposit, d)
-		}
-	}
-	return listDeposit
-}
+// func formatDepositForModel(proposal Proposal) (listDeposit []*model.Deposit) {
+// 	if len(proposal.Deposit) > 0 {
+// 		for _, item := range proposal.Deposit {
+// 			d := &model.Deposit{
+// 				ProposalID: item.ProposalID,
+// 				Depositor:  item.Depositor,
+// 				Amount:     []*model.Amount{},
+// 			}
+// 			d.Amount = formatAmountForModel(item)
+// 			listDeposit = append(listDeposit, d)
+// 		}
+// 	}
+// 	return listDeposit
+// }
 
-func formatVoteForModel(proposal Proposal) (listVote []*model.Vote) {
-	if len(proposal.Deposit) > 0 {
-		for _, item := range proposal.Vote {
-			v := &model.Vote{
-				ProposalID: item.ProposalId,
-				Voter:      item.Voter,
-				Option:     item.Option,
-			}
-			listVote = append(listVote, v)
-		}
-	}
-	return listVote
-}
+// func formatVoteForModel(proposal Proposal) (listVote []*model.Vote) {
+// 	if len(proposal.Deposit) > 0 {
+// 		for _, item := range proposal.Vote {
+// 			v := &model.Vote{
+// 				ProposalID: item.ProposalId,
+// 				Voter:      item.Voter,
+// 				Option:     item.Option,
+// 			}
+// 			listVote = append(listVote, v)
+// 		}
+// 	}
+// 	return listVote
+// }
 
 func formatAmountForModel(deposit Deposit) (listAmount []*model.Amount) {
 	if len(deposit.Amount) > 0 {
