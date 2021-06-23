@@ -82,9 +82,8 @@ type Tally {
 }
 
 type Deposit {
-	proposal_id: String!
 	depositor: String!
-	amount: [Amount!]!
+	amount: String
 	tx_hash: String!,
 	time: String!
 }

@@ -3,6 +3,7 @@ package document
 import (
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/cosmos-gaminghub/exploder-graphql/graph/model"
@@ -481,47 +482,38 @@ func (_ CommonTx) QueryProposalTxListById(idArr []uint64) ([]CommonTx, error) {
 }
 
 func (_ CommonTx) QueryProposalDeposit(before int, size int, id int) ([]CommonTx, error) {
-	// var query = orm.NewQuery()
-	// defer query.Release()
-
-	// condition := []bson.M{
-	// 	// {"$sort": bson.M{Tx_Field_Height: -1}},
-	// }
-
-	// if before != 0 {
-	// 	// condition = append(condition, bson.M{
-	// 	// 	"$lt": before,
-	// 	// })
-	// }
-
-	// condition = append(condition,
-	// 	// bson.M{
-	// 	// 	"$limit": size,
-	// 	// },
-	// 	bson.M{
-	// 		"$match": bson.M{
-	// 			Tx_Field_Event_Key:   "proposal_id",
-	// 			Tx_Field_Event_Value: string(id),
-	// 			Tx_Field_Event_Type:  TypeForDeposit,
-	// 		},
-	// 	})
-
-	// result := []CommonTx{}
-	// err := query.SetResult(&result).
-	// 	SetCollection(CollectionNmCommonTx).
-	// 	PipeQuery(
-	// 		condition,
-	// 	)
-	condition := bson.M{Tx_Field_Event_Key: "proposal_id",
-		Tx_Field_Event_Value: id,
-		Tx_Field_Event_Type:  TypeForDeposit,
+	condition := bson.M{}
+	if before != 0 {
+		condition[Tx_Field_Height] = bson.M{
+			"$lt": before,
+		}
 	}
+	condition[Tx_Field_Event_Key] = "proposal_id"
+	condition[Tx_Field_Event_Value] = strconv.Itoa(id)
+	condition[Tx_Field_Event_Type] = TypeForDeposit
+	// condition := bson.M{Tx_Field_Event_Key: "proposal_id",
+	// 	Tx_Field_Event_Value: id,
+	// 	Tx_Field_Event_Type:  TypeForDeposit,
+	// }
 	var txs []CommonTx
-	condition = FilterUnknownTxs(condition)
 
 	err := queryAll(CollectionNmCommonTx, nil, condition, desc(Tx_Field_Time), 0, &txs)
 
 	return txs, err
+}
+
+func (_ CommonTx) GetValueOfLogTransferByKey(logs []Log, key string) (amount string) {
+	log := logs[0]
+	for _, event := range log.Events {
+		if event.Type == "transfer" {
+			for _, attribute := range event.Attributes {
+				if attribute.Key == key {
+					return attribute.Value
+				}
+			}
+		}
+	}
+	return amount
 }
 
 // func (_ CommonTx) QueryProposalTxById(proposalId int64, page, size int, total bool, iaaAddrs []string) (int, []CommonTx, error) {

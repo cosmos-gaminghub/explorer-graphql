@@ -101,9 +101,10 @@ type ComplexityRoot struct {
 	}
 
 	Deposit struct {
-		Amount     func(childComplexity int) int
-		Depositor  func(childComplexity int) int
-		ProposalID func(childComplexity int) int
+		Amount    func(childComplexity int) int
+		Depositor func(childComplexity int) int
+		Time      func(childComplexity int) int
+		TxHash    func(childComplexity int) int
 	}
 
 	Entry struct {
@@ -128,13 +129,11 @@ type ComplexityRoot struct {
 
 	Proposal struct {
 		Content     func(childComplexity int) int
-		Deposit     func(childComplexity int) int
 		ID          func(childComplexity int) int
 		Proposer    func(childComplexity int) int
 		Status      func(childComplexity int) int
 		SubmitTime  func(childComplexity int) int
 		Tally       func(childComplexity int) int
-		Vote        func(childComplexity int) int
 		VotingEnd   func(childComplexity int) int
 		VotingStart func(childComplexity int) int
 	}
@@ -147,6 +146,7 @@ type ComplexityRoot struct {
 		Blocks              func(childComplexity int, offset *int, size *int) int
 		Commission          func(childComplexity int, operatorAddress string) int
 		Delegations         func(childComplexity int, accAddress *string) int
+		Deposit             func(childComplexity int, before *int, size *int, proposalID int) int
 		Inflation           func(childComplexity int) int
 		PowerEvents         func(childComplexity int, before *int, size *int, operatorAddress string) int
 		ProposalDetail      func(childComplexity int, proposalID int) int
@@ -277,6 +277,7 @@ type QueryResolver interface {
 	Commission(ctx context.Context, operatorAddress string) (*model.Commission, error)
 	Delegations(ctx context.Context, accAddress *string) ([]*model.Delegation, error)
 	Unbonding(ctx context.Context, accAddress *string) (*model.Unbonding, error)
+	Deposit(ctx context.Context, before *int, size *int, proposalID int) ([]*model.Deposit, error)
 }
 
 type executableSchema struct {
@@ -504,12 +505,19 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Deposit.Depositor(childComplexity), true
 
-	case "Deposit.proposal_id":
-		if e.complexity.Deposit.ProposalID == nil {
+	case "Deposit.time":
+		if e.complexity.Deposit.Time == nil {
 			break
 		}
 
-		return e.complexity.Deposit.ProposalID(childComplexity), true
+		return e.complexity.Deposit.Time(childComplexity), true
+
+	case "Deposit.tx_hash":
+		if e.complexity.Deposit.TxHash == nil {
+			break
+		}
+
+		return e.complexity.Deposit.TxHash(childComplexity), true
 
 	case "Entry.balance":
 		if e.complexity.Entry.Balance == nil {
@@ -595,13 +603,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Proposal.Content(childComplexity), true
 
-	case "Proposal.deposit":
-		if e.complexity.Proposal.Deposit == nil {
-			break
-		}
-
-		return e.complexity.Proposal.Deposit(childComplexity), true
-
 	case "Proposal.id":
 		if e.complexity.Proposal.ID == nil {
 			break
@@ -636,13 +637,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Proposal.Tally(childComplexity), true
-
-	case "Proposal.vote":
-		if e.complexity.Proposal.Vote == nil {
-			break
-		}
-
-		return e.complexity.Proposal.Vote(childComplexity), true
 
 	case "Proposal.voting_end":
 		if e.complexity.Proposal.VotingEnd == nil {
@@ -741,6 +735,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.Delegations(childComplexity, args["acc_address"].(*string)), true
+
+	case "Query.deposit":
+		if e.complexity.Query.Deposit == nil {
+			break
+		}
+
+		args, err := ec.field_Query_deposit_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.Deposit(childComplexity, args["before"].(*int), args["size"].(*int), args["proposal_id"].(int)), true
 
 	case "Query.inflation":
 		if e.complexity.Query.Inflation == nil {
@@ -1356,8 +1362,6 @@ type Proposal {
 	voting_start: String!
 	voting_end: String!
 	submit_time: String!
-	deposit: [Deposit!]!
-	vote: [Vote!]!
 	tally: Tally!
 	content: Content!
 	proposer: String!
@@ -1371,9 +1375,10 @@ type Tally {
 }
 
 type Deposit {
-	proposal_id: String!
 	depositor: String!
-	amount: [Amount!]!
+	amount: String
+	tx_hash: String!,
+	time: String!
 }
 
 type Vote {
@@ -1519,6 +1524,8 @@ type Query {
 		Get unbonding in account detail
 	"""
   unbonding(acc_address: String): Unbonding!
+
+  deposit(before: Int, size: Int, proposal_id: Int!): [Deposit!]!
 }`, BuiltIn: false},
 }
 var parsedSchema = gqlparser.MustLoadSchema(sources...)
@@ -1653,6 +1660,39 @@ func (ec *executionContext) field_Query_delegations_args(ctx context.Context, ra
 		}
 	}
 	args["acc_address"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_deposit_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *int
+	if tmp, ok := rawArgs["before"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("before"))
+		arg0, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["before"] = arg0
+	var arg1 *int
+	if tmp, ok := rawArgs["size"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("size"))
+		arg1, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["size"] = arg1
+	var arg2 int
+	if tmp, ok := rawArgs["proposal_id"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("proposal_id"))
+		arg2, err = ec.unmarshalNInt2int(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["proposal_id"] = arg2
 	return args, nil
 }
 
@@ -2842,41 +2882,6 @@ func (ec *executionContext) _Delegation_amount(ctx context.Context, field graphq
 	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Deposit_proposal_id(ctx context.Context, field graphql.CollectedField, obj *model.Deposit) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "Deposit",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   false,
-		IsResolver: false,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.ProposalID, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
 func (ec *executionContext) _Deposit_depositor(ctx context.Context, field graphql.CollectedField, obj *model.Deposit) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -2937,14 +2942,81 @@ func (ec *executionContext) _Deposit_amount(ctx context.Context, field graphql.C
 		return graphql.Null
 	}
 	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Deposit_tx_hash(ctx context.Context, field graphql.CollectedField, obj *model.Deposit) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Deposit",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.TxHash, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
 		if !graphql.HasFieldError(ctx, fc) {
 			ec.Errorf(ctx, "must not be null")
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]*model.Amount)
+	res := resTmp.(string)
 	fc.Result = res
-	return ec.marshalNAmount2ᚕᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐAmountᚄ(ctx, field.Selections, res)
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Deposit_time(ctx context.Context, field graphql.CollectedField, obj *model.Deposit) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Deposit",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Time, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Entry_creation_height(ctx context.Context, field graphql.CollectedField, obj *model.Entry) (ret graphql.Marshaler) {
@@ -3493,76 +3565,6 @@ func (ec *executionContext) _Proposal_submit_time(ctx context.Context, field gra
 	res := resTmp.(string)
 	fc.Result = res
 	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Proposal_deposit(ctx context.Context, field graphql.CollectedField, obj *model.Proposal) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "Proposal",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   false,
-		IsResolver: false,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Deposit, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.([]*model.Deposit)
-	fc.Result = res
-	return ec.marshalNDeposit2ᚕᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐDepositᚄ(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Proposal_vote(ctx context.Context, field graphql.CollectedField, obj *model.Proposal) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "Proposal",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   false,
-		IsResolver: false,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Vote, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.([]*model.Vote)
-	fc.Result = res
-	return ec.marshalNVote2ᚕᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐVoteᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Proposal_tally(ctx context.Context, field graphql.CollectedField, obj *model.Proposal) (ret graphql.Marshaler) {
@@ -4480,6 +4482,48 @@ func (ec *executionContext) _Query_unbonding(ctx context.Context, field graphql.
 	res := resTmp.(*model.Unbonding)
 	fc.Result = res
 	return ec.marshalNUnbonding2ᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐUnbonding(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_deposit(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_deposit_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().Deposit(rctx, args["before"].(*int), args["size"].(*int), args["proposal_id"].(int))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Deposit)
+	fc.Result = res
+	return ec.marshalNDeposit2ᚕᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐDepositᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query___type(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -7786,11 +7830,6 @@ func (ec *executionContext) _Deposit(ctx context.Context, sel ast.SelectionSet, 
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Deposit")
-		case "proposal_id":
-			out.Values[i] = ec._Deposit_proposal_id(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
 		case "depositor":
 			out.Values[i] = ec._Deposit_depositor(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -7798,6 +7837,13 @@ func (ec *executionContext) _Deposit(ctx context.Context, sel ast.SelectionSet, 
 			}
 		case "amount":
 			out.Values[i] = ec._Deposit_amount(ctx, field, obj)
+		case "tx_hash":
+			out.Values[i] = ec._Deposit_tx_hash(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "time":
+			out.Values[i] = ec._Deposit_time(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
@@ -7954,16 +8000,6 @@ func (ec *executionContext) _Proposal(ctx context.Context, sel ast.SelectionSet,
 			}
 		case "submit_time":
 			out.Values[i] = ec._Proposal_submit_time(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		case "deposit":
-			out.Values[i] = ec._Proposal_deposit(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		case "vote":
-			out.Values[i] = ec._Proposal_vote(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
@@ -8283,6 +8319,20 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_unbonding(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
+		case "deposit":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_deposit(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}
@@ -9095,53 +9145,6 @@ func (ec *executionContext) ___Type(ctx context.Context, sel ast.SelectionSet, o
 // endregion **************************** object.gotpl ****************************
 
 // region    ***************************** type.gotpl *****************************
-
-func (ec *executionContext) marshalNAmount2ᚕᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐAmountᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Amount) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalNAmount2ᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐAmount(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
-	return ret
-}
-
-func (ec *executionContext) marshalNAmount2ᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐAmount(ctx context.Context, sel ast.SelectionSet, v *model.Amount) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	return ec._Amount(ctx, sel, v)
-}
 
 func (ec *executionContext) marshalNBalance2ᚕᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐBalanceᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Balance) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
@@ -10087,53 +10090,6 @@ func (ec *executionContext) marshalNValidator2ᚖgithubᚗcomᚋcosmosᚑgamingh
 		return graphql.Null
 	}
 	return ec._Validator(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalNVote2ᚕᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐVoteᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Vote) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalNVote2ᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐVote(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
-	return ret
-}
-
-func (ec *executionContext) marshalNVote2ᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐVote(ctx context.Context, sel ast.SelectionSet, v *model.Vote) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	return ec._Vote(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalN__Directive2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐDirective(ctx context.Context, sel ast.SelectionSet, v introspection.Directive) graphql.Marshaler {

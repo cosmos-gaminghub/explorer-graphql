@@ -61,11 +61,10 @@ type Delegation struct {
 }
 
 type Deposit struct {
-	ProposalID string    `json:"proposal_id"`
-	Depositor  string    `json:"depositor"`
-	Amount     []*Amount `json:"amount"`
-	TxHash     string    `json:"tx_hash"`
-	Time       string    `json:"time"`
+	Depositor string  `json:"depositor"`
+	Amount    *string `json:"amount"`
+	TxHash    string  `json:"tx_hash"`
+	Time      string  `json:"time"`
 }
 
 type Entry struct {

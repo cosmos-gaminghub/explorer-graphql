@@ -263,11 +263,23 @@ func (r *queryResolver) Unbonding(ctx context.Context, accAddress *string) (*mod
 }
 
 func (r *queryResolver) Deposit(ctx context.Context, before *int, size *int, proposalID int) ([]*model.Deposit, error) {
-	item, _ := document.CommonTx{}.QueryProposalDeposit(*before, *size, proposalID)
-	fmt.Println(item)
-	return []*model.Deposit{}, nil
+	txs, _ := document.CommonTx{}.QueryProposalDeposit(*before, *size, proposalID)
+	fmt.Println(len(txs))
+	var listDeposit []*model.Deposit
+	for _, item := range txs {
+		bytes, _ := item.Timestamp.MarshalText()
+		amount := document.CommonTx{}.GetValueOfLogTransferByKey(item.Logs, "amount")
+		depositor := document.CommonTx{}.GetValueOfLogTransferByKey(item.Logs, "sender")
+		t := &model.Deposit{
+			TxHash:    item.TxHash,
+			Time:      string(bytes),
+			Amount:    &amount,
+			Depositor: depositor,
+		}
+		listDeposit = append(listDeposit, t)
+	}
+	return listDeposit, nil
 }
-
 
 // Query returns generated.QueryResolver implementation.
 func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
