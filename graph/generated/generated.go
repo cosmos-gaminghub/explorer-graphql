@@ -146,7 +146,7 @@ type ComplexityRoot struct {
 		Blocks              func(childComplexity int, offset *int, size *int) int
 		Commission          func(childComplexity int, operatorAddress string) int
 		Delegations         func(childComplexity int, accAddress *string) int
-		Deposit             func(childComplexity int, before *int, size *int, proposalID int) int
+		Deposit             func(childComplexity int, proposalID int) int
 		Inflation           func(childComplexity int) int
 		PowerEvents         func(childComplexity int, before *int, size *int, operatorAddress string) int
 		ProposalDetail      func(childComplexity int, proposalID int) int
@@ -279,7 +279,7 @@ type QueryResolver interface {
 	Commission(ctx context.Context, operatorAddress string) (*model.Commission, error)
 	Delegations(ctx context.Context, accAddress *string) ([]*model.Delegation, error)
 	Unbonding(ctx context.Context, accAddress *string) (*model.Unbonding, error)
-	Deposit(ctx context.Context, before *int, size *int, proposalID int) ([]*model.Deposit, error)
+	Deposit(ctx context.Context, proposalID int) ([]*model.Deposit, error)
 	Vote(ctx context.Context, before *int, size *int, proposalID int) ([]*model.Vote, error)
 }
 
@@ -749,7 +749,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.Deposit(childComplexity, args["before"].(*int), args["size"].(*int), args["proposal_id"].(int)), true
+		return e.complexity.Query.Deposit(childComplexity, args["proposal_id"].(int)), true
 
 	case "Query.inflation":
 		if e.complexity.Query.Inflation == nil {
@@ -1548,7 +1548,7 @@ type Query {
 	"""
   unbonding(acc_address: String): Unbonding!
 
-  deposit(before: Int, size: Int, proposal_id: Int!): [Deposit!]!
+  deposit(proposal_id: Int!): [Deposit!]!
   vote(before: Int, size: Int, proposal_id: Int!): [Vote!]!
 }`, BuiltIn: false},
 }
@@ -1690,33 +1690,15 @@ func (ec *executionContext) field_Query_delegations_args(ctx context.Context, ra
 func (ec *executionContext) field_Query_deposit_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 *int
-	if tmp, ok := rawArgs["before"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("before"))
-		arg0, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["before"] = arg0
-	var arg1 *int
-	if tmp, ok := rawArgs["size"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("size"))
-		arg1, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["size"] = arg1
-	var arg2 int
+	var arg0 int
 	if tmp, ok := rawArgs["proposal_id"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("proposal_id"))
-		arg2, err = ec.unmarshalNInt2int(ctx, tmp)
+		arg0, err = ec.unmarshalNInt2int(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["proposal_id"] = arg2
+	args["proposal_id"] = arg0
 	return args, nil
 }
 
@@ -4566,7 +4548,7 @@ func (ec *executionContext) _Query_deposit(ctx context.Context, field graphql.Co
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().Deposit(rctx, args["before"].(*int), args["size"].(*int), args["proposal_id"].(int))
+		return ec.resolvers.Query().Deposit(rctx, args["proposal_id"].(int))
 	})
 	if err != nil {
 		ec.Error(ctx, err)

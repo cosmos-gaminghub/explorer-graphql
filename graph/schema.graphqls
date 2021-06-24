@@ -233,6 +233,6 @@ type Query {
 	"""
   unbonding(acc_address: String): Unbonding!
 
-  deposit(before: Int, size: Int, proposal_id: Int!): [Deposit!]!
+  deposit(proposal_id: Int!): [Deposit!]!
   vote(before: Int, size: Int, proposal_id: Int!): [Vote!]!
 }

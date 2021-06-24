@@ -262,8 +262,8 @@ func (r *queryResolver) Unbonding(ctx context.Context, accAddress *string) (*mod
 	return client.GetUnbonding(*accAddress)
 }
 
-func (r *queryResolver) Deposit(ctx context.Context, before *int, size *int, proposalID int) ([]*model.Deposit, error) {
-	txs, _ := document.CommonTx{}.QueryProposalDeposit(*before, *size, proposalID)
+func (r *queryResolver) Deposit(ctx context.Context, proposalID int) ([]*model.Deposit, error) {
+	txs, _ := document.CommonTx{}.QueryProposalDeposit(proposalID)
 	var listDeposit []*model.Deposit
 	for _, item := range txs {
 		bytes, _ := item.Timestamp.MarshalText()
