@@ -149,7 +149,7 @@ type EventAttribute struct {
 func (_ CommonTx) GetListTxBy(size int) ([]CommonTx, error) {
 	var data []CommonTx
 
-	err := queryAll(CollectionNmCommonTx, nil, nil, desc(Tx_Field_Height), size, &data)
+	err := queryAll(CollectionNmCommonTx, nil, nil, desc(Tx_Field_Time), size, &data)
 	return data, err
 }
 
@@ -166,7 +166,7 @@ func (_ CommonTx) GetListTxByAddress(before int, size int, operatorAddress strin
 		}
 	}
 
-	err := querylistByOffsetAndSize(CollectionNmCommonTx, nil, query, desc(Tx_Field_Height), 0, size, &data)
+	err := querylistByOffsetAndSize(CollectionNmCommonTx, nil, query, desc(Tx_Field_Time), 0, size, &data)
 	return data, err
 }
 
@@ -174,7 +174,7 @@ func (_ CommonTx) GetListTxByAccountAddress(accAddress string) ([]CommonTx, erro
 	var data []CommonTx
 	query := bson.M{Tx_Field_Value: accAddress}
 
-	err := queryAll(CollectionNmCommonTx, nil, query, desc(Tx_Field_Height), 0, &data)
+	err := queryAll(CollectionNmCommonTx, nil, query, desc(Tx_Field_Time), 0, &data)
 	return data, err
 }
 
