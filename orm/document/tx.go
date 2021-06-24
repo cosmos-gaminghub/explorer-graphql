@@ -482,13 +482,8 @@ func (_ CommonTx) QueryProposalTxListById(idArr []uint64) ([]CommonTx, error) {
 	return txs, err
 }
 
-func (_ CommonTx) QueryProposalDeposit(before int, size int, id int) ([]CommonTx, error) {
+func (_ CommonTx) QueryProposalDeposit(id int) ([]CommonTx, error) {
 	condition := bson.M{}
-	if before != 0 {
-		condition[Tx_Field_Height] = bson.M{
-			"$lt": before,
-		}
-	}
 	condition[Tx_Field_Event_Key] = "proposal_id"
 	condition[Tx_Field_Event_Value] = strconv.Itoa(id)
 	condition[Tx_Field_Event_Type] = TypeForDeposit
@@ -520,7 +515,6 @@ func (_ CommonTx) GetValueOfLog(logs []Log, eventType string, key string) (amoun
 	log := logs[0]
 	for _, event := range log.Events {
 		if event.Type == eventType {
-			fmt.Println(event)
 			for _, attribute := range event.Attributes {
 				if attribute.Key == key {
 					return attribute.Value
