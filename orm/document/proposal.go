@@ -23,6 +23,7 @@ type Proposal struct {
 	VotingEndTime    time.Time        `bson:"voting_end_time"`
 	VotingStartTime  time.Time        `bson:"voting_start_time"`
 	Proposer         string           `bson:"proposer"`
+	TotalDeposit     []Amount         `bson:"total_deposit"`
 }
 
 type Content struct {
@@ -85,8 +86,9 @@ func (_ Proposal) FormatProposalForModel(proposal Proposal) (listProposal *model
 			No:         proposal.FinalTallyResult.No,
 			NoWithVeto: proposal.FinalTallyResult.NoWithVeto,
 		},
-		ID:         proposal.ProposalId,
-		SubmitTime: proposal.SubmitTime.String(),
+		ID:           proposal.ProposalId,
+		SubmitTime:   proposal.SubmitTime.String(),
+		TotalDeposit: formatTotalDepostForModel(proposal.TotalDeposit),
 	}, err
 }
 
@@ -102,6 +104,19 @@ func formatChangesForModel(content Content) (listChange []*model.Change) {
 		}
 	}
 	return listChange
+}
+
+func formatTotalDepostForModel(totalDeposit []Amount) (td []*model.Amount) {
+	if len(totalDeposit) > 0 {
+		for _, item := range totalDeposit {
+			d := &model.Amount{
+				Denom:  item.Denom,
+				Amount: item.Amount,
+			}
+			td = append(td, d)
+		}
+	}
+	return td
 }
 
 // func formatDepositForModel(proposal Proposal) (listDeposit []*model.Deposit) {
