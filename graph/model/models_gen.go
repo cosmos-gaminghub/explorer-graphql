@@ -88,14 +88,15 @@ type PowerEvent struct {
 }
 
 type Proposal struct {
-	ID          int      `json:"id"`
-	Status      string   `json:"status"`
-	VotingStart string   `json:"voting_start"`
-	VotingEnd   string   `json:"voting_end"`
-	SubmitTime  string   `json:"submit_time"`
-	Tally       *Tally   `json:"tally"`
-	Content     *Content `json:"content"`
-	Proposer    string   `json:"proposer"`
+	ID           int       `json:"id"`
+	Status       string    `json:"status"`
+	VotingStart  string    `json:"voting_start"`
+	VotingEnd    string    `json:"voting_end"`
+	SubmitTime   string    `json:"submit_time"`
+	Tally        *Tally    `json:"tally"`
+	Content      *Content  `json:"content"`
+	Proposer     string    `json:"proposer"`
+	TotalDeposit []*Amount `json:"total_deposit"`
 }
 
 type Reward struct {
