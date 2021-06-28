@@ -48,9 +48,11 @@ type Currency struct {
 	Volume7D               float64   `json:"volume_7d"`
 	Volume30D              float64   `json:"volume_30d"`
 	PercentChange1H        float64   `json:"percent_change_1h"`
-	PercentChangeVolume24H float64   `json:"percent_change_volume_24h"`
-	PercentChangeVolume7D  float64   `json:"percent_change_volume_7d"`
-	PercentChangeVolume30D float64   `json:"percent_change_volume_30d"`
+	PercentChangeVolume24H float64   `json:"percent_change_24h"`
+	PercentChangeVolume7D  float64   `json:"percent_change_7d"`
+	PercentChangeVolume30D float64   `json:"percent_change_30d"`
+	PercentChangeVolume60D float64   `json:"percent_change_60d"`
+	PercentChangeVolume90D float64   `json:"percent_change_90d"`
 	MarketCap              float64   `json:"market_cap"`
 	TotalMarketCap         float64   `json:"total_market_cap"`
 	LastUpdated            time.Time `json:"last_updated"`
@@ -123,10 +125,12 @@ func GetConcurrencyQuoteLastest(slug string) (price *model.Price, err error) {
 	}
 
 	for _, item := range resp.Data {
+		fmt.Println(item.Quote.USD)
 		price = &model.Price{
-			Volume24h: utils.ParseStringFromFloat64(item.Quote.USD.Volume24H),
-			MarketCap: utils.ParseStringFromFloat64(item.Quote.USD.MarketCap),
-			Price:     utils.ParseStringFromFloat64(item.Quote.USD.Price),
+			Volume24h:        utils.ParseStringFromFloat64(item.Quote.USD.Volume24H),
+			MarketCap:        utils.ParseStringFromFloat64(item.Quote.USD.MarketCap),
+			Price:            utils.ParseStringFromFloat64(item.Quote.USD.Price),
+			PercentChange24h: utils.ParseStringFromFloat64(item.Quote.USD.PercentChangeVolume24H),
 		}
 	}
 
