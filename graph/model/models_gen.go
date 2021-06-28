@@ -87,6 +87,12 @@ type PowerEvent struct {
 	TotalRecords int    `json:"total_records"`
 }
 
+type Price struct {
+	Price     string `json:"price"`
+	Volume24h string `json:"volume_24h"`
+	MarketCap string `json:"market_cap"`
+}
+
 type Proposal struct {
 	ID           int       `json:"id"`
 	Status       string    `json:"status"`

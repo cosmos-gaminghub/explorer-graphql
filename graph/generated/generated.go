@@ -127,6 +127,12 @@ type ComplexityRoot struct {
 		Type         func(childComplexity int) int
 	}
 
+	Price struct {
+		MarketCap func(childComplexity int) int
+		Price     func(childComplexity int) int
+		Volume24h func(childComplexity int) int
+	}
+
 	Proposal struct {
 		Content      func(childComplexity int) int
 		ID           func(childComplexity int) int
@@ -150,6 +156,7 @@ type ComplexityRoot struct {
 		Deposit             func(childComplexity int, proposalID int) int
 		Inflation           func(childComplexity int) int
 		PowerEvents         func(childComplexity int, before *int, size *int, operatorAddress string) int
+		Price               func(childComplexity int, slug string) int
 		ProposalDetail      func(childComplexity int, proposalID int) int
 		Proposals           func(childComplexity int) int
 		ProposedBlocks      func(childComplexity int, before *int, size *int, operatorAddress string) int
@@ -282,6 +289,7 @@ type QueryResolver interface {
 	Unbonding(ctx context.Context, accAddress *string) (*model.Unbonding, error)
 	Deposit(ctx context.Context, proposalID int) ([]*model.Deposit, error)
 	Vote(ctx context.Context, before *int, size *int, proposalID int) ([]*model.Vote, error)
+	Price(ctx context.Context, slug string) (*model.Price, error)
 }
 
 type executableSchema struct {
@@ -600,6 +608,27 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.PowerEvent.Type(childComplexity), true
 
+	case "Price.market_cap":
+		if e.complexity.Price.MarketCap == nil {
+			break
+		}
+
+		return e.complexity.Price.MarketCap(childComplexity), true
+
+	case "Price.price":
+		if e.complexity.Price.Price == nil {
+			break
+		}
+
+		return e.complexity.Price.Price(childComplexity), true
+
+	case "Price.volume_24h":
+		if e.complexity.Price.Volume24h == nil {
+			break
+		}
+
+		return e.complexity.Price.Volume24h(childComplexity), true
+
 	case "Proposal.content":
 		if e.complexity.Proposal.Content == nil {
 			break
@@ -777,6 +806,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.PowerEvents(childComplexity, args["before"].(*int), args["size"].(*int), args["operator_address"].(string)), true
+
+	case "Query.price":
+		if e.complexity.Query.Price == nil {
+			break
+		}
+
+		args, err := ec.field_Query_price_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.Price(childComplexity, args["slug"].(string)), true
 
 	case "Query.proposal_detail":
 		if e.complexity.Query.ProposalDetail == nil {
@@ -1509,6 +1550,12 @@ type Entry {
 	balance: String
 }
 
+type Price {
+	price: String!,
+	volume_24h: String!,
+	market_cap: String!
+}
+
 type Query {
   blocks(offset: Int, size: Int): [Block!]!
   block_detail(height: Int): Block!
@@ -1559,6 +1606,8 @@ type Query {
 
   deposit(proposal_id: Int!): [Deposit!]!
   vote(before: Int, size: Int, proposal_id: Int!): [Vote!]!
+
+  price(slug: String!): Price!
 }`, BuiltIn: false},
 }
 var parsedSchema = gqlparser.MustLoadSchema(sources...)
@@ -1741,6 +1790,21 @@ func (ec *executionContext) field_Query_power_events_args(ctx context.Context, r
 		}
 	}
 	args["operator_address"] = arg2
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_price_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["slug"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("slug"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["slug"] = arg0
 	return args, nil
 }
 
@@ -3440,6 +3504,111 @@ func (ec *executionContext) _PowerEvent_total_records(ctx context.Context, field
 	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _Price_price(ctx context.Context, field graphql.CollectedField, obj *model.Price) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Price",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Price, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Price_volume_24h(ctx context.Context, field graphql.CollectedField, obj *model.Price) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Price",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Volume24h, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Price_market_cap(ctx context.Context, field graphql.CollectedField, obj *model.Price) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Price",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.MarketCap, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Proposal_id(ctx context.Context, field graphql.CollectedField, obj *model.Proposal) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -4649,6 +4818,48 @@ func (ec *executionContext) _Query_vote(ctx context.Context, field graphql.Colle
 	res := resTmp.([]*model.Vote)
 	fc.Result = res
 	return ec.marshalNVote2ᚕᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐVoteᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_price(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_price_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().Price(rctx, args["slug"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Price)
+	fc.Result = res
+	return ec.marshalNPrice2ᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐPrice(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query___type(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -8127,6 +8338,43 @@ func (ec *executionContext) _PowerEvent(ctx context.Context, sel ast.SelectionSe
 	return out
 }
 
+var priceImplementors = []string{"Price"}
+
+func (ec *executionContext) _Price(ctx context.Context, sel ast.SelectionSet, obj *model.Price) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, priceImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Price")
+		case "price":
+			out.Values[i] = ec._Price_price(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "volume_24h":
+			out.Values[i] = ec._Price_volume_24h(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "market_cap":
+			out.Values[i] = ec._Price_market_cap(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
 var proposalImplementors = []string{"Proposal"}
 
 func (ec *executionContext) _Proposal(ctx context.Context, sel ast.SelectionSet, obj *model.Proposal) graphql.Marshaler {
@@ -8512,6 +8760,20 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_vote(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
+		case "price":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_price(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}
@@ -9852,6 +10114,20 @@ func (ec *executionContext) marshalNPowerEvent2ᚖgithubᚗcomᚋcosmosᚑgaming
 		return graphql.Null
 	}
 	return ec._PowerEvent(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNPrice2githubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐPrice(ctx context.Context, sel ast.SelectionSet, v model.Price) graphql.Marshaler {
+	return ec._Price(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNPrice2ᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐPrice(ctx context.Context, sel ast.SelectionSet, v *model.Price) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._Price(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNProposal2githubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐProposal(ctx context.Context, sel ast.SelectionSet, v model.Proposal) graphql.Marshaler {
