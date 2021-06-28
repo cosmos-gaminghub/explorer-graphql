@@ -1607,6 +1607,10 @@ type Query {
   deposit(proposal_id: Int!): [Deposit!]!
   vote(before: Int, size: Int, proposal_id: Int!): [Vote!]!
 
+	"""
+		Get price
+		Slug example cosmos
+	"""
   price(slug: String!): Price!
 }`, BuiltIn: false},
 }

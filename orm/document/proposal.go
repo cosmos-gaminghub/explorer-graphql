@@ -69,11 +69,14 @@ func (_ Proposal) FormatListProposalForModel(proposals []Proposal) (listProposal
 }
 
 func (_ Proposal) FormatProposalForModel(proposal Proposal) (listProposal *model.Proposal, err error) {
+	submitTime, _ := proposal.SubmitTime.MarshalText()
+	vottingStart, _ := proposal.VotingStartTime.MarshalText()
+	votingEndTime, _ := proposal.VotingEndTime.MarshalText()
 	return &model.Proposal{
 		Proposer:    proposal.Proposer,
 		Status:      proposal.ProposalStatus,
-		VotingStart: proposal.VotingStartTime.String(),
-		VotingEnd:   proposal.VotingEndTime.String(),
+		VotingStart: string(vottingStart),
+		VotingEnd:   string(votingEndTime),
 		Content: &model.Content{
 			Title:       proposal.Content.Title,
 			Description: proposal.Content.Description,
@@ -87,7 +90,7 @@ func (_ Proposal) FormatProposalForModel(proposal Proposal) (listProposal *model
 			NoWithVeto: proposal.FinalTallyResult.NoWithVeto,
 		},
 		ID:           proposal.ProposalId,
-		SubmitTime:   proposal.SubmitTime.String(),
+		SubmitTime:   string(submitTime),
 		TotalDeposit: formatTotalDepostForModel(proposal.TotalDeposit),
 	}, err
 }
