@@ -186,6 +186,12 @@ type Entry {
 	balance: String
 }
 
+type Price {
+	price: String!,
+	volume_24h: String!,
+	market_cap: String!
+}
+
 type Query {
   blocks(offset: Int, size: Int): [Block!]!
   block_detail(height: Int): Block!
@@ -236,4 +242,6 @@ type Query {
 
   deposit(proposal_id: Int!): [Deposit!]!
   vote(before: Int, size: Int, proposal_id: Int!): [Vote!]!
+
+  price(slug: String!): Price!
 }

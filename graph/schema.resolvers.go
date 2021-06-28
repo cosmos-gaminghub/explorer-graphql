@@ -298,6 +298,10 @@ func (r *queryResolver) Vote(ctx context.Context, before *int, size *int, propos
 	return listVote, nil
 }
 
+func (r *queryResolver) Price(ctx context.Context, slug string) (*model.Price, error) {
+	return client.GetConcurrencyQuoteLastest(slug)
+}
+
 // Query returns generated.QueryResolver implementation.
 func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 

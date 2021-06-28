@@ -16,7 +16,8 @@ const (
 	KeyDbPwd       = "DB_PASSWORD"
 	KeyDbPoolLimit = "DB_POOL_LIMIT"
 
-	KeyLcd = "LCD"
+	KeyLcd              = "LCD"
+	KeyCoinMarketApiKey = "COINMARKET_API_KEY"
 
 	EnvironmentDevelop = ".env"
 	DefaultEnvironment = EnvironmentDevelop
@@ -25,12 +26,13 @@ const (
 func Get() Config {
 	addrs := strings.Split(getEnv(KeyDbAddr, DefaultEnvironment), ",")
 	return Config{
-		Addrs:     addrs,
-		Database:  getEnv(KeyDATABASE, DefaultEnvironment),
-		UserName:  getEnv(KeyDbUser, DefaultEnvironment),
-		Password:  getEnv(KeyDbPwd, DefaultEnvironment),
-		PoolLimit: getEnvInt(KeyDbPoolLimit, DefaultEnvironment),
-		LcdUrl:    getEnv(KeyLcd, DefaultEnvironment),
+		Addrs:        addrs,
+		Database:     getEnv(KeyDATABASE, DefaultEnvironment),
+		UserName:     getEnv(KeyDbUser, DefaultEnvironment),
+		Password:     getEnv(KeyDbPwd, DefaultEnvironment),
+		PoolLimit:    getEnvInt(KeyDbPoolLimit, DefaultEnvironment),
+		LcdUrl:       getEnv(KeyLcd, DefaultEnvironment),
+		MarketApiKey: getEnv(KeyCoinMarketApiKey, EnvironmentDevelop),
 	}
 }
 
@@ -41,7 +43,8 @@ type Config struct {
 	Password  string
 	PoolLimit int
 
-	LcdUrl string
+	LcdUrl       string
+	MarketApiKey string
 }
 
 func getEnv(key string, environment string) string {
