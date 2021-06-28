@@ -190,6 +190,7 @@ type Price {
 	price: String!,
 	volume_24h: String!,
 	market_cap: String!
+	percent_change_24h: String!
 }
 
 type Query {

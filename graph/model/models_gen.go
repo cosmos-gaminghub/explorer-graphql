@@ -88,9 +88,10 @@ type PowerEvent struct {
 }
 
 type Price struct {
-	Price     string `json:"price"`
-	Volume24h string `json:"volume_24h"`
-	MarketCap string `json:"market_cap"`
+	Price            string `json:"price"`
+	Volume24h        string `json:"volume_24h"`
+	MarketCap        string `json:"market_cap"`
+	PercentChange24h string `json:"percent_change_24h"`
 }
 
 type Proposal struct {
