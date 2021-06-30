@@ -155,11 +155,11 @@ func (_ CommonTx) GetListTxBy(size int) ([]CommonTx, error) {
 
 func (_ CommonTx) GetListTxByAddress(before int, size int, operatorAddress string) ([]CommonTx, error) {
 	var data []CommonTx
-	query := bson.M{Tx_Field_Value: operatorAddress}
-	typeArr := []string{TypeDelegate, TypeUnBond, TypeReDelegate}
-	query[Tx_Field_Type] = bson.M{
-		"$in": typeArr,
-	}
+	query := bson.M{"messages": bson.RegEx{operatorAddress + ".*", ""}}
+	// typeArr := []string{TypeDelegate, TypeUnBond, TypeReDelegate}
+	// query[Tx_Field_Type] = bson.M{
+	// 	"$in": typeArr,
+	// }
 	if before != 0 {
 		query[Tx_Field_Height] = bson.M{
 			"$lt": before,
