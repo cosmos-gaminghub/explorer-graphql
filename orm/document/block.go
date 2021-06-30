@@ -1,15 +1,12 @@
 package document
 
 import (
-	"encoding/base64"
 	"fmt"
 	"log"
 	"time"
 
 	"github.com/cosmos-gaminghub/exploder-graphql/graph/model"
 	"github.com/cosmos-gaminghub/exploder-graphql/orm"
-
-	"github.com/cosmos/cosmos-sdk/types/bech32"
 	"gopkg.in/mgo.v2/bson"
 )
 
@@ -144,10 +141,8 @@ func (_ Block) GetBlockListByOffsetAndSizeByOperatorAddress(before int, size int
 	if err != nil {
 		return []Block{}, err
 	}
-	_, decodeByte, err := bech32.DecodeAndConvert(validator.ConsensusAddres)
-	ProposerAddress := base64.StdEncoding.EncodeToString(decodeByte)
 	condition := bson.M{
-		Block_Field_ProposalAddress: ProposerAddress,
+		Block_Field_ProposalAddress: validator.ProposerAddr,
 	}
 
 	if before != 0 {

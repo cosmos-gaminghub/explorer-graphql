@@ -165,7 +165,7 @@ func (_ CommonTx) GetListTxByAddress(before int, size int, operatorAddress strin
 
 func (_ CommonTx) GetListTxByAccountAddress(accAddress string) ([]CommonTx, error) {
 	var data []CommonTx
-	query := bson.M{Tx_Field_Value: accAddress}
+	query := bson.M{"messages": bson.RegEx{accAddress + ".*", ""}}
 
 	err := queryAll(CollectionNmCommonTx, nil, query, desc(Tx_Field_Height), 0, &data)
 	return data, err
