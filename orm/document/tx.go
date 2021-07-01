@@ -156,10 +156,10 @@ func (_ CommonTx) GetListTxBy(size int) ([]CommonTx, error) {
 func (_ CommonTx) GetListTxByAddress(before int, size int, operatorAddress string) ([]CommonTx, error) {
 	var data []CommonTx
 	query := bson.M{"messages": bson.RegEx{operatorAddress + ".*", ""}}
-	// typeArr := []string{TypeDelegate, TypeUnBond, TypeReDelegate}
-	// query[Tx_Field_Type] = bson.M{
-	// 	"$in": typeArr,
-	// }
+	typeArr := []string{TypeDelegate, TypeUnBond, TypeReDelegate}
+	query[Tx_Field_Type] = bson.M{
+		"$in": typeArr,
+	}
 	if before != 0 {
 		query[Tx_Field_Height] = bson.M{
 			"$lt": before,
@@ -186,10 +186,7 @@ func (_ CommonTx) GetAmountFromLogs(logs []Log, operatorAddress string) int64 {
 			if utils.Contains(typeArr, event.Type) {
 				for _, attribute := range event.Attributes {
 					if attribute.Key == "amount" {
-						value, err := utils.ParseInt(attribute.Value)
-						if err {
-							amount = value
-						}
+						amount, _ = utils.ParseInt(attribute.Value)
 						break
 					}
 				}
