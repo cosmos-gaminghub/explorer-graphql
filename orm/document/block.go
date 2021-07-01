@@ -220,15 +220,16 @@ func (_ Block) QueryLatestBlockFromDB() (Block, error) {
 	return Block{}, err
 }
 
-func (_ Block) QueryOneBlockOrderByHeightDesc() (Block, error) {
+func (_ Block) QueryBlockOrderByHeightDesc(size int) ([]Block, error) {
 
 	db := orm.GetDatabase()
 	defer db.Session.Close()
 
-	var firstBlock Block
+	var blocks []Block
 
-	err := db.C(CollectionNmBlock).Find(nil).Sort("-height").One(&firstBlock)
-	return firstBlock, err
+	sort := desc(Block_Field_Height)
+	err := queryAll(CollectionNmBlock, nil, nil, sort, size, &blocks)
+	return blocks, err
 }
 
 func (_ Block) QueryBlocksByDurationWithHeightAsc(startTime, endTime time.Time) ([]Block, error) {
