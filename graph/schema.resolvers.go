@@ -303,7 +303,16 @@ func (r *queryResolver) Vote(ctx context.Context, before *int, size *int, propos
 }
 
 func (r *queryResolver) Price(ctx context.Context, slug string) (*model.Price, error) {
-	return client.GetConcurrencyQuoteLastest(slug)
+	last, _ := document.StatAssetInfoList20Minute{}.QueryLatestStatAssetFromDB()
+	first, _ := document.StatAssetInfoList20Minute{}.QueryNewestFromTime(last.Timestamp)
+	change := last.Price - first.Price
+	percent_change_24h := (change / last.Price) * 100
+	return &model.Price{
+		Price:            fmt.Sprintf("%f", last.Price),
+		PercentChange24h: fmt.Sprintf("%f", percent_change_24h),
+		Volume24h:        fmt.Sprintf("%f", last.Volume24H),
+		MarketCap:        fmt.Sprintf("%f", last.Marketcap),
+	}, nil
 }
 
 func (r *queryResolver) StatsAssets(ctx context.Context) ([]*model.StatsAsset, error) {
