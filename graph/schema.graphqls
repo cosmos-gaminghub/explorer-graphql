@@ -193,6 +193,13 @@ type Price {
 	percent_change_24h: String!
 }
 
+type StatsAsset {
+	price: String!,
+	market_cap: String!,
+	volume_24h: String!,
+	timestamp: String!
+}
+
 type Query {
   blocks(offset: Int, size: Int): [Block!]!
   block_detail(height: Int): Block!
@@ -249,4 +256,6 @@ type Query {
 		Slug example cosmos
 	"""
   price(slug: String!): Price!
+
+  stats_assets: [StatsAsset!]!
 }

@@ -302,6 +302,26 @@ func (r *queryResolver) Price(ctx context.Context, slug string) (*model.Price, e
 	return client.GetConcurrencyQuoteLastest(slug)
 }
 
+func (r *queryResolver) StatsAssets(ctx context.Context) ([]*model.StatsAsset, error) {
+	statsAssets, err := document.StatAssetInfoList20Minute{}.GetList()
+
+	if err != nil {
+		return []*model.StatsAsset{}, nil
+	}
+	var listAssets []*model.StatsAsset
+	for _, item := range statsAssets {
+		bytes, _ := item.Timestamp.MarshalText()
+		t := &model.StatsAsset{
+			Price:     fmt.Sprintf("%f", item.Price),
+			MarketCap: fmt.Sprintf("%f", item.Marketcap),
+			Volume24h: fmt.Sprintf("%f", item.Volume24H),
+			Timestamp: string(bytes),
+		}
+		listAssets = append(listAssets, t)
+	}
+	return listAssets, nil
+}
+
 // Query returns generated.QueryResolver implementation.
 func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 
