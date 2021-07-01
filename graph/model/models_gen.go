@@ -67,6 +67,11 @@ type Deposit struct {
 	Time      string  `json:"time"`
 }
 
+type Entries struct {
+	RedelegationEntry *RedelegationEntry `json:"redelegation_entry"`
+	Balance           string             `json:"balance"`
+}
+
 type Entry struct {
 	CreationHeight *string `json:"creation_height"`
 	CompletionTime *string `json:"completion_time"`
@@ -104,6 +109,29 @@ type Proposal struct {
 	Content      *Content  `json:"content"`
 	Proposer     string    `json:"proposer"`
 	TotalDeposit []*Amount `json:"total_deposit"`
+}
+
+type Redelegation struct {
+	DelegatorAddress    string               `json:"delegator_address"`
+	ValidatorDstAddress string               `json:"validator_dst_address"`
+	ValidatorSrcAddress string               `json:"validator_src_address"`
+	Entries             []*RedelegationEntry `json:"entries"`
+}
+
+type RedelegationEntry struct {
+	CreationHeight int    `json:"creation_height"`
+	CompletionTime string `json:"completion_time"`
+	InitialBalance string `json:"initial_balance"`
+	SharesDst      string `json:"shares_dst"`
+}
+
+type RedelegationResponse struct {
+	Redelegation *Redelegation `json:"redelegation"`
+	Entries      []*Entries    `json:"entries"`
+}
+
+type Redelegations struct {
+	RedelegationResponses []*RedelegationResponse `json:"redelegation_responses"`
 }
 
 type Reward struct {

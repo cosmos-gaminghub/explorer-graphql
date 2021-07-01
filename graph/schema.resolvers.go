@@ -229,8 +229,8 @@ func (r *queryResolver) Commission(ctx context.Context, operatorAddress string) 
 	return client.GetCommission(operatorAddress)
 }
 
-func (r *queryResolver) Delegations(ctx context.Context, accAddress *string) ([]*model.Delegation, error) {
-	delegationResult, err := client.GetDelegation(*accAddress)
+func (r *queryResolver) Delegations(ctx context.Context, accAddress string) ([]*model.Delegation, error) {
+	delegationResult, err := client.GetDelegation(accAddress)
 	if err != nil {
 		return []*model.Delegation{}, nil
 	}
@@ -258,8 +258,12 @@ func (r *queryResolver) Delegations(ctx context.Context, accAddress *string) ([]
 	return listDelegation, nil
 }
 
-func (r *queryResolver) Unbonding(ctx context.Context, accAddress *string) (*model.Unbonding, error) {
-	return client.GetUnbonding(*accAddress)
+func (r *queryResolver) Unbonding(ctx context.Context, accAddress string) (*model.Unbonding, error) {
+	return client.GetUnbonding(accAddress)
+}
+
+func (r *queryResolver) Redelegations(ctx context.Context, accAddress string) (*model.Redelegations, error) {
+	return client.GetRedelegation(accAddress)
 }
 
 func (r *queryResolver) Deposit(ctx context.Context, proposalID int) ([]*model.Deposit, error) {
