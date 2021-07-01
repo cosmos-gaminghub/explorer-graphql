@@ -120,6 +120,13 @@ type Rewards struct {
 	Rewards []*Reward `json:"rewards"`
 }
 
+type StatsAsset struct {
+	Price     string `json:"price"`
+	MarketCap string `json:"market_cap"`
+	Volume24h string `json:"volume_24h"`
+	Timestamp string `json:"timestamp"`
+}
+
 type Status struct {
 	BlockHeight       int                `json:"block_height"`
 	BlockTime         string             `json:"block_time"`

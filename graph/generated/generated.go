@@ -162,6 +162,7 @@ type ComplexityRoot struct {
 		Proposals           func(childComplexity int) int
 		ProposedBlocks      func(childComplexity int, before *int, size *int, operatorAddress string) int
 		Rewards             func(childComplexity int, accAddress string) int
+		StatsAssets         func(childComplexity int) int
 		Status              func(childComplexity int) int
 		TxDetail            func(childComplexity int, txHash *string) int
 		Txs                 func(childComplexity int, size *int) int
@@ -184,6 +185,13 @@ type ComplexityRoot struct {
 
 	Rewards struct {
 		Rewards func(childComplexity int) int
+	}
+
+	StatsAsset struct {
+		MarketCap func(childComplexity int) int
+		Price     func(childComplexity int) int
+		Timestamp func(childComplexity int) int
+		Volume24h func(childComplexity int) int
 	}
 
 	Status struct {
@@ -291,6 +299,7 @@ type QueryResolver interface {
 	Deposit(ctx context.Context, proposalID int) ([]*model.Deposit, error)
 	Vote(ctx context.Context, before *int, size *int, proposalID int) ([]*model.Vote, error)
 	Price(ctx context.Context, slug string) (*model.Price, error)
+	StatsAssets(ctx context.Context) ([]*model.StatsAsset, error)
 }
 
 type executableSchema struct {
@@ -870,6 +879,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.Rewards(childComplexity, args["acc_address"].(string)), true
 
+	case "Query.stats_assets":
+		if e.complexity.Query.StatsAssets == nil {
+			break
+		}
+
+		return e.complexity.Query.StatsAssets(childComplexity), true
+
 	case "Query.status":
 		if e.complexity.Query.Status == nil {
 			break
@@ -990,6 +1006,34 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Rewards.Rewards(childComplexity), true
+
+	case "StatsAsset.market_cap":
+		if e.complexity.StatsAsset.MarketCap == nil {
+			break
+		}
+
+		return e.complexity.StatsAsset.MarketCap(childComplexity), true
+
+	case "StatsAsset.price":
+		if e.complexity.StatsAsset.Price == nil {
+			break
+		}
+
+		return e.complexity.StatsAsset.Price(childComplexity), true
+
+	case "StatsAsset.timestamp":
+		if e.complexity.StatsAsset.Timestamp == nil {
+			break
+		}
+
+		return e.complexity.StatsAsset.Timestamp(childComplexity), true
+
+	case "StatsAsset.volume_24h":
+		if e.complexity.StatsAsset.Volume24h == nil {
+			break
+		}
+
+		return e.complexity.StatsAsset.Volume24h(childComplexity), true
 
 	case "Status.block_height":
 		if e.complexity.Status.BlockHeight == nil {
@@ -1565,6 +1609,13 @@ type Price {
 	percent_change_24h: String!
 }
 
+type StatsAsset {
+	price: String!,
+	market_cap: String!,
+	volume_24h: String!,
+	timestamp: String!
+}
+
 type Query {
   blocks(offset: Int, size: Int): [Block!]!
   block_detail(height: Int): Block!
@@ -1621,6 +1672,8 @@ type Query {
 		Slug example cosmos
 	"""
   price(slug: String!): Price!
+
+  stats_assets: [StatsAsset!]!
 }`, BuiltIn: false},
 }
 var parsedSchema = gqlparser.MustLoadSchema(sources...)
@@ -4910,6 +4963,41 @@ func (ec *executionContext) _Query_price(ctx context.Context, field graphql.Coll
 	return ec.marshalNPrice2ᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐPrice(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _Query_stats_assets(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().StatsAssets(rctx)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.StatsAsset)
+	fc.Result = res
+	return ec.marshalNStatsAsset2ᚕᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐStatsAssetᚄ(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Query___type(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -5154,6 +5242,146 @@ func (ec *executionContext) _Rewards_rewards(ctx context.Context, field graphql.
 	res := resTmp.([]*model.Reward)
 	fc.Result = res
 	return ec.marshalNReward2ᚕᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐRewardᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _StatsAsset_price(ctx context.Context, field graphql.CollectedField, obj *model.StatsAsset) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "StatsAsset",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Price, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _StatsAsset_market_cap(ctx context.Context, field graphql.CollectedField, obj *model.StatsAsset) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "StatsAsset",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.MarketCap, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _StatsAsset_volume_24h(ctx context.Context, field graphql.CollectedField, obj *model.StatsAsset) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "StatsAsset",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Volume24h, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _StatsAsset_timestamp(ctx context.Context, field graphql.CollectedField, obj *model.StatsAsset) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "StatsAsset",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Timestamp, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Status_block_height(ctx context.Context, field graphql.CollectedField, obj *model.Status) (ret graphql.Marshaler) {
@@ -8832,6 +9060,20 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 				}
 				return res
 			})
+		case "stats_assets":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_stats_assets(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
 		case "__type":
 			out.Values[i] = ec._Query___type(ctx, field)
 		case "__schema":
@@ -8924,6 +9166,48 @@ func (ec *executionContext) _Rewards(ctx context.Context, sel ast.SelectionSet, 
 			out.Values[i] = graphql.MarshalString("Rewards")
 		case "rewards":
 			out.Values[i] = ec._Rewards_rewards(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var statsAssetImplementors = []string{"StatsAsset"}
+
+func (ec *executionContext) _StatsAsset(ctx context.Context, sel ast.SelectionSet, obj *model.StatsAsset) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, statsAssetImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("StatsAsset")
+		case "price":
+			out.Values[i] = ec._StatsAsset_price(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "market_cap":
+			out.Values[i] = ec._StatsAsset_market_cap(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "volume_24h":
+			out.Values[i] = ec._StatsAsset_volume_24h(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "timestamp":
+			out.Values[i] = ec._StatsAsset_timestamp(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
@@ -10340,6 +10624,53 @@ func (ec *executionContext) marshalNRewards2ᚖgithubᚗcomᚋcosmosᚑgaminghub
 		return graphql.Null
 	}
 	return ec._Rewards(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNStatsAsset2ᚕᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐStatsAssetᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.StatsAsset) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNStatsAsset2ᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐStatsAsset(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+	return ret
+}
+
+func (ec *executionContext) marshalNStatsAsset2ᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐStatsAsset(ctx context.Context, sel ast.SelectionSet, v *model.StatsAsset) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._StatsAsset(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNStatus2githubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐStatus(ctx context.Context, sel ast.SelectionSet, v model.Status) graphql.Marshaler {
