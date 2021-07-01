@@ -157,7 +157,7 @@ type StatsAsset struct {
 
 type Status struct {
 	BlockHeight       int                `json:"block_height"`
-	BlockTime         string             `json:"block_time"`
+	BlockTime         int                `json:"block_time"`
 	TotalTxsNum       int                `json:"total_txs_num"`
 	BondedTokens      int                `json:"bonded_tokens"`
 	TotalSupplyTokens *TotalSupplyTokens `json:"total_supply_tokens"`

@@ -116,7 +116,7 @@ type Change {
 
 type Status {
 	block_height: Int!
-	block_time: String!,
+	block_time: Int!,
 	total_txs_num: Int!
 	bonded_tokens: Int!
 	total_supply_tokens: TotalSupplyTokens

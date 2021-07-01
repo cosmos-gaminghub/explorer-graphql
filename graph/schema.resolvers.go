@@ -183,7 +183,7 @@ func (r *queryResolver) ProposalDetail(ctx context.Context, proposalID int) (*mo
 }
 
 func (r *queryResolver) Status(ctx context.Context) (*model.Status, error) {
-	lastBlock, err := document.Block{}.QueryOneBlockOrderByHeightDesc()
+	blocks, err := document.Block{}.QueryBlockOrderByHeightDesc(2)
 	if err != nil {
 		return &model.Status{}, nil
 	}
@@ -203,10 +203,11 @@ func (r *queryResolver) Status(ctx context.Context) (*model.Status, error) {
 		return &model.Status{}, nil
 	}
 
-	bytes, _ := lastBlock.Time.MarshalText()
+	BlockTime := blocks[0].Time.UnixNano() - blocks[1].Time.UnixNano()
+	fmt.Println(BlockTime)
 	return &model.Status{
-		BlockHeight:       int(lastBlock.Height),
-		BlockTime:         string(bytes),
+		BlockHeight:       int(blocks[0].Height),
+		BlockTime:         int(BlockTime),
 		BondedTokens:      int(bondedToken),
 		TotalTxsNum:       totalNumTxs,
 		TotalSupplyTokens: totalSupplyToken,

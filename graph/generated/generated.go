@@ -1665,7 +1665,7 @@ type Change {
 
 type Status {
 	block_height: Int!
-	block_time: String!,
+	block_time: Int!,
 	total_txs_num: Int!
 	bonded_tokens: Int!
 	total_supply_tokens: TotalSupplyTokens
@@ -6127,9 +6127,9 @@ func (ec *executionContext) _Status_block_time(ctx context.Context, field graphq
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(int)
 	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Status_total_txs_num(ctx context.Context, field graphql.CollectedField, obj *model.Status) (ret graphql.Marshaler) {
