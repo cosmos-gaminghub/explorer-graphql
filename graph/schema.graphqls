@@ -200,6 +200,34 @@ type StatsAsset {
 	timestamp: String!
 }
 
+type Redelegations {
+	redelegation_responses: [RedelegationResponse!]!
+}
+
+type RedelegationResponse {
+	redelegation: Redelegation!
+	entries: [Entries!]!
+}
+
+type Redelegation {
+	delegator_address: String!,
+	validator_dst_address: String!,
+	validator_src_address: String!,
+	entries: [RedelegationEntry!]!
+}
+
+type Entries {
+	redelegation_entry: RedelegationEntry!,
+	balance: String!
+}
+
+type RedelegationEntry {
+	creation_height:	Int!
+	completion_time:	String!
+	initial_balance:	String!
+	shares_dst: 		String!
+}
+
 type Query {
   blocks(offset: Int, size: Int): [Block!]!
   block_detail(height: Int): Block!
@@ -241,12 +269,17 @@ type Query {
 	"""
 		Get delegate in account detail
 	"""
-  delegations(acc_address: String): [Delegation!]!
+  delegations(acc_address: String!): [Delegation!]!
 
   	"""
 		Get unbonding in account detail
 	"""
-  unbonding(acc_address: String): Unbonding!
+  unbonding(acc_address: String!): Unbonding!
+
+  	"""
+		Get unbonding in account detail
+	"""
+  redelegations(acc_address: String!): Redelegations!
 
   deposit(proposal_id: Int!): [Deposit!]!
   vote(before: Int, size: Int, proposal_id: Int!): [Vote!]!
