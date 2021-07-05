@@ -120,6 +120,7 @@ type Status {
 	total_txs_num: Int!
 	bonded_tokens: Int!
 	total_supply_tokens: TotalSupplyTokens
+	timestamp: String!
 }
 type TotalSupplyTokens {
 	supply: [Supply!]!
