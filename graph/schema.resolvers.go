@@ -204,9 +204,10 @@ func (r *queryResolver) Status(ctx context.Context) (*model.Status, error) {
 	}
 
 	BlockTime := blocks[0].Time.UnixNano() - blocks[1].Time.UnixNano()
-	fmt.Println(BlockTime)
+	bytes, _ := blocks[0].Time.MarshalText()
 	return &model.Status{
 		BlockHeight:       int(blocks[0].Height),
+		Timestamp:         string(bytes),
 		BlockTime:         int(BlockTime),
 		BondedTokens:      int(bondedToken),
 		TotalTxsNum:       totalNumTxs,

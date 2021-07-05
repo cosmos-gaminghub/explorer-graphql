@@ -227,6 +227,7 @@ type ComplexityRoot struct {
 		BlockHeight       func(childComplexity int) int
 		BlockTime         func(childComplexity int) int
 		BondedTokens      func(childComplexity int) int
+		Timestamp         func(childComplexity int) int
 		TotalSupplyTokens func(childComplexity int) int
 		TotalTxsNum       func(childComplexity int) int
 	}
@@ -1189,6 +1190,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Status.BondedTokens(childComplexity), true
 
+	case "Status.timestamp":
+		if e.complexity.Status.Timestamp == nil {
+			break
+		}
+
+		return e.complexity.Status.Timestamp(childComplexity), true
+
 	case "Status.total_supply_tokens":
 		if e.complexity.Status.TotalSupplyTokens == nil {
 			break
@@ -1669,6 +1677,7 @@ type Status {
 	total_txs_num: Int!
 	bonded_tokens: Int!
 	total_supply_tokens: TotalSupplyTokens
+	timestamp: String!
 }
 type TotalSupplyTokens {
 	supply: [Supply!]!
@@ -6234,6 +6243,41 @@ func (ec *executionContext) _Status_total_supply_tokens(ctx context.Context, fie
 	return ec.marshalOTotalSupplyTokens2ᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐTotalSupplyTokens(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _Status_timestamp(ctx context.Context, field graphql.CollectedField, obj *model.Status) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Status",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Timestamp, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Supply_denom(ctx context.Context, field graphql.CollectedField, obj *model.Supply) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -10122,6 +10166,11 @@ func (ec *executionContext) _Status(ctx context.Context, sel ast.SelectionSet, o
 			}
 		case "total_supply_tokens":
 			out.Values[i] = ec._Status_total_supply_tokens(ctx, field, obj)
+		case "timestamp":
+			out.Values[i] = ec._Status_timestamp(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}

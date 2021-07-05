@@ -161,6 +161,7 @@ type Status struct {
 	TotalTxsNum       int                `json:"total_txs_num"`
 	BondedTokens      int                `json:"bonded_tokens"`
 	TotalSupplyTokens *TotalSupplyTokens `json:"total_supply_tokens"`
+	Timestamp         string             `json:"timestamp"`
 }
 
 type Supply struct {
