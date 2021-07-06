@@ -201,7 +201,7 @@ func (_ CommonTx) GetTypeTextFromLogs(logs []Log, operatorAddress string) string
 	typeText := "add"
 	for _, log := range logs {
 		for _, event := range log.Events {
-			if utils.Contains(typeArr, event.Type) && event.Type == TypeUnBond {
+			if utils.Contains(typeArr, event.Type) && (event.Type == TypeUnBond || event.Type == TypeReDelegate) {
 				typeText = "minus"
 				break
 			}
