@@ -297,9 +297,9 @@ func (_ Block) GetCountBlock(condition bson.M) (int, error) {
 	defer query.Release()
 	query.SetResult(&result).
 		SetCollection(CollectionNmBlock).
-		SetCondition(condition).
 		PipeQuery(
 			[]bson.M{
+				{"$match": condition},
 				{"$group": bson.M{
 					"_id":   "",
 					"count": bson.M{"$sum": 1},
