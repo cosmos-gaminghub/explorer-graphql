@@ -136,14 +136,16 @@ func (_ Block) GetBlockListByOffsetAndSize(offset, size int) ([]bson.M, error) {
 	return results, err
 }
 
-func (_ Block) GetBlockListByOffsetAndSizeByOperatorAddress(before int, size int, operatorAddress string) ([]Block, error) {
+func (_ Block) GetBlockListByOffsetAndSizeByOperatorAddress(before int, size int, operatorAddress string) ([]Block, int, error) {
 	validator, err := Validator{}.QueryValidatorDetailByOperatorAddr(operatorAddress)
+	var totalRecord int
 	if err != nil {
-		return []Block{}, err
+		return []Block{}, totalRecord, err
 	}
 	condition := bson.M{
 		Block_Field_ProposalAddress: validator.ProposerAddr,
 	}
+	totalRecord, _ = Block{}.GetCountBlock(condition)
 
 	if before != 0 {
 		condition[Block_Field_Height] = bson.M{
@@ -159,7 +161,7 @@ func (_ Block) GetBlockListByOffsetAndSizeByOperatorAddress(before int, size int
 
 	err = querylistByOffsetAndSize(CollectionNmBlock, selector, condition, sort, 0, size, &blocks)
 
-	return blocks, err
+	return blocks, totalRecord, err
 }
 
 func (_ Block) GetBlockListByPage(offset, size int, total bool) (int, []Block, error) {
@@ -251,9 +253,8 @@ func (_ Block) QueryValidatorsByHeightList(hArr []int64) ([]Block, error) {
 	return blocks, err
 }
 
-func (_ Block) FormatListBlockForModel(blocks []Block) ([]*model.Block, error) {
+func (_ Block) FormatListBlockForModel(blocks []Block, totalRecord int) ([]*model.Block, error) {
 	var listBlock []*model.Block
-	totalRecord, _ := Block{}.GetCountBlock()
 	for _, block := range blocks {
 		bytes, _ := block.Time.MarshalText()
 		t := &model.Block{
@@ -290,12 +291,13 @@ func (_ Block) FormatBsonMForModelBlockDetail(result bson.M) (*model.Block, erro
 	}, nil
 }
 
-func (_ Block) GetCountBlock() (int, error) {
+func (_ Block) GetCountBlock(condition bson.M) (int, error) {
 	result := []bson.M{}
 	var query = orm.NewQuery()
 	defer query.Release()
 	query.SetResult(&result).
 		SetCollection(CollectionNmBlock).
+		SetCondition(condition).
 		PipeQuery(
 			[]bson.M{
 				{"$group": bson.M{

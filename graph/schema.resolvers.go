@@ -152,11 +152,11 @@ func (r *queryResolver) Uptimes(ctx context.Context, operatorAddress *string) (*
 }
 
 func (r *queryResolver) ProposedBlocks(ctx context.Context, before *int, size *int, operatorAddress string) ([]*model.Block, error) {
-	blocks, err := document.Block{}.GetBlockListByOffsetAndSizeByOperatorAddress(*before, *size, operatorAddress)
+	blocks, totalRecord, err := document.Block{}.GetBlockListByOffsetAndSizeByOperatorAddress(*before, *size, operatorAddress)
 	if err != nil {
 		return []*model.Block{}, nil
 	}
-	return document.Block{}.FormatListBlockForModel(blocks)
+	return document.Block{}.FormatListBlockForModel(blocks, totalRecord)
 }
 
 func (r *queryResolver) PowerEvents(ctx context.Context, before *int, size *int, operatorAddress string) ([]*model.PowerEvent, error) {
