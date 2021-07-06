@@ -69,6 +69,10 @@ func (r *queryResolver) Validators(ctx context.Context) ([]*model.Validator, err
 	validatorFormat := document.Validator{}.FormatListValidator(validators)
 	var listValidator []*model.Validator
 	for index, validator := range validatorFormat {
+		uptime := 0
+		if index < 125 {
+			uptime = upTimeCount[validator.OperatorAddr]
+		}
 		commision, _ := utils.ParseStringToFloat(validator.Commission.CommissionRate.Rate)
 		t := &model.Validator{
 			Moniker:         validator.Description.Moniker,
@@ -78,7 +82,7 @@ func (r *queryResolver) Validators(ctx context.Context) ([]*model.Validator, err
 			Commission:      commision,
 			Jailed:          validator.Jailed,
 			Status:          validator.Status,
-			Uptime:          upTimeCount[validator.OperatorAddr],
+			Uptime:          uptime,
 			OverBlocks:      overBlocks,
 			Website:         validator.Description.Website,
 			Rank:            index + 1,
@@ -102,6 +106,11 @@ func (r *queryResolver) ValidatorDetail(ctx context.Context, operatorAddress *st
 		validatorFormat := document.Validator{}.FormatListValidator(validators)
 		rank = document.Validator{}.GetIndexFromFormatListValidator(validatorFormat, validator.OperatorAddr)
 	}
+
+	uptime := 0
+	if rank <= 125 {
+		uptime = upTimeCount[validator.OperatorAddr]
+	}
 	return &model.Validator{
 		Moniker:         validator.Description.Moniker,
 		OperatorAddress: validator.OperatorAddr,
@@ -110,7 +119,7 @@ func (r *queryResolver) ValidatorDetail(ctx context.Context, operatorAddress *st
 		Commission:      commision,
 		Jailed:          validator.Jailed,
 		Status:          validator.Status,
-		Uptime:          upTimeCount[validator.OperatorAddr],
+		Uptime:          uptime,
 		OverBlocks:      overBlocks,
 		Website:         validator.Description.Website,
 		Details:         validator.Description.Details,
