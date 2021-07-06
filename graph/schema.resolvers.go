@@ -69,7 +69,7 @@ func (r *queryResolver) Validators(ctx context.Context) ([]*model.Validator, err
 	validatorFormat := document.Validator{}.FormatListValidator(validators)
 	var listValidator []*model.Validator
 	for index, validator := range validatorFormat {
-		uptime := 0
+		uptime := overBlocks
 		if index < 125 {
 			uptime = upTimeCount[validator.OperatorAddr]
 		}
@@ -107,7 +107,7 @@ func (r *queryResolver) ValidatorDetail(ctx context.Context, operatorAddress *st
 		rank = document.Validator{}.GetIndexFromFormatListValidator(validatorFormat, validator.OperatorAddr)
 	}
 
-	uptime := 0
+	uptime := overBlocks
 	if rank <= 125 {
 		uptime = upTimeCount[validator.OperatorAddr]
 	}
