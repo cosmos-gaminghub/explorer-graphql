@@ -312,6 +312,23 @@ func (_ Block) GetCountBlock(condition bson.M) (int, error) {
 	return result[0]["count"].(int), nil
 }
 
+func (_ Block) GetCountTxs() (int64, error) {
+	result := bson.M{}
+	var query = orm.NewQuery()
+	defer query.Release()
+	query.SetResult(&result).
+		SetCollection(CollectionNmBlock).
+		PipeQuery(
+			[]bson.M{
+				{"$group": bson.M{
+					"_id":   "",
+					"count": bson.M{"$sum": "$num_txs"},
+				}},
+			},
+		)
+	return result["count"].(int64), nil
+}
+
 type BlockMeta struct {
 	BlockID BlockID `bson:"block_id"`
 	Header  Header  `bson:"header"`

@@ -202,7 +202,7 @@ func (r *queryResolver) Status(ctx context.Context) (*model.Status, error) {
 		return &model.Status{}, nil
 	}
 
-	totalNumTxs, err := document.CommonTx{}.GetCountTxs(nil)
+	totalNumTxs, err := document.Block{}.GetCountTxs()
 	if err != nil {
 		return &model.Status{}, nil
 	}
@@ -219,7 +219,7 @@ func (r *queryResolver) Status(ctx context.Context) (*model.Status, error) {
 		Timestamp:         string(bytes),
 		BlockTime:         int(BlockTime),
 		BondedTokens:      int(bondedToken),
-		TotalTxsNum:       totalNumTxs,
+		TotalTxsNum:       int(totalNumTxs),
 		TotalSupplyTokens: totalSupplyToken,
 	}, nil
 }
