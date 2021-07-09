@@ -51,6 +51,7 @@ type Content struct {
 	Type        string    `json:"type"`
 	Description string    `json:"description"`
 	Amount      []*Amount `json:"amount"`
+	Changes     []*Change `json:"changes"`
 }
 
 type Delegation struct {

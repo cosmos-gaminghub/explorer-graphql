@@ -34,6 +34,11 @@ type Content struct {
 		Denom  string `bson:"denom"`
 		Amount string `bson:"amount"`
 	} `bson:"amount"`
+	Changes []struct {
+		Key      string `bson:"key"`
+		Value    string `bson:"value"`
+		Subspace string `bson:"subspace"`
+	} `bson:"changes"`
 }
 
 type FinalTallyResult struct {
@@ -81,6 +86,7 @@ func (_ Proposal) FormatProposalForModel(proposal Proposal, moniker string) (lis
 			Description: proposal.Content.Description,
 			Type:        proposal.Content.Type,
 			Amount:      formatAmountForModelContent(proposal.Content),
+			Changes:     formatChangesForModel(proposal.Content),
 		},
 		Tally: &model.Tally{
 			Yes:        proposal.FinalTallyResult.Yes,
@@ -121,34 +127,19 @@ func formatTotalDepostForModel(totalDeposit []Amount) (td []*model.Amount) {
 	return td
 }
 
-// func formatDepositForModel(proposal Proposal) (listDeposit []*model.Deposit) {
-// 	if len(proposal.Deposit) > 0 {
-// 		for _, item := range proposal.Deposit {
-// 			d := &model.Deposit{
-// 				ProposalID: item.ProposalID,
-// 				Depositor:  item.Depositor,
-// 				Amount:     []*model.Amount{},
-// 			}
-// 			d.Amount = formatAmountForModel(item)
-// 			listDeposit = append(listDeposit, d)
-// 		}
-// 	}
-// 	return listDeposit
-// }
-
-// func formatVoteForModel(proposal Proposal) (listVote []*model.Vote) {
-// 	if len(proposal.Deposit) > 0 {
-// 		for _, item := range proposal.Vote {
-// 			v := &model.Vote{
-// 				ProposalID: item.ProposalId,
-// 				Voter:      item.Voter,
-// 				Option:     item.Option,
-// 			}
-// 			listVote = append(listVote, v)
-// 		}
-// 	}
-// 	return listVote
-// }
+func formatChangesForModel(content Content) (listChange []*model.Change) {
+	if len(content.Changes) > 0 {
+		for _, item := range content.Changes {
+			c := &model.Change{
+				Key:      item.Key,
+				Value:    item.Value,
+				Subspace: item.Subspace,
+			}
+			listChange = append(listChange, c)
+		}
+	}
+	return listChange
+}
 
 func formatAmountForModel(deposit Deposit) (listAmount []*model.Amount) {
 	if len(deposit.Amount) > 0 {
