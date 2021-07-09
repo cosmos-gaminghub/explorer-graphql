@@ -62,13 +62,13 @@ func (_ Proposal) QueryProposalById(ProposalId int) (Proposal, error) {
 
 func (_ Proposal) FormatListProposalForModel(proposals []Proposal) (listProposal []*model.Proposal, err error) {
 	for _, proposal := range proposals {
-		t, _ := Proposal{}.FormatProposalForModel(proposal)
+		t, _ := Proposal{}.FormatProposalForModel(proposal, "")
 		listProposal = append(listProposal, t)
 	}
 	return listProposal, nil
 }
 
-func (_ Proposal) FormatProposalForModel(proposal Proposal) (listProposal *model.Proposal, err error) {
+func (_ Proposal) FormatProposalForModel(proposal Proposal, moniker string) (listProposal *model.Proposal, err error) {
 	submitTime, _ := proposal.SubmitTime.MarshalText()
 	vottingStart, _ := proposal.VotingStartTime.MarshalText()
 	votingEndTime, _ := proposal.VotingEndTime.MarshalText()
@@ -92,6 +92,7 @@ func (_ Proposal) FormatProposalForModel(proposal Proposal) (listProposal *model
 		ID:           proposal.ProposalId,
 		SubmitTime:   string(submitTime),
 		TotalDeposit: formatTotalDepostForModel(proposal.TotalDeposit),
+		Moniker:      moniker,
 	}, err
 }
 
