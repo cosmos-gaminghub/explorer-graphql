@@ -102,6 +102,7 @@ type Content {
 	type: String!
 	description: String!
 	amount: [Amount!]!
+	changes: [Change!]!
 }
 
 type Amount {
