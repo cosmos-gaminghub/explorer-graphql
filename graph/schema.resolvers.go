@@ -185,10 +185,18 @@ func (r *queryResolver) Proposals(ctx context.Context) ([]*model.Proposal, error
 
 func (r *queryResolver) ProposalDetail(ctx context.Context, proposalID int) (*model.Proposal, error) {
 	proposal, err := document.Proposal{}.QueryProposalById(proposalID)
+	validator, err := document.Validator{}.QueryValidatorDetailByAccAddr(proposal.Proposer)
+
+	var moniker string
+	if err == nil {
+		moniker = validator.Description.Moniker
+	}
+
 	if err != nil {
 		return &model.Proposal{}, nil
 	}
-	return document.Proposal{}.FormatProposalForModel(proposal)
+
+	return document.Proposal{}.FormatProposalForModel(proposal, moniker)
 }
 
 func (r *queryResolver) Status(ctx context.Context) (*model.Status, error) {

@@ -108,6 +108,7 @@ type Proposal struct {
 	Tally        *Tally    `json:"tally"`
 	Content      *Content  `json:"content"`
 	Proposer     string    `json:"proposer"`
+	Moniker      string    `json:"moniker"`
 	TotalDeposit []*Amount `json:"total_deposit"`
 }
 

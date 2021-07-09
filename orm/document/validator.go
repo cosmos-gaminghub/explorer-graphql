@@ -23,6 +23,7 @@ const (
 	ValidatorFieldTokens           = "tokens"
 	ValidatorFieldDelegatorShares  = "delegator_shares"
 	ValidatorFieldIcon             = "icons"
+	ValidatorFieldValidatorAddress = "account_address"
 	ValidatorStatusValUnbonded     = 0
 	ValidatorStatusValUnbonding    = 1
 	ValidatorStatusValBonded       = 2
@@ -191,83 +192,6 @@ func (v Validator) QueryValidatorMonikerOpAddrByHashAddr(hashAddr []string) ([]V
 	return validators, err
 }
 
-// func (_ Validator) GetValidatorListByPage(typ string, page, size int, ispage, total bool) (int, []Validator, error) {
-
-// 	var query = orm.NewQuery()
-// 	defer query.Release()
-// 	var validators []Validator
-// 	condition := bson.M{}
-// 	switch typ {
-// 	case types.RoleValidator:
-// 		condition[ValidatorFieldJailed] = false
-// 		condition[ValidatorFieldStatus] = types.Bonded
-// 		break
-// 	case types.RoleCandidate:
-// 		condition[ValidatorFieldJailed] = false
-// 		condition[ValidatorFieldStatus] = bson.M{
-// 			"$in": []int{types.Unbonded, types.Unbonding},
-// 		}
-// 		break
-// 	case types.RoleJailed:
-// 		condition[ValidatorFieldJailed] = true
-// 		break
-// 	default:
-// 	}
-
-// 	if ispage {
-// 		query.SetCollection(CollectionNmValidator).
-// 			SetCondition(condition).
-// 			SetSort(desc(ValidatorFieldVotingPower)).
-// 			SetPage(page).
-// 			SetSize(size).
-// 			SetResult(&validators)
-// 	} else {
-// 		query.SetCollection(CollectionNmValidator).
-// 			SetCondition(condition).
-// 			SetSort(desc(ValidatorFieldVotingPower)).
-// 			SetResult(&validators)
-// 	}
-
-// 	count, err := query.ExecPage(total)
-
-// 	return count, validators, err
-// }
-
-// func (_ Validator) GetCandidatesTopN() ([]Validator, int64, map[string]int, error) {
-// 	var validators []Validator
-// 	var query = orm.NewQuery()
-// 	defer query.Release()
-
-// 	condition := bson.M{}
-// 	condition[ValidatorFieldJailed] = false
-// 	condition[ValidatorFieldStatus] = types.Bonded
-
-// 	query.SetCollection(CollectionNmValidator).
-// 		SetCondition(condition).
-// 		SetSort(desc(ValidatorFieldVotingPower)).SetSize(10).
-// 		SetResult(&validators)
-
-// 	err := query.Exec()
-// 	if err != nil {
-// 		return nil, 0, nil, err
-// 	}
-
-// 	var allPower vo.CountVo
-// 	query.SetResult(&allPower)
-// 	query.PipeQuery(
-// 		[]bson.M{
-// 			{"$match": condition},
-// 			{"$group": bson.M{
-// 				"_id":   ValidatorFieldVotingPower,
-// 				"count": bson.M{"$sum": "$voting_power"},
-// 			}},
-// 		},
-// 	)
-
-// 	upTimeMap := getValUpTime(query)
-
-// 	return validators, int64(allPower.Count), upTimeMap, err
-// }
 func GetValidatorByAddr(addr string) (Validator, error) {
 	db := getDb()
 	c := db.C(CollectionNmValidator)
@@ -365,6 +289,19 @@ func (_ Validator) QueryValidatorDetailByOperatorAddr(opAddr string) (Validator,
 
 	valCondition := bson.M{
 		ValidatorFieldOperatorAddress: opAddr,
+	}
+
+	err := queryOne(CollectionNmValidator, nil, valCondition, &validator)
+
+	return validator, err
+}
+
+func (_ Validator) QueryValidatorDetailByAccAddr(accAddress string) (Validator, error) {
+
+	validator := Validator{}
+
+	valCondition := bson.M{
+		ValidatorFieldValidatorAddress: accAddress,
 	}
 
 	err := queryOne(CollectionNmValidator, nil, valCondition, &validator)
@@ -477,34 +414,3 @@ func (_ Validator) GetIndexFromFormatListValidator(validators []Validator, opera
 	}
 	return rank
 }
-
-// func getValUpTime(fromHeight int64, toHeight int64) map[string]int {
-// 	var result []MissedBlock
-// 	var upTimeMap = make(map[string]int)
-// 	var selector = bson.M{"height": 1, "operator_address": 1}
-// 	query.Reset().
-// 		SetCollection(CollectionNmBlock).
-// 		SetSelector(selector).
-// 		SetSize(100).
-// 		SetSort(desc(Block_Field_Height)).
-// 		SetResult(&result)
-
-// 	if err := query.Exec(); err != nil {
-// 		log.Fatal("getValUpTime error")
-// 	}
-// 	for _, block := range result {
-// 		for _, pre := range block.Block.LastCommit.Precommits {
-// 			upTimeMap[pre.ValidatorAddress]++
-// 		}
-// 	}
-// 	return upTimeMap
-// }
-
-// update document by primary key
-// func (_ Validator) UpdateByPk(validator Validator) error {
-// 	db := orm.GetDatabase()
-// 	defer db.Session.Close()
-
-// 	c := db.C(CollectionNmValidator)
-// 	return c.Update(validator.PkKvPair(), validator)
-// }

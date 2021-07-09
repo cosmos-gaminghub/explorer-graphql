@@ -72,6 +72,7 @@ type Proposal {
 	tally: Tally!
 	content: Content!
 	proposer: String!
+	moniker: String!
 	total_deposit: [Amount!]!
 }
 
