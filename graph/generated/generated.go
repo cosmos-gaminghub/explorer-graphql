@@ -87,7 +87,7 @@ type ComplexityRoot struct {
 	}
 
 	Content struct {
-		Changes     func(childComplexity int) int
+		Amount      func(childComplexity int) int
 		Description func(childComplexity int) int
 		Title       func(childComplexity int) int
 		Type        func(childComplexity int) int
@@ -489,12 +489,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Commissions.Commission(childComplexity), true
 
-	case "Content.changes":
-		if e.complexity.Content.Changes == nil {
+	case "Content.amount":
+		if e.complexity.Content.Amount == nil {
 			break
 		}
 
-		return e.complexity.Content.Changes(childComplexity), true
+		return e.complexity.Content.Amount(childComplexity), true
 
 	case "Content.description":
 		if e.complexity.Content.Description == nil {
@@ -1666,7 +1666,7 @@ type Content {
 	title: String!
 	type: String!
 	description: String!
-	changes: [Change!]!
+	amount: [Amount!]!
 }
 
 type Amount {
@@ -3084,7 +3084,7 @@ func (ec *executionContext) _Content_description(ctx context.Context, field grap
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Content_changes(ctx context.Context, field graphql.CollectedField, obj *model.Content) (ret graphql.Marshaler) {
+func (ec *executionContext) _Content_amount(ctx context.Context, field graphql.CollectedField, obj *model.Content) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -3102,7 +3102,7 @@ func (ec *executionContext) _Content_changes(ctx context.Context, field graphql.
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Changes, nil
+		return obj.Amount, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -3114,9 +3114,9 @@ func (ec *executionContext) _Content_changes(ctx context.Context, field graphql.
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]*model.Change)
+	res := resTmp.([]*model.Amount)
 	fc.Result = res
-	return ec.marshalNChange2ᚕᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐChangeᚄ(ctx, field.Selections, res)
+	return ec.marshalNAmount2ᚕᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐAmountᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Delegation_moniker(ctx context.Context, field graphql.CollectedField, obj *model.Delegation) (ret graphql.Marshaler) {
@@ -9174,8 +9174,8 @@ func (ec *executionContext) _Content(ctx context.Context, sel ast.SelectionSet, 
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "changes":
-			out.Values[i] = ec._Content_changes(ctx, field, obj)
+		case "amount":
+			out.Values[i] = ec._Content_amount(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
@@ -11066,53 +11066,6 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 		}
 	}
 	return res
-}
-
-func (ec *executionContext) marshalNChange2ᚕᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐChangeᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Change) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalNChange2ᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐChange(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
-	return ret
-}
-
-func (ec *executionContext) marshalNChange2ᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐChange(ctx context.Context, sel ast.SelectionSet, v *model.Change) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	return ec._Change(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNCommission2githubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐCommission(ctx context.Context, sel ast.SelectionSet, v model.Commission) graphql.Marshaler {

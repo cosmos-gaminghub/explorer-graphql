@@ -30,11 +30,10 @@ type Content struct {
 	Type        string `bson:"type"`
 	Title       string `bson:"title"`
 	Description string `bson:"description"`
-	Changes     []struct {
-		Key      string `bson:"key"`
-		Value    string `bson:"value"`
-		Subspace string `bson:"subspace"`
-	}
+	Amount      []struct {
+		Denom  string `bson:"denom"`
+		Amount string `bson:"amount"`
+	} `bson:"amount"`
 }
 
 type FinalTallyResult struct {
@@ -81,7 +80,7 @@ func (_ Proposal) FormatProposalForModel(proposal Proposal, moniker string) (lis
 			Title:       proposal.Content.Title,
 			Description: proposal.Content.Description,
 			Type:        proposal.Content.Type,
-			Changes:     formatChangesForModel(proposal.Content),
+			Amount:      formatAmountForModelContent(proposal.Content),
 		},
 		Tally: &model.Tally{
 			Yes:        proposal.FinalTallyResult.Yes,
@@ -96,18 +95,17 @@ func (_ Proposal) FormatProposalForModel(proposal Proposal, moniker string) (lis
 	}, err
 }
 
-func formatChangesForModel(content Content) (listChange []*model.Change) {
-	if len(content.Changes) > 0 {
-		for _, item := range content.Changes {
-			c := &model.Change{
-				Key:      item.Key,
-				Value:    item.Value,
-				Subspace: item.Subspace,
+func formatAmountForModelContent(content Content) (listAmount []*model.Amount) {
+	if len(content.Amount) > 0 {
+		for _, item := range content.Amount {
+			c := &model.Amount{
+				Denom:  item.Denom,
+				Amount: item.Amount,
 			}
-			listChange = append(listChange, c)
+			listAmount = append(listAmount, c)
 		}
 	}
-	return listChange
+	return listAmount
 }
 
 func formatTotalDepostForModel(totalDeposit []Amount) (td []*model.Amount) {
