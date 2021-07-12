@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 
 	"github.com/cosmos-gaminghub/exploder-graphql/conf"
 	"github.com/cosmos-gaminghub/exploder-graphql/graph/model"
