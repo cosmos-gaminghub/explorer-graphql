@@ -287,7 +287,11 @@ func (r *queryResolver) Redelegations(ctx context.Context, accAddress string) (*
 	mapAccAndMoniker := document.Validator{}.MapOperatorAndMoniker(validators)
 	for _, item := range result.RedelegationResponses {
 		if v, found := mapAccAndMoniker[item.Redelegation.ValidatorSrcAddress]; found {
-			item.Redelegation.Moniker = v
+			item.Redelegation.MonikerSrc = v
+		}
+
+		if v, found := mapAccAndMoniker[item.Redelegation.ValidatorDstAddress]; found {
+			item.Redelegation.MonikerDst = v
 		}
 	}
 	return result, err
