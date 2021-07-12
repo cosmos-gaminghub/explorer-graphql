@@ -203,8 +203,9 @@ type Unbonding struct {
 }
 
 type UnbondingResponse struct {
-	DelegatorAddress *string  `json:"delegator_address"`
-	ValidatorAddress *string  `json:"validator_address"`
+	DelegatorAddress string   `json:"delegator_address"`
+	ValidatorAddress string   `json:"validator_address"`
+	Moniker          string   `json:"moniker"`
 	Entries          []*Entry `json:"entries"`
 }
 

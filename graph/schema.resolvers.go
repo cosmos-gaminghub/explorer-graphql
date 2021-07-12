@@ -277,13 +277,22 @@ func (r *queryResolver) Delegations(ctx context.Context, accAddress string) ([]*
 }
 
 func (r *queryResolver) Unbonding(ctx context.Context, accAddress string) (*model.Unbonding, error) {
-	return client.GetUnbonding(accAddress)
+	result, err := client.GetUnbonding(accAddress)
+	listOpAddress := client.GetListAccAddressFromUnbonding(result)
+	validators, _ := document.Validator{}.QueryValidatorMonikerOpAddr(listOpAddress)
+	mapAccAndMoniker := document.Validator{}.MapOperatorAndMoniker(validators)
+	for _, item := range result.UnbondingResponses {
+		if v, found := mapAccAndMoniker[item.ValidatorAddress]; found {
+			item.Moniker = v
+		}
+	}
+	return result, err
 }
 
 func (r *queryResolver) Redelegations(ctx context.Context, accAddress string) (*model.Redelegations, error) {
 	result, err := client.GetRedelegation(accAddress)
-	listAccAddress := client.GetListAccAddressFromRedelegation(result)
-	validators, _ := document.Validator{}.QueryValidatorMonikerOpAddr(listAccAddress)
+	listOpAddress := client.GetListAccAddressFromRedelegation(result)
+	validators, _ := document.Validator{}.QueryValidatorMonikerOpAddr(listOpAddress)
 	mapAccAndMoniker := document.Validator{}.MapOperatorAndMoniker(validators)
 	for _, item := range result.RedelegationResponses {
 		if v, found := mapAccAndMoniker[item.Redelegation.ValidatorSrcAddress]; found {

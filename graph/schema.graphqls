@@ -174,8 +174,9 @@ type Commission {
 }
 
 type UnbondingResponse {
-	delegator_address: String,
-	validator_address: String,
+	delegator_address: String!,
+	validator_address: String!,
+	moniker: String!
 	entries: [Entry!]!
 }
 
