@@ -74,6 +74,7 @@ type Proposal {
 	proposer: String!
 	moniker: String!
 	total_deposit: [Amount!]!
+	deposit_end_time: String!
 }
 
 type Tally {

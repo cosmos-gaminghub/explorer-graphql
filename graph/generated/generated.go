@@ -141,16 +141,17 @@ type ComplexityRoot struct {
 	}
 
 	Proposal struct {
-		Content      func(childComplexity int) int
-		ID           func(childComplexity int) int
-		Moniker      func(childComplexity int) int
-		Proposer     func(childComplexity int) int
-		Status       func(childComplexity int) int
-		SubmitTime   func(childComplexity int) int
-		Tally        func(childComplexity int) int
-		TotalDeposit func(childComplexity int) int
-		VotingEnd    func(childComplexity int) int
-		VotingStart  func(childComplexity int) int
+		Content        func(childComplexity int) int
+		DepositEndTime func(childComplexity int) int
+		ID             func(childComplexity int) int
+		Moniker        func(childComplexity int) int
+		Proposer       func(childComplexity int) int
+		Status         func(childComplexity int) int
+		SubmitTime     func(childComplexity int) int
+		Tally          func(childComplexity int) int
+		TotalDeposit   func(childComplexity int) int
+		VotingEnd      func(childComplexity int) int
+		VotingStart    func(childComplexity int) int
 	}
 
 	Query struct {
@@ -706,6 +707,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Proposal.Content(childComplexity), true
+
+	case "Proposal.deposit_end_time":
+		if e.complexity.Proposal.DepositEndTime == nil {
+			break
+		}
+
+		return e.complexity.Proposal.DepositEndTime(childComplexity), true
 
 	case "Proposal.id":
 		if e.complexity.Proposal.ID == nil {
@@ -1647,6 +1655,7 @@ type Proposal {
 	proposer: String!
 	moniker: String!
 	total_deposit: [Amount!]!
+	deposit_end_time: String!
 }
 
 type Tally {
@@ -4371,6 +4380,41 @@ func (ec *executionContext) _Proposal_total_deposit(ctx context.Context, field g
 	res := resTmp.([]*model.Amount)
 	fc.Result = res
 	return ec.marshalNAmount2ᚕᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐAmountᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Proposal_deposit_end_time(ctx context.Context, field graphql.CollectedField, obj *model.Proposal) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Proposal",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.DepositEndTime, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_blocks(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -9561,6 +9605,11 @@ func (ec *executionContext) _Proposal(ctx context.Context, sel ast.SelectionSet,
 			}
 		case "total_deposit":
 			out.Values[i] = ec._Proposal_total_deposit(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "deposit_end_time":
+			out.Values[i] = ec._Proposal_deposit_end_time(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
