@@ -101,16 +101,17 @@ type Price struct {
 }
 
 type Proposal struct {
-	ID           int       `json:"id"`
-	Status       string    `json:"status"`
-	VotingStart  string    `json:"voting_start"`
-	VotingEnd    string    `json:"voting_end"`
-	SubmitTime   string    `json:"submit_time"`
-	Tally        *Tally    `json:"tally"`
-	Content      *Content  `json:"content"`
-	Proposer     string    `json:"proposer"`
-	Moniker      string    `json:"moniker"`
-	TotalDeposit []*Amount `json:"total_deposit"`
+	ID             int       `json:"id"`
+	Status         string    `json:"status"`
+	VotingStart    string    `json:"voting_start"`
+	VotingEnd      string    `json:"voting_end"`
+	SubmitTime     string    `json:"submit_time"`
+	Tally          *Tally    `json:"tally"`
+	Content        *Content  `json:"content"`
+	Proposer       string    `json:"proposer"`
+	Moniker        string    `json:"moniker"`
+	TotalDeposit   []*Amount `json:"total_deposit"`
+	DepositEndTime string    `json:"deposit_end_time"`
 }
 
 type Redelegation struct {

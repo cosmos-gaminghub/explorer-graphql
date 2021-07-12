@@ -20,6 +20,7 @@ type Proposal struct {
 	Content          Content          `bson:"content" json:"content"`
 	SubmitTime       time.Time        `bson:"submit_time"`
 	FinalTallyResult FinalTallyResult `bson:"final_tally_result" json:"final_tally_result"`
+	DepositEndTime   time.Time        `bson:"deposit_end_time"`
 	VotingEndTime    time.Time        `bson:"voting_end_time"`
 	VotingStartTime  time.Time        `bson:"voting_start_time"`
 	Proposer         string           `bson:"proposer"`
@@ -76,11 +77,13 @@ func (_ Proposal) FormatProposalForModel(proposal Proposal, moniker string) (lis
 	submitTime, _ := proposal.SubmitTime.MarshalText()
 	vottingStart, _ := proposal.VotingStartTime.MarshalText()
 	votingEndTime, _ := proposal.VotingEndTime.MarshalText()
+	depositEndTime, _ := proposal.DepositEndTime.MarshalText()
 	return &model.Proposal{
-		Proposer:    proposal.Proposer,
-		Status:      proposal.ProposalStatus,
-		VotingStart: string(vottingStart),
-		VotingEnd:   string(votingEndTime),
+		Proposer:       proposal.Proposer,
+		Status:         proposal.ProposalStatus,
+		VotingStart:    string(vottingStart),
+		VotingEnd:      string(votingEndTime),
+		DepositEndTime: string(depositEndTime),
 		Content: &model.Content{
 			Title:       proposal.Content.Title,
 			Description: proposal.Content.Description,
