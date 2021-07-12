@@ -32,7 +32,6 @@ func GetDelegation(accAddress string) (DelegationResult, error) {
 
 	var result DelegationResult
 	if err := json.Unmarshal(resBytes, &result); err != nil {
-		log.Fatalln("Unmarshal delegation error")
 		return result, errors.New("Unmarshal delegation error")
 	}
 
