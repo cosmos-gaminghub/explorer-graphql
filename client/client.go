@@ -148,3 +148,10 @@ func GetListAccAddressFromRedelegation(result *model.Redelegations) (listAccAddr
 	}
 	return listAccAddress
 }
+
+func GetListAccAddressFromUnbonding(result *model.Unbonding) (listAccAddress []string) {
+	for _, item := range result.UnbondingResponses {
+		listAccAddress = append(listAccAddress, item.ValidatorAddress)
+	}
+	return listAccAddress
+}
