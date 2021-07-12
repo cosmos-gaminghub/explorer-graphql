@@ -217,6 +217,7 @@ type Redelegation {
 	delegator_address: String!,
 	validator_dst_address: String!,
 	validator_src_address: String!,
+	moniker: String!
 	entries: [RedelegationEntry!]!
 }
 

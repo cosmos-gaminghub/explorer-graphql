@@ -118,6 +118,7 @@ type Redelegation struct {
 	DelegatorAddress    string               `json:"delegator_address"`
 	ValidatorDstAddress string               `json:"validator_dst_address"`
 	ValidatorSrcAddress string               `json:"validator_src_address"`
+	Moniker             string               `json:"moniker"`
 	Entries             []*RedelegationEntry `json:"entries"`
 }
 

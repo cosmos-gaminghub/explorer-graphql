@@ -281,7 +281,16 @@ func (r *queryResolver) Unbonding(ctx context.Context, accAddress string) (*mode
 }
 
 func (r *queryResolver) Redelegations(ctx context.Context, accAddress string) (*model.Redelegations, error) {
-	return client.GetRedelegation(accAddress)
+	result, err := client.GetRedelegation(accAddress)
+	listAccAddress := client.GetListAccAddressFromRedelegation(result)
+	validators, _ := document.Validator{}.QueryValidatorMonikerOpAddr(listAccAddress)
+	mapAccAndMoniker := document.Validator{}.MapOperatorAndMoniker(validators)
+	for _, item := range result.RedelegationResponses {
+		if v, found := mapAccAndMoniker[item.Redelegation.ValidatorSrcAddress]; found {
+			item.Redelegation.Moniker = v
+		}
+	}
+	return result, err
 }
 
 func (r *queryResolver) Deposit(ctx context.Context, proposalID int) ([]*model.Deposit, error) {
