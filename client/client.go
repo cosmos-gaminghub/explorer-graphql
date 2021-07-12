@@ -144,6 +144,7 @@ func GetRedelegation(accAddress string) (result *model.Redelegations, err error)
 func GetListAccAddressFromRedelegation(result *model.Redelegations) (listAccAddress []string) {
 	for _, item := range result.RedelegationResponses {
 		listAccAddress = append(listAccAddress, item.Redelegation.ValidatorSrcAddress)
+		listAccAddress = append(listAccAddress, item.Redelegation.ValidatorDstAddress)
 	}
 	return listAccAddress
 }
