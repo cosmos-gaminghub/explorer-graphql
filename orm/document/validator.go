@@ -309,6 +309,18 @@ func (_ Validator) QueryValidatorDetailByAccAddr(accAddress string) (Validator, 
 	return validator, err
 }
 
+func (_ Validator) QueryValidatorDetailByListAccAddr(listAccAddress []string) ([]Validator, error) {
+
+	var validators []Validator
+	var selector = bson.M{
+		"description.moniker":          1,
+		ValidatorFieldValidatorAddress: 1,
+	}
+
+	err := queryAll(CollectionNmValidator, selector, bson.M{ValidatorFieldValidatorAddress: bson.M{"$in": listAccAddress}}, "", 0, &validators)
+	return validators, err
+}
+
 func (_ Validator) QueryTotalActiveValidatorVotingPower() (int64, error) {
 
 	validators := []Validator{}
@@ -359,6 +371,14 @@ func (_ Validator) GetListMapOperatorAndMoniker(delegationResult client.Delegati
 				break
 			}
 		}
+	}
+	return mapList
+}
+
+func (_ Validator) MapOperatorAndMoniker(validators []Validator) map[string]string {
+	var mapList = make(map[string]string)
+	for _, validator := range validators {
+		mapList[validator.OperatorAddr] = validator.Description.Moniker
 	}
 	return mapList
 }

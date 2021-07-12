@@ -184,6 +184,7 @@ type ComplexityRoot struct {
 	Redelegation struct {
 		DelegatorAddress    func(childComplexity int) int
 		Entries             func(childComplexity int) int
+		Moniker             func(childComplexity int) int
 		ValidatorDstAddress func(childComplexity int) int
 		ValidatorSrcAddress func(childComplexity int) int
 	}
@@ -1059,6 +1060,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Redelegation.Entries(childComplexity), true
 
+	case "Redelegation.moniker":
+		if e.complexity.Redelegation.Moniker == nil {
+			break
+		}
+
+		return e.complexity.Redelegation.Moniker(childComplexity), true
+
 	case "Redelegation.validator_dst_address":
 		if e.complexity.Redelegation.ValidatorDstAddress == nil {
 			break
@@ -1789,6 +1797,7 @@ type Redelegation {
 	delegator_address: String!,
 	validator_dst_address: String!,
 	validator_src_address: String!,
+	moniker: String!
 	entries: [RedelegationEntry!]!
 }
 
@@ -5548,6 +5557,41 @@ func (ec *executionContext) _Redelegation_validator_src_address(ctx context.Cont
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.ValidatorSrcAddress, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Redelegation_moniker(ctx context.Context, field graphql.CollectedField, obj *model.Redelegation) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Redelegation",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Moniker, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -9978,6 +10022,11 @@ func (ec *executionContext) _Redelegation(ctx context.Context, sel ast.Selection
 			}
 		case "validator_src_address":
 			out.Values[i] = ec._Redelegation_validator_src_address(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "moniker":
+			out.Values[i] = ec._Redelegation_moniker(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
