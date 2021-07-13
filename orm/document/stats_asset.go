@@ -25,7 +25,12 @@ func (_ StatAssetInfoList20Minute) GetList() ([]StatAssetInfoList20Minute, error
 	var statsAssets []StatAssetInfoList20Minute
 
 	sort := desc(StatsAsset_Field_Time)
-	err := queryAll(CollectionNmStatsAsset, nil, nil, sort, 72, &statsAssets)
+	condition := bson.M{
+		StatsAsset_Field_Time: bson.M{
+			"$gte": time.Now().AddDate(0, 0, -1),
+		},
+	}
+	err := queryAll(CollectionNmStatsAsset, nil, condition, sort, 0, &statsAssets)
 
 	return statsAssets, err
 }
