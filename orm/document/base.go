@@ -2,7 +2,6 @@ package document
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/cosmos-gaminghub/exploder-graphql/orm"
 
@@ -26,9 +25,9 @@ func queryAll(collation string, selector, condition bson.M, sort string, size in
 
 	err := query.Exec()
 	if err != nil {
-		log.Fatal("queryAll error")
+		return err
 	}
-	return err
+	return nil
 }
 
 func queryOne(collation string, selector, condition bson.M, result interface{}) error {
