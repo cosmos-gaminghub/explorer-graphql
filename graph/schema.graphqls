@@ -97,6 +97,7 @@ type Vote {
   option: String!
   tx_hash: String!
   time: String!
+  moniker: String!
 }
 
 type Content {

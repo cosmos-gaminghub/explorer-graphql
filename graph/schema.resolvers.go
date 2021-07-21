@@ -327,15 +327,27 @@ func (r *queryResolver) Deposit(ctx context.Context, proposalID int) ([]*model.D
 func (r *queryResolver) Vote(ctx context.Context, before *int, size *int, proposalID int) ([]*model.Vote, error) {
 	txs, _ := document.CommonTx{}.QueryProposalVote(*before, *size, proposalID)
 	var listVote []*model.Vote
+	var listAccAddress []string
+	for _, item := range txs {
+		listAccAddress = append(listAccAddress, document.CommonTx{}.GetValueOfLog(item.Logs, "message", "sender"))
+	}
+	mapAccAndMoniker := document.Validator{}.GetListMapAccAndMoniker(listAccAddress)
 	for _, item := range txs {
 		bytes, _ := item.Timestamp.MarshalText()
 		option := document.CommonTx{}.GetValueOfLog(item.Logs, "proposal_vote", "option")
 		voter := document.CommonTx{}.GetValueOfLog(item.Logs, "message", "sender")
+
+		var moniker string
+		if v, ok := mapAccAndMoniker[voter]; ok {
+			moniker = v
+		}
+
 		t := &model.Vote{
-			TxHash: item.TxHash,
-			Time:   string(bytes),
-			Option: option,
-			Voter:  voter,
+			TxHash:  item.TxHash,
+			Time:    string(bytes),
+			Option:  option,
+			Voter:   voter,
+			Moniker: moniker,
 		}
 		listVote = append(listVote, t)
 	}
