@@ -40,6 +40,13 @@ type Content struct {
 		Value    string `bson:"value"`
 		Subspace string `bson:"subspace"`
 	} `bson:"changes"`
+	Plan struct {
+		Name                string    `bson:"name"`
+		Time                time.Time `bson:"time"`
+		Height              string    `bson:"height"`
+		Info                string    `bson:"info"`
+		UpgradedClientState string    `bson:"upgraded_client_state"`
+	} `json:"bson"`
 }
 
 type FinalTallyResult struct {
@@ -90,6 +97,7 @@ func (_ Proposal) FormatProposalForModel(proposal Proposal, moniker string) (lis
 			Type:        proposal.Content.Type,
 			Amount:      formatAmountForModelContent(proposal.Content),
 			Changes:     formatChangesForModel(proposal.Content),
+			Plan:        formatPlanForModel(proposal.Content),
 		},
 		Tally: &model.Tally{
 			Yes:        proposal.FinalTallyResult.Yes,
@@ -142,6 +150,17 @@ func formatChangesForModel(content Content) (listChange []*model.Change) {
 		}
 	}
 	return listChange
+}
+
+func formatPlanForModel(content Content) (plan *model.Plan) {
+	time, _ := content.Plan.Time.MarshalText()
+	return &model.Plan{
+		Name:                content.Plan.Name,
+		Height:              content.Plan.Height,
+		Info:                content.Plan.Info,
+		Time:                string(time),
+		UpgradedClientState: content.Plan.UpgradedClientState,
+	}
 }
 
 func formatAmountForModel(deposit Deposit) (listAmount []*model.Amount) {
