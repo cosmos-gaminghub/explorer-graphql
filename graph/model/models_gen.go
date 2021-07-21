@@ -196,6 +196,7 @@ type Tx struct {
 	Memo      string `json:"memo"`
 	GasUsed   int    `json:"gas_used"`
 	GasWanted int    `json:"gas_wanted"`
+	RawLog    string `json:"raw_log"`
 }
 
 type Unbonding struct {

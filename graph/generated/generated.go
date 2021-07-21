@@ -261,6 +261,7 @@ type ComplexityRoot struct {
 		Logs      func(childComplexity int) int
 		Memo      func(childComplexity int) int
 		Messages  func(childComplexity int) int
+		RawLog    func(childComplexity int) int
 		Status    func(childComplexity int) int
 		Timestamp func(childComplexity int) int
 		TxHash    func(childComplexity int) int
@@ -1350,6 +1351,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Tx.Messages(childComplexity), true
 
+	case "Tx.raw_log":
+		if e.complexity.Tx.RawLog == nil {
+			break
+		}
+
+		return e.complexity.Tx.RawLog(childComplexity), true
+
 	case "Tx.status":
 		if e.complexity.Tx.Status == nil {
 			break
@@ -1604,240 +1612,241 @@ func (ec *executionContext) introspectType(name string) (*introspection.Type, er
 
 var sources = []*ast.Source{
 	{Name: "graph/schema.graphqls", Input: `type Block {
-	height: Int!
-	hash: String!
-	proposer_addr: String!
-	num_txs: Int!
-	time: String!
-	moniker: String!
-	operator_address: String!
-	total_records: Int!
+  height: Int!
+  hash: String!
+  proposer_addr: String!
+  num_txs: Int!
+  time: String!
+  moniker: String!
+  operator_address: String!
+  total_records: Int!
 }
 
 type Validator {
-	moniker: String!
-	voting_power: Int!
-	cumulative_share: String! 
-	uptime: Int!
-	over_blocks: Int!
-	commission: Float!
-	operator_address: String!
-	acc_address: String!
-	jailed: Boolean!
-	status: String!
-	website: String!
-	rank: Int!
-	details: String!
+  moniker: String!
+  voting_power: Int!
+  cumulative_share: String!
+  uptime: Int!
+  over_blocks: Int!
+  commission: Float!
+  operator_address: String!
+  acc_address: String!
+  jailed: Boolean!
+  status: String!
+  website: String!
+  rank: Int!
+  details: String!
 }
 
 type UptimeResult {
-	last_height: Int!
-	uptime: [Uptime!]!
+  last_height: Int!
+  uptime: [Uptime!]!
 }
 type Uptime {
-	height: Int!
-	timestamp: String!
+  height: Int!
+  timestamp: String!
 }
 
 type PowerEvent {
-	height: Int!
-	tx_hash: String!
-	timestamp: String!
-	amount: Int!
-	type: String!
-	total_records: Int!
+  height: Int!
+  tx_hash: String!
+  timestamp: String!
+  amount: Int!
+  type: String!
+  total_records: Int!
 }
 
 type Delegation {
-	moniker: String!
-	delegator_address: String!
-	validator_address: String!
-	amount: Int!
+  moniker: String!
+  delegator_address: String!
+  validator_address: String!
+  amount: Int!
 }
 
 type Tx {
-	tx_hash: String!
-	status: Int!
-	fee: String!
-	height: Int!
-	timestamp: String!,
-	messages: String!
-	logs: String!,
-	memo: String!
-	gas_used: Int!
-	gas_wanted: Int!
+  tx_hash: String!
+  status: Int!
+  fee: String!
+  height: Int!
+  timestamp: String!
+  messages: String!
+  logs: String!
+  memo: String!
+  gas_used: Int!
+  gas_wanted: Int!
+  raw_log: String!
 }
 
 type Proposal {
-	id: Int!
-	status: String!
-	voting_start: String!
-	voting_end: String!
-	submit_time: String!
-	tally: Tally!
-	content: Content!
-	proposer: String!
-	moniker: String!
-	total_deposit: [Amount!]!
-	deposit_end_time: String!
+  id: Int!
+  status: String!
+  voting_start: String!
+  voting_end: String!
+  submit_time: String!
+  tally: Tally!
+  content: Content!
+  proposer: String!
+  moniker: String!
+  total_deposit: [Amount!]!
+  deposit_end_time: String!
 }
 
 type Tally {
-	yes: String!
-	abstain: String!
-	no: String!
-	no_with_veto: String!
+  yes: String!
+  abstain: String!
+  no: String!
+  no_with_veto: String!
 }
 
 type Deposit {
-	depositor: String!
-	amount: String
-	tx_hash: String!,
-	time: String!
+  depositor: String!
+  amount: String
+  tx_hash: String!
+  time: String!
 }
 
 type Vote {
-	voter: String!
-	option: String!
-	tx_hash: String!,
-	time: String!
+  voter: String!
+  option: String!
+  tx_hash: String!
+  time: String!
 }
 
 type Content {
-	title: String!
-	type: String!
-	description: String!
-	amount: [Amount!]!
-	changes: [Change!]!
+  title: String!
+  type: String!
+  description: String!
+  amount: [Amount!]!
+  changes: [Change!]!
 }
 
 type Amount {
-	denom: String!
-	amount: String!
+  denom: String!
+  amount: String!
 }
 
 type Change {
-	key:      String!
-	value:    String!
-	subspace: String!
+  key: String!
+  value: String!
+  subspace: String!
 }
 
 type Status {
-	block_height: Int!
-	block_time: Int!,
-	total_txs_num: Int!
-	bonded_tokens: Int!
-	total_supply_tokens: TotalSupplyTokens
-	timestamp: String!
+  block_height: Int!
+  block_time: Int!
+  total_txs_num: Int!
+  bonded_tokens: Int!
+  total_supply_tokens: TotalSupplyTokens
+  timestamp: String!
 }
 type TotalSupplyTokens {
-	supply: [Supply!]!
+  supply: [Supply!]!
 }
 type Supply {
-	denom: String,
-	amount: String,
+  denom: String
+  amount: String
 }
 
 type Inflation {
-	inflation: String!
+  inflation: String!
 }
 
 type Balance {
-	denom: String!,
-	amount: String!
+  denom: String!
+  amount: String!
 }
 
 type Balances {
-	balances: [Balance!]!
+  balances: [Balance!]!
 }
 
-type RewardInfo{
-	denom: String!,
-	amount: String!
+type RewardInfo {
+  denom: String!
+  amount: String!
 }
 
 type Reward {
-	validator_address: String!
-	reward: [RewardInfo!]!
+  validator_address: String!
+  reward: [RewardInfo!]!
 }
 
 type Rewards {
-	rewards: [Reward!]!
+  rewards: [Reward!]!
 }
 
 type CommissionInfo {
-	denom: String!,
-	amount: String!
+  denom: String!
+  amount: String!
 }
 
 type Commissions {
-	commission: [CommissionInfo!]!
+  commission: [CommissionInfo!]!
 }
 
 type Commission {
-	commission: Commissions
+  commission: Commissions
 }
 
 type UnbondingResponse {
-	delegator_address: String!,
-	validator_address: String!,
-	moniker: String!
-	entries: [Entry!]!
+  delegator_address: String!
+  validator_address: String!
+  moniker: String!
+  entries: [Entry!]!
 }
 
 type Unbonding {
-	unbonding_responses: [UnbondingResponse!]!
+  unbonding_responses: [UnbondingResponse!]!
 }
 
 type Entry {
-	creation_height: String,
-	completion_time: String,
-	initial_balance: String,
-	balance: String
+  creation_height: String
+  completion_time: String
+  initial_balance: String
+  balance: String
 }
 
 type Price {
-	price: String!,
-	volume_24h: String!,
-	market_cap: String!
-	percent_change_24h: String!
+  price: String!
+  volume_24h: String!
+  market_cap: String!
+  percent_change_24h: String!
 }
 
 type StatsAsset {
-	price: String!,
-	market_cap: String!,
-	volume_24h: String!,
-	timestamp: String!
+  price: String!
+  market_cap: String!
+  volume_24h: String!
+  timestamp: String!
 }
 
 type Redelegations {
-	redelegation_responses: [RedelegationResponse!]!
+  redelegation_responses: [RedelegationResponse!]!
 }
 
 type RedelegationResponse {
-	redelegation: Redelegation!
-	entries: [Entries!]!
+  redelegation: Redelegation!
+  entries: [Entries!]!
 }
 
 type Redelegation {
-	delegator_address: String!,
-	validator_dst_address: String!,
-	validator_src_address: String!,
-	moniker_src: String!
-	moniker_dst: String!
-	entries: [RedelegationEntry!]!
+  delegator_address: String!
+  validator_dst_address: String!
+  validator_src_address: String!
+  moniker_src: String!
+  moniker_dst: String!
+  entries: [RedelegationEntry!]!
 }
 
 type Entries {
-	redelegation_entry: RedelegationEntry!,
-	balance: String!
+  redelegation_entry: RedelegationEntry!
+  balance: String!
 }
 
 type RedelegationEntry {
-	creation_height:	Int!
-	completion_time:	String!
-	initial_balance:	String!
-	shares_dst: 		String!
+  creation_height: Int!
+  completion_time: String!
+  initial_balance: String!
+  shares_dst: String!
 }
 
 type Query {
@@ -1852,8 +1861,11 @@ type Query {
   validator_detail(operator_address: String): Validator!
   uptimes(operator_address: String): UptimeResult!
   proposed_blocks(before: Int, size: Int, operator_address: String!): [Block!]!
-  power_events(before: Int, size: Int, operator_address: String!): [PowerEvent!]!
-  
+  power_events(
+    before: Int
+    size: Int
+    operator_address: String!
+  ): [PowerEvent!]!
 
   account_transactions(acc_address: String): [Tx!]!
 
@@ -1863,47 +1875,48 @@ type Query {
   status: Status!
   inflation: Inflation!
 
-	"""
-		Get avaiable in account detail
-	"""
-  balances(acc_address: String!):  Balances!
+  """
+  Get avaiable in account detail
+  """
+  balances(acc_address: String!): Balances!
 
-  	"""
-		Get rewardss in account detail
-	"""
-  rewards(acc_address: String!):  Rewards!
+  """
+  Get rewardss in account detail
+  """
+  rewards(acc_address: String!): Rewards!
 
-  	"""
-		Get commisions in account detail
-	"""
-  commission(operator_address: String!):  Commission!
+  """
+  Get commisions in account detail
+  """
+  commission(operator_address: String!): Commission!
 
-	"""
-		Get delegate in account detail
-	"""
+  """
+  Get delegate in account detail
+  """
   delegations(acc_address: String!): [Delegation!]!
 
-  	"""
-		Get unbonding in account detail
-	"""
+  """
+  Get unbonding in account detail
+  """
   unbonding(acc_address: String!): Unbonding!
 
-  	"""
-		Get unbonding in account detail
-	"""
+  """
+  Get unbonding in account detail
+  """
   redelegations(acc_address: String!): Redelegations!
 
   deposit(proposal_id: Int!): [Deposit!]!
   vote(before: Int, size: Int, proposal_id: Int!): [Vote!]!
 
-	"""
-		Get price
-		Slug example cosmos
-	"""
+  """
+  Get price
+  Slug example cosmos
+  """
   price(slug: String!): Price!
 
   stats_assets: [StatsAsset!]!
-}`, BuiltIn: false},
+}
+`, BuiltIn: false},
 }
 var parsedSchema = gqlparser.MustLoadSchema(sources...)
 
@@ -7096,6 +7109,41 @@ func (ec *executionContext) _Tx_gas_wanted(ctx context.Context, field graphql.Co
 	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _Tx_raw_log(ctx context.Context, field graphql.CollectedField, obj *model.Tx) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Tx",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.RawLog, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Unbonding_unbonding_responses(ctx context.Context, field graphql.CollectedField, obj *model.Unbonding) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -10630,6 +10678,11 @@ func (ec *executionContext) _Tx(ctx context.Context, sel ast.SelectionSet, obj *
 			}
 		case "gas_wanted":
 			out.Values[i] = ec._Tx_gas_wanted(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "raw_log":
+			out.Values[i] = ec._Tx_raw_log(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}

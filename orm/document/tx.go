@@ -103,6 +103,7 @@ type CommonTx struct {
 	Fee        Fee       `bson:"fee" json:"fee"`
 	Signatures []string  `bson:"signatures" json:"signatures"`
 	Messages   string    `bson:"messages" json:"messages"`
+	RawLog     string    `bson:"raw_log"`
 }
 
 type Fee struct {
@@ -274,6 +275,7 @@ func (_ CommonTx) FormatTxForModel(tx CommonTx) (*model.Tx, error) {
 		GasUsed:   int(tx.GasUsed),
 		GasWanted: int(tx.GasWanted),
 		Memo:      tx.Memo,
+		RawLog:    tx.RawLog,
 	}
 	return t, nil
 }
