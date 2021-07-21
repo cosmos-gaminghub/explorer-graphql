@@ -375,6 +375,19 @@ func (_ Validator) GetListMapOperatorAndMoniker(delegationResult client.Delegati
 	return mapList
 }
 
+func (_ Validator) GetListMapAccAndMoniker(listAccAddress []string) map[string]string {
+	validators, err := Validator{}.QueryValidatorDetailByListAccAddr(listAccAddress)
+	var mapList = make(map[string]string)
+	if err != nil {
+		return mapList
+	}
+
+	for _, validator := range validators {
+		mapList[validator.AccountAddr] = validator.Description.Moniker
+	}
+	return mapList
+}
+
 func (_ Validator) MapOperatorAndMoniker(validators []Validator) map[string]string {
 	var mapList = make(map[string]string)
 	for _, validator := range validators {
