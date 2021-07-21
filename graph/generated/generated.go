@@ -87,6 +87,7 @@ type ComplexityRoot struct {
 	}
 
 	Content struct {
+		Amount      func(childComplexity int) int
 		Changes     func(childComplexity int) int
 		Description func(childComplexity int) int
 		Title       func(childComplexity int) int
@@ -105,6 +106,11 @@ type ComplexityRoot struct {
 		Depositor func(childComplexity int) int
 		Time      func(childComplexity int) int
 		TxHash    func(childComplexity int) int
+	}
+
+	Entries struct {
+		Balance           func(childComplexity int) int
+		RedelegationEntry func(childComplexity int) int
 	}
 
 	Entry struct {
@@ -127,15 +133,25 @@ type ComplexityRoot struct {
 		Type         func(childComplexity int) int
 	}
 
+	Price struct {
+		MarketCap        func(childComplexity int) int
+		PercentChange24h func(childComplexity int) int
+		Price            func(childComplexity int) int
+		Volume24h        func(childComplexity int) int
+	}
+
 	Proposal struct {
-		Content     func(childComplexity int) int
-		ID          func(childComplexity int) int
-		Proposer    func(childComplexity int) int
-		Status      func(childComplexity int) int
-		SubmitTime  func(childComplexity int) int
-		Tally       func(childComplexity int) int
-		VotingEnd   func(childComplexity int) int
-		VotingStart func(childComplexity int) int
+		Content        func(childComplexity int) int
+		DepositEndTime func(childComplexity int) int
+		ID             func(childComplexity int) int
+		Moniker        func(childComplexity int) int
+		Proposer       func(childComplexity int) int
+		Status         func(childComplexity int) int
+		SubmitTime     func(childComplexity int) int
+		Tally          func(childComplexity int) int
+		TotalDeposit   func(childComplexity int) int
+		VotingEnd      func(childComplexity int) int
+		VotingStart    func(childComplexity int) int
 	}
 
 	Query struct {
@@ -145,22 +161,50 @@ type ComplexityRoot struct {
 		BlockTxs            func(childComplexity int, height *int) int
 		Blocks              func(childComplexity int, offset *int, size *int) int
 		Commission          func(childComplexity int, operatorAddress string) int
-		Delegations         func(childComplexity int, accAddress *string) int
+		Delegations         func(childComplexity int, accAddress string) int
 		Deposit             func(childComplexity int, proposalID int) int
 		Inflation           func(childComplexity int) int
 		PowerEvents         func(childComplexity int, before *int, size *int, operatorAddress string) int
+		Price               func(childComplexity int, slug string) int
 		ProposalDetail      func(childComplexity int, proposalID int) int
 		Proposals           func(childComplexity int) int
 		ProposedBlocks      func(childComplexity int, before *int, size *int, operatorAddress string) int
+		Redelegations       func(childComplexity int, accAddress string) int
 		Rewards             func(childComplexity int, accAddress string) int
+		StatsAssets         func(childComplexity int) int
 		Status              func(childComplexity int) int
 		TxDetail            func(childComplexity int, txHash *string) int
 		Txs                 func(childComplexity int, size *int) int
-		Unbonding           func(childComplexity int, accAddress *string) int
+		Unbonding           func(childComplexity int, accAddress string) int
 		Uptimes             func(childComplexity int, operatorAddress *string) int
 		ValidatorDetail     func(childComplexity int, operatorAddress *string) int
 		Validators          func(childComplexity int) int
 		Vote                func(childComplexity int, before *int, size *int, proposalID int) int
+	}
+
+	Redelegation struct {
+		DelegatorAddress    func(childComplexity int) int
+		Entries             func(childComplexity int) int
+		MonikerDst          func(childComplexity int) int
+		MonikerSrc          func(childComplexity int) int
+		ValidatorDstAddress func(childComplexity int) int
+		ValidatorSrcAddress func(childComplexity int) int
+	}
+
+	RedelegationEntry struct {
+		CompletionTime func(childComplexity int) int
+		CreationHeight func(childComplexity int) int
+		InitialBalance func(childComplexity int) int
+		SharesDst      func(childComplexity int) int
+	}
+
+	RedelegationResponse struct {
+		Entries      func(childComplexity int) int
+		Redelegation func(childComplexity int) int
+	}
+
+	Redelegations struct {
+		RedelegationResponses func(childComplexity int) int
 	}
 
 	Reward struct {
@@ -177,10 +221,18 @@ type ComplexityRoot struct {
 		Rewards func(childComplexity int) int
 	}
 
+	StatsAsset struct {
+		MarketCap func(childComplexity int) int
+		Price     func(childComplexity int) int
+		Timestamp func(childComplexity int) int
+		Volume24h func(childComplexity int) int
+	}
+
 	Status struct {
 		BlockHeight       func(childComplexity int) int
 		BlockTime         func(childComplexity int) int
 		BondedTokens      func(childComplexity int) int
+		Timestamp         func(childComplexity int) int
 		TotalSupplyTokens func(childComplexity int) int
 		TotalTxsNum       func(childComplexity int) int
 	}
@@ -209,7 +261,6 @@ type ComplexityRoot struct {
 		Logs      func(childComplexity int) int
 		Memo      func(childComplexity int) int
 		Messages  func(childComplexity int) int
-		RawLog    func(childComplexity int) int
 		Status    func(childComplexity int) int
 		Timestamp func(childComplexity int) int
 		TxHash    func(childComplexity int) int
@@ -222,6 +273,7 @@ type ComplexityRoot struct {
 	UnbondingResponse struct {
 		DelegatorAddress func(childComplexity int) int
 		Entries          func(childComplexity int) int
+		Moniker          func(childComplexity int) int
 		ValidatorAddress func(childComplexity int) int
 	}
 
@@ -278,10 +330,13 @@ type QueryResolver interface {
 	Balances(ctx context.Context, accAddress string) (*model.Balances, error)
 	Rewards(ctx context.Context, accAddress string) (*model.Rewards, error)
 	Commission(ctx context.Context, operatorAddress string) (*model.Commission, error)
-	Delegations(ctx context.Context, accAddress *string) ([]*model.Delegation, error)
-	Unbonding(ctx context.Context, accAddress *string) (*model.Unbonding, error)
+	Delegations(ctx context.Context, accAddress string) ([]*model.Delegation, error)
+	Unbonding(ctx context.Context, accAddress string) (*model.Unbonding, error)
+	Redelegations(ctx context.Context, accAddress string) (*model.Redelegations, error)
 	Deposit(ctx context.Context, proposalID int) ([]*model.Deposit, error)
 	Vote(ctx context.Context, before *int, size *int, proposalID int) ([]*model.Vote, error)
+	Price(ctx context.Context, slug string) (*model.Price, error)
+	StatsAssets(ctx context.Context) ([]*model.StatsAsset, error)
 }
 
 type executableSchema struct {
@@ -439,6 +494,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Commissions.Commission(childComplexity), true
 
+	case "Content.amount":
+		if e.complexity.Content.Amount == nil {
+			break
+		}
+
+		return e.complexity.Content.Amount(childComplexity), true
+
 	case "Content.changes":
 		if e.complexity.Content.Changes == nil {
 			break
@@ -523,6 +585,20 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Deposit.TxHash(childComplexity), true
 
+	case "Entries.balance":
+		if e.complexity.Entries.Balance == nil {
+			break
+		}
+
+		return e.complexity.Entries.Balance(childComplexity), true
+
+	case "Entries.redelegation_entry":
+		if e.complexity.Entries.RedelegationEntry == nil {
+			break
+		}
+
+		return e.complexity.Entries.RedelegationEntry(childComplexity), true
+
 	case "Entry.balance":
 		if e.complexity.Entry.Balance == nil {
 			break
@@ -600,6 +676,34 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.PowerEvent.Type(childComplexity), true
 
+	case "Price.market_cap":
+		if e.complexity.Price.MarketCap == nil {
+			break
+		}
+
+		return e.complexity.Price.MarketCap(childComplexity), true
+
+	case "Price.percent_change_24h":
+		if e.complexity.Price.PercentChange24h == nil {
+			break
+		}
+
+		return e.complexity.Price.PercentChange24h(childComplexity), true
+
+	case "Price.price":
+		if e.complexity.Price.Price == nil {
+			break
+		}
+
+		return e.complexity.Price.Price(childComplexity), true
+
+	case "Price.volume_24h":
+		if e.complexity.Price.Volume24h == nil {
+			break
+		}
+
+		return e.complexity.Price.Volume24h(childComplexity), true
+
 	case "Proposal.content":
 		if e.complexity.Proposal.Content == nil {
 			break
@@ -607,12 +711,26 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Proposal.Content(childComplexity), true
 
+	case "Proposal.deposit_end_time":
+		if e.complexity.Proposal.DepositEndTime == nil {
+			break
+		}
+
+		return e.complexity.Proposal.DepositEndTime(childComplexity), true
+
 	case "Proposal.id":
 		if e.complexity.Proposal.ID == nil {
 			break
 		}
 
 		return e.complexity.Proposal.ID(childComplexity), true
+
+	case "Proposal.moniker":
+		if e.complexity.Proposal.Moniker == nil {
+			break
+		}
+
+		return e.complexity.Proposal.Moniker(childComplexity), true
 
 	case "Proposal.proposer":
 		if e.complexity.Proposal.Proposer == nil {
@@ -641,6 +759,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Proposal.Tally(childComplexity), true
+
+	case "Proposal.total_deposit":
+		if e.complexity.Proposal.TotalDeposit == nil {
+			break
+		}
+
+		return e.complexity.Proposal.TotalDeposit(childComplexity), true
 
 	case "Proposal.voting_end":
 		if e.complexity.Proposal.VotingEnd == nil {
@@ -738,7 +863,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.Delegations(childComplexity, args["acc_address"].(*string)), true
+		return e.complexity.Query.Delegations(childComplexity, args["acc_address"].(string)), true
 
 	case "Query.deposit":
 		if e.complexity.Query.Deposit == nil {
@@ -771,6 +896,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.PowerEvents(childComplexity, args["before"].(*int), args["size"].(*int), args["operator_address"].(string)), true
 
+	case "Query.price":
+		if e.complexity.Query.Price == nil {
+			break
+		}
+
+		args, err := ec.field_Query_price_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.Price(childComplexity, args["slug"].(string)), true
+
 	case "Query.proposal_detail":
 		if e.complexity.Query.ProposalDetail == nil {
 			break
@@ -802,6 +939,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.ProposedBlocks(childComplexity, args["before"].(*int), args["size"].(*int), args["operator_address"].(string)), true
 
+	case "Query.redelegations":
+		if e.complexity.Query.Redelegations == nil {
+			break
+		}
+
+		args, err := ec.field_Query_redelegations_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.Redelegations(childComplexity, args["acc_address"].(string)), true
+
 	case "Query.rewards":
 		if e.complexity.Query.Rewards == nil {
 			break
@@ -813,6 +962,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.Rewards(childComplexity, args["acc_address"].(string)), true
+
+	case "Query.stats_assets":
+		if e.complexity.Query.StatsAssets == nil {
+			break
+		}
+
+		return e.complexity.Query.StatsAssets(childComplexity), true
 
 	case "Query.status":
 		if e.complexity.Query.Status == nil {
@@ -855,7 +1011,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.Unbonding(childComplexity, args["acc_address"].(*string)), true
+		return e.complexity.Query.Unbonding(childComplexity, args["acc_address"].(string)), true
 
 	case "Query.uptimes":
 		if e.complexity.Query.Uptimes == nil {
@@ -900,6 +1056,97 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.Vote(childComplexity, args["before"].(*int), args["size"].(*int), args["proposal_id"].(int)), true
 
+	case "Redelegation.delegator_address":
+		if e.complexity.Redelegation.DelegatorAddress == nil {
+			break
+		}
+
+		return e.complexity.Redelegation.DelegatorAddress(childComplexity), true
+
+	case "Redelegation.entries":
+		if e.complexity.Redelegation.Entries == nil {
+			break
+		}
+
+		return e.complexity.Redelegation.Entries(childComplexity), true
+
+	case "Redelegation.moniker_dst":
+		if e.complexity.Redelegation.MonikerDst == nil {
+			break
+		}
+
+		return e.complexity.Redelegation.MonikerDst(childComplexity), true
+
+	case "Redelegation.moniker_src":
+		if e.complexity.Redelegation.MonikerSrc == nil {
+			break
+		}
+
+		return e.complexity.Redelegation.MonikerSrc(childComplexity), true
+
+	case "Redelegation.validator_dst_address":
+		if e.complexity.Redelegation.ValidatorDstAddress == nil {
+			break
+		}
+
+		return e.complexity.Redelegation.ValidatorDstAddress(childComplexity), true
+
+	case "Redelegation.validator_src_address":
+		if e.complexity.Redelegation.ValidatorSrcAddress == nil {
+			break
+		}
+
+		return e.complexity.Redelegation.ValidatorSrcAddress(childComplexity), true
+
+	case "RedelegationEntry.completion_time":
+		if e.complexity.RedelegationEntry.CompletionTime == nil {
+			break
+		}
+
+		return e.complexity.RedelegationEntry.CompletionTime(childComplexity), true
+
+	case "RedelegationEntry.creation_height":
+		if e.complexity.RedelegationEntry.CreationHeight == nil {
+			break
+		}
+
+		return e.complexity.RedelegationEntry.CreationHeight(childComplexity), true
+
+	case "RedelegationEntry.initial_balance":
+		if e.complexity.RedelegationEntry.InitialBalance == nil {
+			break
+		}
+
+		return e.complexity.RedelegationEntry.InitialBalance(childComplexity), true
+
+	case "RedelegationEntry.shares_dst":
+		if e.complexity.RedelegationEntry.SharesDst == nil {
+			break
+		}
+
+		return e.complexity.RedelegationEntry.SharesDst(childComplexity), true
+
+	case "RedelegationResponse.entries":
+		if e.complexity.RedelegationResponse.Entries == nil {
+			break
+		}
+
+		return e.complexity.RedelegationResponse.Entries(childComplexity), true
+
+	case "RedelegationResponse.redelegation":
+		if e.complexity.RedelegationResponse.Redelegation == nil {
+			break
+		}
+
+		return e.complexity.RedelegationResponse.Redelegation(childComplexity), true
+
+	case "Redelegations.redelegation_responses":
+		if e.complexity.Redelegations.RedelegationResponses == nil {
+			break
+		}
+
+		return e.complexity.Redelegations.RedelegationResponses(childComplexity), true
+
 	case "Reward.reward":
 		if e.complexity.Reward.Reward == nil {
 			break
@@ -935,6 +1182,34 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Rewards.Rewards(childComplexity), true
 
+	case "StatsAsset.market_cap":
+		if e.complexity.StatsAsset.MarketCap == nil {
+			break
+		}
+
+		return e.complexity.StatsAsset.MarketCap(childComplexity), true
+
+	case "StatsAsset.price":
+		if e.complexity.StatsAsset.Price == nil {
+			break
+		}
+
+		return e.complexity.StatsAsset.Price(childComplexity), true
+
+	case "StatsAsset.timestamp":
+		if e.complexity.StatsAsset.Timestamp == nil {
+			break
+		}
+
+		return e.complexity.StatsAsset.Timestamp(childComplexity), true
+
+	case "StatsAsset.volume_24h":
+		if e.complexity.StatsAsset.Volume24h == nil {
+			break
+		}
+
+		return e.complexity.StatsAsset.Volume24h(childComplexity), true
+
 	case "Status.block_height":
 		if e.complexity.Status.BlockHeight == nil {
 			break
@@ -955,6 +1230,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Status.BondedTokens(childComplexity), true
+
+	case "Status.timestamp":
+		if e.complexity.Status.Timestamp == nil {
+			break
+		}
+
+		return e.complexity.Status.Timestamp(childComplexity), true
 
 	case "Status.total_supply_tokens":
 		if e.complexity.Status.TotalSupplyTokens == nil {
@@ -1068,13 +1350,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Tx.Messages(childComplexity), true
 
-	case "Tx.raw_log":
-		if e.complexity.Tx.RawLog == nil {
-			break
-		}
-
-		return e.complexity.Tx.RawLog(childComplexity), true
-
 	case "Tx.status":
 		if e.complexity.Tx.Status == nil {
 			break
@@ -1116,6 +1391,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.UnbondingResponse.Entries(childComplexity), true
+
+	case "UnbondingResponse.moniker":
+		if e.complexity.UnbondingResponse.Moniker == nil {
+			break
+		}
+
+		return e.complexity.UnbondingResponse.Moniker(childComplexity), true
 
 	case "UnbondingResponse.validator_address":
 		if e.complexity.UnbondingResponse.ValidatorAddress == nil {
@@ -1322,191 +1604,240 @@ func (ec *executionContext) introspectType(name string) (*introspection.Type, er
 
 var sources = []*ast.Source{
 	{Name: "graph/schema.graphqls", Input: `type Block {
-  height: Int!
-  hash: String!
-  proposer_addr: String!
-  num_txs: Int!
-  time: String!
-  moniker: String!
-  operator_address: String!
-  total_records: Int!
+	height: Int!
+	hash: String!
+	proposer_addr: String!
+	num_txs: Int!
+	time: String!
+	moniker: String!
+	operator_address: String!
+	total_records: Int!
 }
 
 type Validator {
-  moniker: String!
-  voting_power: Int!
-  cumulative_share: String!
-  uptime: Int!
-  over_blocks: Int!
-  commission: Float!
-  operator_address: String!
-  acc_address: String!
-  jailed: Boolean!
-  status: String!
-  website: String!
-  rank: Int!
-  details: String!
+	moniker: String!
+	voting_power: Int!
+	cumulative_share: String! 
+	uptime: Int!
+	over_blocks: Int!
+	commission: Float!
+	operator_address: String!
+	acc_address: String!
+	jailed: Boolean!
+	status: String!
+	website: String!
+	rank: Int!
+	details: String!
 }
 
 type UptimeResult {
-  last_height: Int!
-  uptime: [Uptime!]!
+	last_height: Int!
+	uptime: [Uptime!]!
 }
 type Uptime {
-  height: Int!
-  timestamp: String!
+	height: Int!
+	timestamp: String!
 }
 
 type PowerEvent {
-  height: Int!
-  tx_hash: String!
-  timestamp: String!
-  amount: Int!
-  type: String!
-  total_records: Int!
+	height: Int!
+	tx_hash: String!
+	timestamp: String!
+	amount: Int!
+	type: String!
+	total_records: Int!
 }
 
 type Delegation {
-  moniker: String!
-  delegator_address: String!
-  validator_address: String!
-  amount: Int!
+	moniker: String!
+	delegator_address: String!
+	validator_address: String!
+	amount: Int!
 }
 
 type Tx {
-  tx_hash: String!
-  status: Int!
-  fee: String!
-  height: Int!
-  timestamp: String!
-  messages: String!
-  logs: String!
-  memo: String!
-  gas_used: Int!
-  gas_wanted: Int!
-  raw_log: String!
+	tx_hash: String!
+	status: Int!
+	fee: String!
+	height: Int!
+	timestamp: String!,
+	messages: String!
+	logs: String!,
+	memo: String!
+	gas_used: Int!
+	gas_wanted: Int!
 }
 
 type Proposal {
-  id: Int!
-  status: String!
-  voting_start: String!
-  voting_end: String!
-  submit_time: String!
-  tally: Tally!
-  content: Content!
-  proposer: String!
+	id: Int!
+	status: String!
+	voting_start: String!
+	voting_end: String!
+	submit_time: String!
+	tally: Tally!
+	content: Content!
+	proposer: String!
+	moniker: String!
+	total_deposit: [Amount!]!
+	deposit_end_time: String!
 }
 
 type Tally {
-  yes: String!
-  abstain: String!
-  no: String!
-  no_with_veto: String!
+	yes: String!
+	abstain: String!
+	no: String!
+	no_with_veto: String!
 }
 
 type Deposit {
-  depositor: String!
-  amount: String
-  tx_hash: String!
-  time: String!
+	depositor: String!
+	amount: String
+	tx_hash: String!,
+	time: String!
 }
 
 type Vote {
-  voter: String!
-  option: String!
-  tx_hash: String!
-  time: String!
+	voter: String!
+	option: String!
+	tx_hash: String!,
+	time: String!
 }
 
 type Content {
-  title: String!
-  type: String!
-  description: String!
-  changes: [Change!]!
+	title: String!
+	type: String!
+	description: String!
+	amount: [Amount!]!
+	changes: [Change!]!
 }
 
 type Amount {
-  denom: String!
-  amount: String!
+	denom: String!
+	amount: String!
 }
 
 type Change {
-  key: String!
-  value: String!
-  subspace: String!
+	key:      String!
+	value:    String!
+	subspace: String!
 }
 
 type Status {
-  block_height: Int!
-  block_time: String!
-  total_txs_num: Int!
-  bonded_tokens: Int!
-  total_supply_tokens: TotalSupplyTokens
+	block_height: Int!
+	block_time: Int!,
+	total_txs_num: Int!
+	bonded_tokens: Int!
+	total_supply_tokens: TotalSupplyTokens
+	timestamp: String!
 }
 type TotalSupplyTokens {
-  supply: [Supply!]!
+	supply: [Supply!]!
 }
 type Supply {
-  denom: String
-  amount: String
+	denom: String,
+	amount: String,
 }
 
 type Inflation {
-  inflation: String!
+	inflation: String!
 }
 
 type Balance {
-  denom: String!
-  amount: String!
+	denom: String!,
+	amount: String!
 }
 
 type Balances {
-  balances: [Balance!]!
+	balances: [Balance!]!
 }
 
-type RewardInfo {
-  denom: String!
-  amount: String!
+type RewardInfo{
+	denom: String!,
+	amount: String!
 }
 
 type Reward {
-  validator_address: String!
-  reward: [RewardInfo!]!
+	validator_address: String!
+	reward: [RewardInfo!]!
 }
 
 type Rewards {
-  rewards: [Reward!]!
+	rewards: [Reward!]!
 }
 
 type CommissionInfo {
-  denom: String!
-  amount: String!
+	denom: String!,
+	amount: String!
 }
 
 type Commissions {
-  commission: [CommissionInfo!]!
+	commission: [CommissionInfo!]!
 }
 
 type Commission {
-  commission: Commissions
+	commission: Commissions
 }
 
 type UnbondingResponse {
-  delegator_address: String
-  validator_address: String
-  entries: [Entry!]!
+	delegator_address: String!,
+	validator_address: String!,
+	moniker: String!
+	entries: [Entry!]!
 }
 
 type Unbonding {
-  unbonding_responses: [UnbondingResponse!]!
+	unbonding_responses: [UnbondingResponse!]!
 }
 
 type Entry {
-  creation_height: String
-  completion_time: String
-  initial_balance: String
-  balance: String
+	creation_height: String,
+	completion_time: String,
+	initial_balance: String,
+	balance: String
+}
+
+type Price {
+	price: String!,
+	volume_24h: String!,
+	market_cap: String!
+	percent_change_24h: String!
+}
+
+type StatsAsset {
+	price: String!,
+	market_cap: String!,
+	volume_24h: String!,
+	timestamp: String!
+}
+
+type Redelegations {
+	redelegation_responses: [RedelegationResponse!]!
+}
+
+type RedelegationResponse {
+	redelegation: Redelegation!
+	entries: [Entries!]!
+}
+
+type Redelegation {
+	delegator_address: String!,
+	validator_dst_address: String!,
+	validator_src_address: String!,
+	moniker_src: String!
+	moniker_dst: String!
+	entries: [RedelegationEntry!]!
+}
+
+type Entries {
+	redelegation_entry: RedelegationEntry!,
+	balance: String!
+}
+
+type RedelegationEntry {
+	creation_height:	Int!
+	completion_time:	String!
+	initial_balance:	String!
+	shares_dst: 		String!
 }
 
 type Query {
@@ -1521,11 +1852,8 @@ type Query {
   validator_detail(operator_address: String): Validator!
   uptimes(operator_address: String): UptimeResult!
   proposed_blocks(before: Int, size: Int, operator_address: String!): [Block!]!
-  power_events(
-    before: Int
-    size: Int
-    operator_address: String!
-  ): [PowerEvent!]!
+  power_events(before: Int, size: Int, operator_address: String!): [PowerEvent!]!
+  
 
   account_transactions(acc_address: String): [Tx!]!
 
@@ -1535,35 +1863,47 @@ type Query {
   status: Status!
   inflation: Inflation!
 
-  """
-  Get avaiable in account detail
-  """
-  balances(acc_address: String!): Balances!
+	"""
+		Get avaiable in account detail
+	"""
+  balances(acc_address: String!):  Balances!
 
-  """
-  Get rewardss in account detail
-  """
-  rewards(acc_address: String!): Rewards!
+  	"""
+		Get rewardss in account detail
+	"""
+  rewards(acc_address: String!):  Rewards!
 
-  """
-  Get commisions in account detail
-  """
-  commission(operator_address: String!): Commission!
+  	"""
+		Get commisions in account detail
+	"""
+  commission(operator_address: String!):  Commission!
 
-  """
-  Get delegate in account detail
-  """
-  delegations(acc_address: String): [Delegation!]!
+	"""
+		Get delegate in account detail
+	"""
+  delegations(acc_address: String!): [Delegation!]!
 
-  """
-  Get unbonding in account detail
-  """
-  unbonding(acc_address: String): Unbonding!
+  	"""
+		Get unbonding in account detail
+	"""
+  unbonding(acc_address: String!): Unbonding!
+
+  	"""
+		Get unbonding in account detail
+	"""
+  redelegations(acc_address: String!): Redelegations!
 
   deposit(proposal_id: Int!): [Deposit!]!
   vote(before: Int, size: Int, proposal_id: Int!): [Vote!]!
-}
-`, BuiltIn: false},
+
+	"""
+		Get price
+		Slug example cosmos
+	"""
+  price(slug: String!): Price!
+
+  stats_assets: [StatsAsset!]!
+}`, BuiltIn: false},
 }
 var parsedSchema = gqlparser.MustLoadSchema(sources...)
 
@@ -1688,10 +2028,10 @@ func (ec *executionContext) field_Query_commission_args(ctx context.Context, raw
 func (ec *executionContext) field_Query_delegations_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 *string
+	var arg0 string
 	if tmp, ok := rawArgs["acc_address"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("acc_address"))
-		arg0, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -1748,6 +2088,21 @@ func (ec *executionContext) field_Query_power_events_args(ctx context.Context, r
 	return args, nil
 }
 
+func (ec *executionContext) field_Query_price_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["slug"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("slug"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["slug"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Query_proposal_detail_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -1793,6 +2148,21 @@ func (ec *executionContext) field_Query_proposed_blocks_args(ctx context.Context
 		}
 	}
 	args["operator_address"] = arg2
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_redelegations_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["acc_address"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("acc_address"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["acc_address"] = arg0
 	return args, nil
 }
 
@@ -1844,10 +2214,10 @@ func (ec *executionContext) field_Query_txs_args(ctx context.Context, rawArgs ma
 func (ec *executionContext) field_Query_unbonding_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 *string
+	var arg0 string
 	if tmp, ok := rawArgs["acc_address"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("acc_address"))
-		arg0, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -2759,6 +3129,41 @@ func (ec *executionContext) _Content_description(ctx context.Context, field grap
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _Content_amount(ctx context.Context, field graphql.CollectedField, obj *model.Content) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Content",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Amount, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Amount)
+	fc.Result = res
+	return ec.marshalNAmount2ᚕᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐAmountᚄ(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Content_changes(ctx context.Context, field graphql.CollectedField, obj *model.Content) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -3055,6 +3460,76 @@ func (ec *executionContext) _Deposit_time(ctx context.Context, field graphql.Col
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Time, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Entries_redelegation_entry(ctx context.Context, field graphql.CollectedField, obj *model.Entries) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Entries",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.RedelegationEntry, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.RedelegationEntry)
+	fc.Result = res
+	return ec.marshalNRedelegationEntry2ᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐRedelegationEntry(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Entries_balance(ctx context.Context, field graphql.CollectedField, obj *model.Entries) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Entries",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Balance, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -3444,6 +3919,146 @@ func (ec *executionContext) _PowerEvent_total_records(ctx context.Context, field
 	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _Price_price(ctx context.Context, field graphql.CollectedField, obj *model.Price) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Price",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Price, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Price_volume_24h(ctx context.Context, field graphql.CollectedField, obj *model.Price) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Price",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Volume24h, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Price_market_cap(ctx context.Context, field graphql.CollectedField, obj *model.Price) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Price",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.MarketCap, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Price_percent_change_24h(ctx context.Context, field graphql.CollectedField, obj *model.Price) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Price",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.PercentChange24h, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Proposal_id(ctx context.Context, field graphql.CollectedField, obj *model.Proposal) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -3708,6 +4323,111 @@ func (ec *executionContext) _Proposal_proposer(ctx context.Context, field graphq
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Proposer, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Proposal_moniker(ctx context.Context, field graphql.CollectedField, obj *model.Proposal) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Proposal",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Moniker, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Proposal_total_deposit(ctx context.Context, field graphql.CollectedField, obj *model.Proposal) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Proposal",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.TotalDeposit, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Amount)
+	fc.Result = res
+	return ec.marshalNAmount2ᚕᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐAmountᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Proposal_deposit_end_time(ctx context.Context, field graphql.CollectedField, obj *model.Proposal) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Proposal",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.DepositEndTime, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -4477,7 +5197,7 @@ func (ec *executionContext) _Query_delegations(ctx context.Context, field graphq
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().Delegations(rctx, args["acc_address"].(*string))
+		return ec.resolvers.Query().Delegations(rctx, args["acc_address"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -4519,7 +5239,7 @@ func (ec *executionContext) _Query_unbonding(ctx context.Context, field graphql.
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().Unbonding(rctx, args["acc_address"].(*string))
+		return ec.resolvers.Query().Unbonding(rctx, args["acc_address"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -4534,6 +5254,48 @@ func (ec *executionContext) _Query_unbonding(ctx context.Context, field graphql.
 	res := resTmp.(*model.Unbonding)
 	fc.Result = res
 	return ec.marshalNUnbonding2ᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐUnbonding(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_redelegations(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_redelegations_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().Redelegations(rctx, args["acc_address"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Redelegations)
+	fc.Result = res
+	return ec.marshalNRedelegations2ᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐRedelegations(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_deposit(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -4620,6 +5382,83 @@ func (ec *executionContext) _Query_vote(ctx context.Context, field graphql.Colle
 	return ec.marshalNVote2ᚕᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐVoteᚄ(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _Query_price(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_price_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().Price(rctx, args["slug"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Price)
+	fc.Result = res
+	return ec.marshalNPrice2ᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐPrice(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_stats_assets(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().StatsAssets(rctx)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.StatsAsset)
+	fc.Result = res
+	return ec.marshalNStatsAsset2ᚕᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐStatsAssetᚄ(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Query___type(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -4689,6 +5528,461 @@ func (ec *executionContext) _Query___schema(ctx context.Context, field graphql.C
 	res := resTmp.(*introspection.Schema)
 	fc.Result = res
 	return ec.marshalO__Schema2ᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐSchema(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Redelegation_delegator_address(ctx context.Context, field graphql.CollectedField, obj *model.Redelegation) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Redelegation",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.DelegatorAddress, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Redelegation_validator_dst_address(ctx context.Context, field graphql.CollectedField, obj *model.Redelegation) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Redelegation",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ValidatorDstAddress, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Redelegation_validator_src_address(ctx context.Context, field graphql.CollectedField, obj *model.Redelegation) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Redelegation",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ValidatorSrcAddress, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Redelegation_moniker_src(ctx context.Context, field graphql.CollectedField, obj *model.Redelegation) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Redelegation",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.MonikerSrc, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Redelegation_moniker_dst(ctx context.Context, field graphql.CollectedField, obj *model.Redelegation) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Redelegation",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.MonikerDst, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Redelegation_entries(ctx context.Context, field graphql.CollectedField, obj *model.Redelegation) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Redelegation",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Entries, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.RedelegationEntry)
+	fc.Result = res
+	return ec.marshalNRedelegationEntry2ᚕᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐRedelegationEntryᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _RedelegationEntry_creation_height(ctx context.Context, field graphql.CollectedField, obj *model.RedelegationEntry) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "RedelegationEntry",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CreationHeight, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _RedelegationEntry_completion_time(ctx context.Context, field graphql.CollectedField, obj *model.RedelegationEntry) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "RedelegationEntry",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CompletionTime, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _RedelegationEntry_initial_balance(ctx context.Context, field graphql.CollectedField, obj *model.RedelegationEntry) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "RedelegationEntry",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.InitialBalance, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _RedelegationEntry_shares_dst(ctx context.Context, field graphql.CollectedField, obj *model.RedelegationEntry) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "RedelegationEntry",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.SharesDst, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _RedelegationResponse_redelegation(ctx context.Context, field graphql.CollectedField, obj *model.RedelegationResponse) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "RedelegationResponse",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Redelegation, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Redelegation)
+	fc.Result = res
+	return ec.marshalNRedelegation2ᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐRedelegation(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _RedelegationResponse_entries(ctx context.Context, field graphql.CollectedField, obj *model.RedelegationResponse) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "RedelegationResponse",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Entries, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Entries)
+	fc.Result = res
+	return ec.marshalNEntries2ᚕᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐEntriesᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Redelegations_redelegation_responses(ctx context.Context, field graphql.CollectedField, obj *model.Redelegations) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Redelegations",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.RedelegationResponses, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.RedelegationResponse)
+	fc.Result = res
+	return ec.marshalNRedelegationResponse2ᚕᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐRedelegationResponseᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Reward_validator_address(ctx context.Context, field graphql.CollectedField, obj *model.Reward) (ret graphql.Marshaler) {
@@ -4866,6 +6160,146 @@ func (ec *executionContext) _Rewards_rewards(ctx context.Context, field graphql.
 	return ec.marshalNReward2ᚕᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐRewardᚄ(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _StatsAsset_price(ctx context.Context, field graphql.CollectedField, obj *model.StatsAsset) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "StatsAsset",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Price, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _StatsAsset_market_cap(ctx context.Context, field graphql.CollectedField, obj *model.StatsAsset) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "StatsAsset",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.MarketCap, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _StatsAsset_volume_24h(ctx context.Context, field graphql.CollectedField, obj *model.StatsAsset) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "StatsAsset",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Volume24h, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _StatsAsset_timestamp(ctx context.Context, field graphql.CollectedField, obj *model.StatsAsset) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "StatsAsset",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Timestamp, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Status_block_height(ctx context.Context, field graphql.CollectedField, obj *model.Status) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -4931,9 +6365,9 @@ func (ec *executionContext) _Status_block_time(ctx context.Context, field graphq
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(int)
 	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Status_total_txs_num(ctx context.Context, field graphql.CollectedField, obj *model.Status) (ret graphql.Marshaler) {
@@ -5036,6 +6470,41 @@ func (ec *executionContext) _Status_total_supply_tokens(ctx context.Context, fie
 	res := resTmp.(*model.TotalSupplyTokens)
 	fc.Result = res
 	return ec.marshalOTotalSupplyTokens2ᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐTotalSupplyTokens(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Status_timestamp(ctx context.Context, field graphql.CollectedField, obj *model.Status) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Status",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Timestamp, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Supply_denom(ctx context.Context, field graphql.CollectedField, obj *model.Supply) (ret graphql.Marshaler) {
@@ -5627,41 +7096,6 @@ func (ec *executionContext) _Tx_gas_wanted(ctx context.Context, field graphql.Co
 	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Tx_raw_log(ctx context.Context, field graphql.CollectedField, obj *model.Tx) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "Tx",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   false,
-		IsResolver: false,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.RawLog, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
 func (ec *executionContext) _Unbonding_unbonding_responses(ctx context.Context, field graphql.CollectedField, obj *model.Unbonding) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -5722,11 +7156,14 @@ func (ec *executionContext) _UnbondingResponse_delegator_address(ctx context.Con
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
-	res := resTmp.(*string)
+	res := resTmp.(string)
 	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _UnbondingResponse_validator_address(ctx context.Context, field graphql.CollectedField, obj *model.UnbondingResponse) (ret graphql.Marshaler) {
@@ -5754,11 +7191,49 @@ func (ec *executionContext) _UnbondingResponse_validator_address(ctx context.Con
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
-	res := resTmp.(*string)
+	res := resTmp.(string)
 	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _UnbondingResponse_moniker(ctx context.Context, field graphql.CollectedField, obj *model.UnbondingResponse) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "UnbondingResponse",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Moniker, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _UnbondingResponse_entries(ctx context.Context, field graphql.CollectedField, obj *model.UnbondingResponse) (ret graphql.Marshaler) {
@@ -7925,6 +9400,11 @@ func (ec *executionContext) _Content(ctx context.Context, sel ast.SelectionSet, 
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
+		case "amount":
+			out.Values[i] = ec._Content_amount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "changes":
 			out.Values[i] = ec._Content_changes(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -8008,6 +9488,38 @@ func (ec *executionContext) _Deposit(ctx context.Context, sel ast.SelectionSet, 
 			}
 		case "time":
 			out.Values[i] = ec._Deposit_time(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var entriesImplementors = []string{"Entries"}
+
+func (ec *executionContext) _Entries(ctx context.Context, sel ast.SelectionSet, obj *model.Entries) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, entriesImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Entries")
+		case "redelegation_entry":
+			out.Values[i] = ec._Entries_redelegation_entry(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "balance":
+			out.Values[i] = ec._Entries_balance(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
@@ -8131,6 +9643,48 @@ func (ec *executionContext) _PowerEvent(ctx context.Context, sel ast.SelectionSe
 	return out
 }
 
+var priceImplementors = []string{"Price"}
+
+func (ec *executionContext) _Price(ctx context.Context, sel ast.SelectionSet, obj *model.Price) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, priceImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Price")
+		case "price":
+			out.Values[i] = ec._Price_price(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "volume_24h":
+			out.Values[i] = ec._Price_volume_24h(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "market_cap":
+			out.Values[i] = ec._Price_market_cap(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "percent_change_24h":
+			out.Values[i] = ec._Price_percent_change_24h(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
 var proposalImplementors = []string{"Proposal"}
 
 func (ec *executionContext) _Proposal(ctx context.Context, sel ast.SelectionSet, obj *model.Proposal) graphql.Marshaler {
@@ -8179,6 +9733,21 @@ func (ec *executionContext) _Proposal(ctx context.Context, sel ast.SelectionSet,
 			}
 		case "proposer":
 			out.Values[i] = ec._Proposal_proposer(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "moniker":
+			out.Values[i] = ec._Proposal_moniker(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "total_deposit":
+			out.Values[i] = ec._Proposal_total_deposit(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "deposit_end_time":
+			out.Values[i] = ec._Proposal_deposit_end_time(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
@@ -8488,6 +10057,20 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 				}
 				return res
 			})
+		case "redelegations":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_redelegations(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
 		case "deposit":
 			field := field
 			out.Concurrently(i, func() (res graphql.Marshaler) {
@@ -8516,10 +10099,191 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 				}
 				return res
 			})
+		case "price":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_price(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
+		case "stats_assets":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_stats_assets(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
 		case "__type":
 			out.Values[i] = ec._Query___type(ctx, field)
 		case "__schema":
 			out.Values[i] = ec._Query___schema(ctx, field)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var redelegationImplementors = []string{"Redelegation"}
+
+func (ec *executionContext) _Redelegation(ctx context.Context, sel ast.SelectionSet, obj *model.Redelegation) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, redelegationImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Redelegation")
+		case "delegator_address":
+			out.Values[i] = ec._Redelegation_delegator_address(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "validator_dst_address":
+			out.Values[i] = ec._Redelegation_validator_dst_address(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "validator_src_address":
+			out.Values[i] = ec._Redelegation_validator_src_address(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "moniker_src":
+			out.Values[i] = ec._Redelegation_moniker_src(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "moniker_dst":
+			out.Values[i] = ec._Redelegation_moniker_dst(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "entries":
+			out.Values[i] = ec._Redelegation_entries(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var redelegationEntryImplementors = []string{"RedelegationEntry"}
+
+func (ec *executionContext) _RedelegationEntry(ctx context.Context, sel ast.SelectionSet, obj *model.RedelegationEntry) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, redelegationEntryImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("RedelegationEntry")
+		case "creation_height":
+			out.Values[i] = ec._RedelegationEntry_creation_height(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "completion_time":
+			out.Values[i] = ec._RedelegationEntry_completion_time(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "initial_balance":
+			out.Values[i] = ec._RedelegationEntry_initial_balance(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "shares_dst":
+			out.Values[i] = ec._RedelegationEntry_shares_dst(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var redelegationResponseImplementors = []string{"RedelegationResponse"}
+
+func (ec *executionContext) _RedelegationResponse(ctx context.Context, sel ast.SelectionSet, obj *model.RedelegationResponse) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, redelegationResponseImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("RedelegationResponse")
+		case "redelegation":
+			out.Values[i] = ec._RedelegationResponse_redelegation(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "entries":
+			out.Values[i] = ec._RedelegationResponse_entries(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var redelegationsImplementors = []string{"Redelegations"}
+
+func (ec *executionContext) _Redelegations(ctx context.Context, sel ast.SelectionSet, obj *model.Redelegations) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, redelegationsImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Redelegations")
+		case "redelegation_responses":
+			out.Values[i] = ec._Redelegations_redelegation_responses(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -8622,6 +10386,48 @@ func (ec *executionContext) _Rewards(ctx context.Context, sel ast.SelectionSet, 
 	return out
 }
 
+var statsAssetImplementors = []string{"StatsAsset"}
+
+func (ec *executionContext) _StatsAsset(ctx context.Context, sel ast.SelectionSet, obj *model.StatsAsset) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, statsAssetImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("StatsAsset")
+		case "price":
+			out.Values[i] = ec._StatsAsset_price(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "market_cap":
+			out.Values[i] = ec._StatsAsset_market_cap(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "volume_24h":
+			out.Values[i] = ec._StatsAsset_volume_24h(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "timestamp":
+			out.Values[i] = ec._StatsAsset_timestamp(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
 var statusImplementors = []string{"Status"}
 
 func (ec *executionContext) _Status(ctx context.Context, sel ast.SelectionSet, obj *model.Status) graphql.Marshaler {
@@ -8655,6 +10461,11 @@ func (ec *executionContext) _Status(ctx context.Context, sel ast.SelectionSet, o
 			}
 		case "total_supply_tokens":
 			out.Values[i] = ec._Status_total_supply_tokens(ctx, field, obj)
+		case "timestamp":
+			out.Values[i] = ec._Status_timestamp(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -8822,11 +10633,6 @@ func (ec *executionContext) _Tx(ctx context.Context, sel ast.SelectionSet, obj *
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "raw_log":
-			out.Values[i] = ec._Tx_raw_log(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -8878,8 +10684,19 @@ func (ec *executionContext) _UnbondingResponse(ctx context.Context, sel ast.Sele
 			out.Values[i] = graphql.MarshalString("UnbondingResponse")
 		case "delegator_address":
 			out.Values[i] = ec._UnbondingResponse_delegator_address(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "validator_address":
 			out.Values[i] = ec._UnbondingResponse_validator_address(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "moniker":
+			out.Values[i] = ec._UnbondingResponse_moniker(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "entries":
 			out.Values[i] = ec._UnbondingResponse_entries(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -9334,6 +11151,53 @@ func (ec *executionContext) ___Type(ctx context.Context, sel ast.SelectionSet, o
 
 // region    ***************************** type.gotpl *****************************
 
+func (ec *executionContext) marshalNAmount2ᚕᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐAmountᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Amount) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNAmount2ᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐAmount(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+	return ret
+}
+
+func (ec *executionContext) marshalNAmount2ᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐAmount(ctx context.Context, sel ast.SelectionSet, v *model.Amount) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._Amount(ctx, sel, v)
+}
+
 func (ec *executionContext) marshalNBalance2ᚕᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐBalanceᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Balance) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
@@ -9673,6 +11537,53 @@ func (ec *executionContext) marshalNDeposit2ᚖgithubᚗcomᚋcosmosᚑgaminghub
 	return ec._Deposit(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalNEntries2ᚕᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐEntriesᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Entries) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNEntries2ᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐEntries(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+	return ret
+}
+
+func (ec *executionContext) marshalNEntries2ᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐEntries(ctx context.Context, sel ast.SelectionSet, v *model.Entries) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._Entries(ctx, sel, v)
+}
+
 func (ec *executionContext) marshalNEntry2ᚕᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐEntryᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Entry) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
@@ -9811,6 +11722,20 @@ func (ec *executionContext) marshalNPowerEvent2ᚖgithubᚗcomᚋcosmosᚑgaming
 	return ec._PowerEvent(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalNPrice2githubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐPrice(ctx context.Context, sel ast.SelectionSet, v model.Price) graphql.Marshaler {
+	return ec._Price(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNPrice2ᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐPrice(ctx context.Context, sel ast.SelectionSet, v *model.Price) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._Price(ctx, sel, v)
+}
+
 func (ec *executionContext) marshalNProposal2githubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐProposal(ctx context.Context, sel ast.SelectionSet, v model.Proposal) graphql.Marshaler {
 	return ec._Proposal(ctx, sel, &v)
 }
@@ -9860,6 +11785,124 @@ func (ec *executionContext) marshalNProposal2ᚖgithubᚗcomᚋcosmosᚑgaminghu
 		return graphql.Null
 	}
 	return ec._Proposal(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNRedelegation2ᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐRedelegation(ctx context.Context, sel ast.SelectionSet, v *model.Redelegation) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._Redelegation(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNRedelegationEntry2ᚕᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐRedelegationEntryᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.RedelegationEntry) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNRedelegationEntry2ᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐRedelegationEntry(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+	return ret
+}
+
+func (ec *executionContext) marshalNRedelegationEntry2ᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐRedelegationEntry(ctx context.Context, sel ast.SelectionSet, v *model.RedelegationEntry) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._RedelegationEntry(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNRedelegationResponse2ᚕᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐRedelegationResponseᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.RedelegationResponse) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNRedelegationResponse2ᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐRedelegationResponse(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+	return ret
+}
+
+func (ec *executionContext) marshalNRedelegationResponse2ᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐRedelegationResponse(ctx context.Context, sel ast.SelectionSet, v *model.RedelegationResponse) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._RedelegationResponse(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNRedelegations2githubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐRedelegations(ctx context.Context, sel ast.SelectionSet, v model.Redelegations) graphql.Marshaler {
+	return ec._Redelegations(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNRedelegations2ᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐRedelegations(ctx context.Context, sel ast.SelectionSet, v *model.Redelegations) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._Redelegations(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNReward2ᚕᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐRewardᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Reward) graphql.Marshaler {
@@ -9968,6 +12011,53 @@ func (ec *executionContext) marshalNRewards2ᚖgithubᚗcomᚋcosmosᚑgaminghub
 		return graphql.Null
 	}
 	return ec._Rewards(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNStatsAsset2ᚕᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐStatsAssetᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.StatsAsset) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNStatsAsset2ᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐStatsAsset(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+	return ret
+}
+
+func (ec *executionContext) marshalNStatsAsset2ᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐStatsAsset(ctx context.Context, sel ast.SelectionSet, v *model.StatsAsset) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._StatsAsset(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNStatus2githubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐStatus(ctx context.Context, sel ast.SelectionSet, v model.Status) graphql.Marshaler {

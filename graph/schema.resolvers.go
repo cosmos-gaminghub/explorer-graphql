@@ -69,6 +69,10 @@ func (r *queryResolver) Validators(ctx context.Context) ([]*model.Validator, err
 	validatorFormat := document.Validator{}.FormatListValidator(validators)
 	var listValidator []*model.Validator
 	for index, validator := range validatorFormat {
+		uptime := overBlocks
+		if index < 125 {
+			uptime = upTimeCount[validator.OperatorAddr]
+		}
 		commision, _ := utils.ParseStringToFloat(validator.Commission.CommissionRate.Rate)
 		t := &model.Validator{
 			Moniker:         validator.Description.Moniker,
@@ -78,7 +82,7 @@ func (r *queryResolver) Validators(ctx context.Context) ([]*model.Validator, err
 			Commission:      commision,
 			Jailed:          validator.Jailed,
 			Status:          validator.Status,
-			Uptime:          upTimeCount[validator.OperatorAddr],
+			Uptime:          uptime,
 			OverBlocks:      overBlocks,
 			Website:         validator.Description.Website,
 			Rank:            index + 1,
@@ -102,6 +106,11 @@ func (r *queryResolver) ValidatorDetail(ctx context.Context, operatorAddress *st
 		validatorFormat := document.Validator{}.FormatListValidator(validators)
 		rank = document.Validator{}.GetIndexFromFormatListValidator(validatorFormat, validator.OperatorAddr)
 	}
+
+	uptime := overBlocks
+	if rank <= 125 {
+		uptime = upTimeCount[validator.OperatorAddr]
+	}
 	return &model.Validator{
 		Moniker:         validator.Description.Moniker,
 		OperatorAddress: validator.OperatorAddr,
@@ -110,7 +119,7 @@ func (r *queryResolver) ValidatorDetail(ctx context.Context, operatorAddress *st
 		Commission:      commision,
 		Jailed:          validator.Jailed,
 		Status:          validator.Status,
-		Uptime:          upTimeCount[validator.OperatorAddr],
+		Uptime:          uptime,
 		OverBlocks:      overBlocks,
 		Website:         validator.Description.Website,
 		Details:         validator.Description.Details,
@@ -143,11 +152,11 @@ func (r *queryResolver) Uptimes(ctx context.Context, operatorAddress *string) (*
 }
 
 func (r *queryResolver) ProposedBlocks(ctx context.Context, before *int, size *int, operatorAddress string) ([]*model.Block, error) {
-	blocks, err := document.Block{}.GetBlockListByOffsetAndSizeByOperatorAddress(*before, *size, operatorAddress)
+	blocks, totalRecord, err := document.Block{}.GetBlockListByOffsetAndSizeByOperatorAddress(*before, *size, operatorAddress)
 	if err != nil {
 		return []*model.Block{}, nil
 	}
-	return document.Block{}.FormatListBlockForModel(blocks)
+	return document.Block{}.FormatListBlockForModel(blocks, totalRecord)
 }
 
 func (r *queryResolver) PowerEvents(ctx context.Context, before *int, size *int, operatorAddress string) ([]*model.PowerEvent, error) {
@@ -179,11 +188,18 @@ func (r *queryResolver) ProposalDetail(ctx context.Context, proposalID int) (*mo
 	if err != nil {
 		return &model.Proposal{}, nil
 	}
-	return document.Proposal{}.FormatProposalForModel(proposal)
+
+	validator, err := document.Validator{}.QueryValidatorDetailByAccAddr(proposal.Proposer)
+	var moniker string
+	if err == nil {
+		moniker = validator.Description.Moniker
+	}
+
+	return document.Proposal{}.FormatProposalForModel(proposal, moniker)
 }
 
 func (r *queryResolver) Status(ctx context.Context) (*model.Status, error) {
-	lastBlock, err := document.Block{}.QueryOneBlockOrderByHeightDesc()
+	blocks, err := document.Block{}.QueryBlockOrderByHeightDesc(2)
 	if err != nil {
 		return &model.Status{}, nil
 	}
@@ -193,7 +209,7 @@ func (r *queryResolver) Status(ctx context.Context) (*model.Status, error) {
 		return &model.Status{}, nil
 	}
 
-	totalNumTxs, err := document.CommonTx{}.GetCountTxs(nil)
+	totalNumTxs, err := document.Block{}.GetCountTxs()
 	if err != nil {
 		return &model.Status{}, nil
 	}
@@ -203,12 +219,14 @@ func (r *queryResolver) Status(ctx context.Context) (*model.Status, error) {
 		return &model.Status{}, nil
 	}
 
-	bytes, _ := lastBlock.Time.MarshalText()
+	BlockTime := blocks[0].Time.UnixNano() - blocks[1].Time.UnixNano()
+	bytes, _ := blocks[0].Time.MarshalText()
 	return &model.Status{
-		BlockHeight:       int(lastBlock.Height),
-		BlockTime:         string(bytes),
+		BlockHeight:       int(blocks[0].Height),
+		Timestamp:         string(bytes),
+		BlockTime:         int(BlockTime),
 		BondedTokens:      int(bondedToken),
-		TotalTxsNum:       totalNumTxs,
+		TotalTxsNum:       int(totalNumTxs),
 		TotalSupplyTokens: totalSupplyToken,
 	}, nil
 }
@@ -229,8 +247,8 @@ func (r *queryResolver) Commission(ctx context.Context, operatorAddress string) 
 	return client.GetCommission(operatorAddress)
 }
 
-func (r *queryResolver) Delegations(ctx context.Context, accAddress *string) ([]*model.Delegation, error) {
-	delegationResult, err := client.GetDelegation(*accAddress)
+func (r *queryResolver) Delegations(ctx context.Context, accAddress string) ([]*model.Delegation, error) {
+	delegationResult, err := client.GetDelegation(accAddress)
 	if err != nil {
 		return []*model.Delegation{}, nil
 	}
@@ -258,8 +276,34 @@ func (r *queryResolver) Delegations(ctx context.Context, accAddress *string) ([]
 	return listDelegation, nil
 }
 
-func (r *queryResolver) Unbonding(ctx context.Context, accAddress *string) (*model.Unbonding, error) {
-	return client.GetUnbonding(*accAddress)
+func (r *queryResolver) Unbonding(ctx context.Context, accAddress string) (*model.Unbonding, error) {
+	result, err := client.GetUnbonding(accAddress)
+	listOpAddress := client.GetListAccAddressFromUnbonding(result)
+	validators, _ := document.Validator{}.QueryValidatorMonikerOpAddr(listOpAddress)
+	mapAccAndMoniker := document.Validator{}.MapOperatorAndMoniker(validators)
+	for _, item := range result.UnbondingResponses {
+		if v, found := mapAccAndMoniker[item.ValidatorAddress]; found {
+			item.Moniker = v
+		}
+	}
+	return result, err
+}
+
+func (r *queryResolver) Redelegations(ctx context.Context, accAddress string) (*model.Redelegations, error) {
+	result, err := client.GetRedelegation(accAddress)
+	listOpAddress := client.GetListAccAddressFromRedelegation(result)
+	validators, _ := document.Validator{}.QueryValidatorMonikerOpAddr(listOpAddress)
+	mapAccAndMoniker := document.Validator{}.MapOperatorAndMoniker(validators)
+	for _, item := range result.RedelegationResponses {
+		if v, found := mapAccAndMoniker[item.Redelegation.ValidatorSrcAddress]; found {
+			item.Redelegation.MonikerSrc = v
+		}
+
+		if v, found := mapAccAndMoniker[item.Redelegation.ValidatorDstAddress]; found {
+			item.Redelegation.MonikerDst = v
+		}
+	}
+	return result, err
 }
 
 func (r *queryResolver) Deposit(ctx context.Context, proposalID int) ([]*model.Deposit, error) {
@@ -296,6 +340,39 @@ func (r *queryResolver) Vote(ctx context.Context, before *int, size *int, propos
 		listVote = append(listVote, t)
 	}
 	return listVote, nil
+}
+
+func (r *queryResolver) Price(ctx context.Context, slug string) (*model.Price, error) {
+	last, _ := document.StatAssetInfoList20Minute{}.QueryLatestStatAssetFromDB()
+	first, _ := document.StatAssetInfoList20Minute{}.QueryNewestFromTime(last.Timestamp)
+	change := last.Price - first.Price
+	percent_change_24h := (change / last.Price) * 100
+	return &model.Price{
+		Price:            fmt.Sprintf("%f", last.Price),
+		PercentChange24h: fmt.Sprintf("%f", percent_change_24h),
+		Volume24h:        fmt.Sprintf("%f", last.Volume24H),
+		MarketCap:        fmt.Sprintf("%f", last.Marketcap),
+	}, nil
+}
+
+func (r *queryResolver) StatsAssets(ctx context.Context) ([]*model.StatsAsset, error) {
+	statsAssets, err := document.StatAssetInfoList20Minute{}.GetList()
+
+	if err != nil {
+		return []*model.StatsAsset{}, nil
+	}
+	var listAssets []*model.StatsAsset
+	for _, item := range statsAssets {
+		bytes, _ := item.Timestamp.MarshalText()
+		t := &model.StatsAsset{
+			Price:     fmt.Sprintf("%f", item.Price),
+			MarketCap: fmt.Sprintf("%f", item.Marketcap),
+			Volume24h: fmt.Sprintf("%f", item.Volume24H),
+			Timestamp: string(bytes),
+		}
+		listAssets = append(listAssets, t)
+	}
+	return listAssets, nil
 }
 
 // Query returns generated.QueryResolver implementation.

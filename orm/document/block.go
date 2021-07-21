@@ -1,15 +1,12 @@
 package document
 
 import (
-	"encoding/base64"
 	"fmt"
 	"log"
 	"time"
 
 	"github.com/cosmos-gaminghub/exploder-graphql/graph/model"
 	"github.com/cosmos-gaminghub/exploder-graphql/orm"
-
-	"github.com/cosmos/cosmos-sdk/types/bech32"
 	"gopkg.in/mgo.v2/bson"
 )
 
@@ -139,16 +136,16 @@ func (_ Block) GetBlockListByOffsetAndSize(offset, size int) ([]bson.M, error) {
 	return results, err
 }
 
-func (_ Block) GetBlockListByOffsetAndSizeByOperatorAddress(before int, size int, operatorAddress string) ([]Block, error) {
+func (_ Block) GetBlockListByOffsetAndSizeByOperatorAddress(before int, size int, operatorAddress string) ([]Block, int, error) {
 	validator, err := Validator{}.QueryValidatorDetailByOperatorAddr(operatorAddress)
+	var totalRecord int
 	if err != nil {
-		return []Block{}, err
+		return []Block{}, totalRecord, err
 	}
-	_, decodeByte, err := bech32.DecodeAndConvert(validator.ConsensusAddres)
-	ProposerAddress := base64.StdEncoding.EncodeToString(decodeByte)
 	condition := bson.M{
-		Block_Field_ProposalAddress: ProposerAddress,
+		Block_Field_ProposalAddress: validator.ProposerAddr,
 	}
+	totalRecord, _ = Block{}.GetCountBlock(condition)
 
 	if before != 0 {
 		condition[Block_Field_Height] = bson.M{
@@ -164,7 +161,7 @@ func (_ Block) GetBlockListByOffsetAndSizeByOperatorAddress(before int, size int
 
 	err = querylistByOffsetAndSize(CollectionNmBlock, selector, condition, sort, 0, size, &blocks)
 
-	return blocks, err
+	return blocks, totalRecord, err
 }
 
 func (_ Block) GetBlockListByPage(offset, size int, total bool) (int, []Block, error) {
@@ -225,15 +222,16 @@ func (_ Block) QueryLatestBlockFromDB() (Block, error) {
 	return Block{}, err
 }
 
-func (_ Block) QueryOneBlockOrderByHeightDesc() (Block, error) {
+func (_ Block) QueryBlockOrderByHeightDesc(size int) ([]Block, error) {
 
 	db := orm.GetDatabase()
 	defer db.Session.Close()
 
-	var firstBlock Block
+	var blocks []Block
 
-	err := db.C(CollectionNmBlock).Find(nil).Sort("-height").One(&firstBlock)
-	return firstBlock, err
+	sort := desc(Block_Field_Height)
+	err := queryAll(CollectionNmBlock, nil, nil, sort, size, &blocks)
+	return blocks, err
 }
 
 func (_ Block) QueryBlocksByDurationWithHeightAsc(startTime, endTime time.Time) ([]Block, error) {
@@ -255,9 +253,8 @@ func (_ Block) QueryValidatorsByHeightList(hArr []int64) ([]Block, error) {
 	return blocks, err
 }
 
-func (_ Block) FormatListBlockForModel(blocks []Block) ([]*model.Block, error) {
+func (_ Block) FormatListBlockForModel(blocks []Block, totalRecord int) ([]*model.Block, error) {
 	var listBlock []*model.Block
-	totalRecord, _ := Block{}.GetCountBlock()
 	for _, block := range blocks {
 		bytes, _ := block.Time.MarshalText()
 		t := &model.Block{
@@ -294,7 +291,7 @@ func (_ Block) FormatBsonMForModelBlockDetail(result bson.M) (*model.Block, erro
 	}, nil
 }
 
-func (_ Block) GetCountBlock() (int, error) {
+func (_ Block) GetCountBlock(condition bson.M) (int, error) {
 	result := []bson.M{}
 	var query = orm.NewQuery()
 	defer query.Release()
@@ -302,6 +299,7 @@ func (_ Block) GetCountBlock() (int, error) {
 		SetCollection(CollectionNmBlock).
 		PipeQuery(
 			[]bson.M{
+				{"$match": condition},
 				{"$group": bson.M{
 					"_id":   "",
 					"count": bson.M{"$sum": 1},
@@ -312,6 +310,23 @@ func (_ Block) GetCountBlock() (int, error) {
 		return 0, nil
 	}
 	return result[0]["count"].(int), nil
+}
+
+func (_ Block) GetCountTxs() (int64, error) {
+	result := bson.M{}
+	var query = orm.NewQuery()
+	defer query.Release()
+	query.SetResult(&result).
+		SetCollection(CollectionNmBlock).
+		PipeQuery(
+			[]bson.M{
+				{"$group": bson.M{
+					"_id":   "",
+					"count": bson.M{"$sum": "$num_txs"},
+				}},
+			},
+		)
+	return result["count"].(int64), nil
 }
 
 type BlockMeta struct {

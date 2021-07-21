@@ -50,6 +50,7 @@ type Content struct {
 	Title       string    `json:"title"`
 	Type        string    `json:"type"`
 	Description string    `json:"description"`
+	Amount      []*Amount `json:"amount"`
 	Changes     []*Change `json:"changes"`
 }
 
@@ -65,6 +66,11 @@ type Deposit struct {
 	Amount    *string `json:"amount"`
 	TxHash    string  `json:"tx_hash"`
 	Time      string  `json:"time"`
+}
+
+type Entries struct {
+	RedelegationEntry *RedelegationEntry `json:"redelegation_entry"`
+	Balance           string             `json:"balance"`
 }
 
 type Entry struct {
@@ -87,15 +93,50 @@ type PowerEvent struct {
 	TotalRecords int    `json:"total_records"`
 }
 
+type Price struct {
+	Price            string `json:"price"`
+	Volume24h        string `json:"volume_24h"`
+	MarketCap        string `json:"market_cap"`
+	PercentChange24h string `json:"percent_change_24h"`
+}
+
 type Proposal struct {
-	ID          int      `json:"id"`
-	Status      string   `json:"status"`
-	VotingStart string   `json:"voting_start"`
-	VotingEnd   string   `json:"voting_end"`
-	SubmitTime  string   `json:"submit_time"`
-	Tally       *Tally   `json:"tally"`
-	Content     *Content `json:"content"`
-	Proposer    string   `json:"proposer"`
+	ID             int       `json:"id"`
+	Status         string    `json:"status"`
+	VotingStart    string    `json:"voting_start"`
+	VotingEnd      string    `json:"voting_end"`
+	SubmitTime     string    `json:"submit_time"`
+	Tally          *Tally    `json:"tally"`
+	Content        *Content  `json:"content"`
+	Proposer       string    `json:"proposer"`
+	Moniker        string    `json:"moniker"`
+	TotalDeposit   []*Amount `json:"total_deposit"`
+	DepositEndTime string    `json:"deposit_end_time"`
+}
+
+type Redelegation struct {
+	DelegatorAddress    string               `json:"delegator_address"`
+	ValidatorDstAddress string               `json:"validator_dst_address"`
+	ValidatorSrcAddress string               `json:"validator_src_address"`
+	MonikerSrc          string               `json:"moniker_src"`
+	MonikerDst          string               `json:"moniker_dst"`
+	Entries             []*RedelegationEntry `json:"entries"`
+}
+
+type RedelegationEntry struct {
+	CreationHeight int    `json:"creation_height"`
+	CompletionTime string `json:"completion_time"`
+	InitialBalance string `json:"initial_balance"`
+	SharesDst      string `json:"shares_dst"`
+}
+
+type RedelegationResponse struct {
+	Redelegation *Redelegation `json:"redelegation"`
+	Entries      []*Entries    `json:"entries"`
+}
+
+type Redelegations struct {
+	RedelegationResponses []*RedelegationResponse `json:"redelegation_responses"`
 }
 
 type Reward struct {
@@ -112,12 +153,20 @@ type Rewards struct {
 	Rewards []*Reward `json:"rewards"`
 }
 
+type StatsAsset struct {
+	Price     string `json:"price"`
+	MarketCap string `json:"market_cap"`
+	Volume24h string `json:"volume_24h"`
+	Timestamp string `json:"timestamp"`
+}
+
 type Status struct {
 	BlockHeight       int                `json:"block_height"`
-	BlockTime         string             `json:"block_time"`
+	BlockTime         int                `json:"block_time"`
 	TotalTxsNum       int                `json:"total_txs_num"`
 	BondedTokens      int                `json:"bonded_tokens"`
 	TotalSupplyTokens *TotalSupplyTokens `json:"total_supply_tokens"`
+	Timestamp         string             `json:"timestamp"`
 }
 
 type Supply struct {
@@ -155,8 +204,9 @@ type Unbonding struct {
 }
 
 type UnbondingResponse struct {
-	DelegatorAddress *string  `json:"delegator_address"`
-	ValidatorAddress *string  `json:"validator_address"`
+	DelegatorAddress string   `json:"delegator_address"`
+	ValidatorAddress string   `json:"validator_address"`
+	Moniker          string   `json:"moniker"`
 	Entries          []*Entry `json:"entries"`
 }
 

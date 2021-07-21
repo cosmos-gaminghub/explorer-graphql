@@ -156,7 +156,7 @@ func (_ CommonTx) GetListTxBy(size int) ([]CommonTx, error) {
 
 func (_ CommonTx) GetListTxByAddress(before int, size int, operatorAddress string) ([]CommonTx, error) {
 	var data []CommonTx
-	query := bson.M{Tx_Field_Value: operatorAddress}
+	query := bson.M{"messages": bson.RegEx{operatorAddress + ".*", ""}}
 	typeArr := []string{TypeDelegate, TypeUnBond, TypeReDelegate}
 	query[Tx_Field_Type] = bson.M{
 		"$in": typeArr,
@@ -173,7 +173,7 @@ func (_ CommonTx) GetListTxByAddress(before int, size int, operatorAddress strin
 
 func (_ CommonTx) GetListTxByAccountAddress(accAddress string) ([]CommonTx, error) {
 	var data []CommonTx
-	query := bson.M{Tx_Field_Value: accAddress}
+	query := bson.M{"messages": bson.RegEx{accAddress + ".*", ""}}
 
 	err := queryAll(CollectionNmCommonTx, nil, query, desc(Tx_Field_Time), 0, &data)
 	return data, err
@@ -187,10 +187,7 @@ func (_ CommonTx) GetAmountFromLogs(logs []Log, operatorAddress string) int64 {
 			if utils.Contains(typeArr, event.Type) {
 				for _, attribute := range event.Attributes {
 					if attribute.Key == "amount" {
-						value, err := utils.ParseInt(attribute.Value)
-						if err {
-							amount = value
-						}
+						amount, _ = utils.ParseInt(attribute.Value)
 						break
 					}
 				}
@@ -205,9 +202,18 @@ func (_ CommonTx) GetTypeTextFromLogs(logs []Log, operatorAddress string) string
 	typeText := "add"
 	for _, log := range logs {
 		for _, event := range log.Events {
-			if utils.Contains(typeArr, event.Type) && event.Type == TypeUnBond {
-				typeText = "minus"
-				break
+			if utils.Contains(typeArr, event.Type) {
+				if event.Type == TypeUnBond {
+					typeText = "minus"
+					break
+				} else if event.Type == TypeReDelegate {
+					for _, attribute := range event.Attributes {
+						if attribute.Key == "source_validator" && attribute.Value == operatorAddress {
+							typeText = "minus"
+							break
+						}
+					}
+				}
 			}
 		}
 	}

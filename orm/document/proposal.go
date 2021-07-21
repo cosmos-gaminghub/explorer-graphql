@@ -20,20 +20,26 @@ type Proposal struct {
 	Content          Content          `bson:"content" json:"content"`
 	SubmitTime       time.Time        `bson:"submit_time"`
 	FinalTallyResult FinalTallyResult `bson:"final_tally_result" json:"final_tally_result"`
+	DepositEndTime   time.Time        `bson:"deposit_end_time"`
 	VotingEndTime    time.Time        `bson:"voting_end_time"`
 	VotingStartTime  time.Time        `bson:"voting_start_time"`
 	Proposer         string           `bson:"proposer"`
+	TotalDeposit     []Amount         `bson:"total_deposit"`
 }
 
 type Content struct {
 	Type        string `bson:"type"`
 	Title       string `bson:"title"`
 	Description string `bson:"description"`
-	Changes     []struct {
+	Amount      []struct {
+		Denom  string `bson:"denom"`
+		Amount string `bson:"amount"`
+	} `bson:"amount"`
+	Changes []struct {
 		Key      string `bson:"key"`
 		Value    string `bson:"value"`
 		Subspace string `bson:"subspace"`
-	}
+	} `bson:"changes"`
 }
 
 type FinalTallyResult struct {
@@ -61,22 +67,28 @@ func (_ Proposal) QueryProposalById(ProposalId int) (Proposal, error) {
 
 func (_ Proposal) FormatListProposalForModel(proposals []Proposal) (listProposal []*model.Proposal, err error) {
 	for _, proposal := range proposals {
-		t, _ := Proposal{}.FormatProposalForModel(proposal)
+		t, _ := Proposal{}.FormatProposalForModel(proposal, "")
 		listProposal = append(listProposal, t)
 	}
 	return listProposal, nil
 }
 
-func (_ Proposal) FormatProposalForModel(proposal Proposal) (listProposal *model.Proposal, err error) {
+func (_ Proposal) FormatProposalForModel(proposal Proposal, moniker string) (listProposal *model.Proposal, err error) {
+	submitTime, _ := proposal.SubmitTime.MarshalText()
+	vottingStart, _ := proposal.VotingStartTime.MarshalText()
+	votingEndTime, _ := proposal.VotingEndTime.MarshalText()
+	depositEndTime, _ := proposal.DepositEndTime.MarshalText()
 	return &model.Proposal{
-		Proposer:    proposal.Proposer,
-		Status:      proposal.ProposalStatus,
-		VotingStart: proposal.VotingStartTime.String(),
-		VotingEnd:   proposal.VotingEndTime.String(),
+		Proposer:       proposal.Proposer,
+		Status:         proposal.ProposalStatus,
+		VotingStart:    string(vottingStart),
+		VotingEnd:      string(votingEndTime),
+		DepositEndTime: string(depositEndTime),
 		Content: &model.Content{
 			Title:       proposal.Content.Title,
 			Description: proposal.Content.Description,
 			Type:        proposal.Content.Type,
+			Amount:      formatAmountForModelContent(proposal.Content),
 			Changes:     formatChangesForModel(proposal.Content),
 		},
 		Tally: &model.Tally{
@@ -85,9 +97,37 @@ func (_ Proposal) FormatProposalForModel(proposal Proposal) (listProposal *model
 			No:         proposal.FinalTallyResult.No,
 			NoWithVeto: proposal.FinalTallyResult.NoWithVeto,
 		},
-		ID:         proposal.ProposalId,
-		SubmitTime: proposal.SubmitTime.String(),
+		ID:           proposal.ProposalId,
+		SubmitTime:   string(submitTime),
+		TotalDeposit: formatTotalDepostForModel(proposal.TotalDeposit),
+		Moniker:      moniker,
 	}, err
+}
+
+func formatAmountForModelContent(content Content) (listAmount []*model.Amount) {
+	if len(content.Amount) > 0 {
+		for _, item := range content.Amount {
+			c := &model.Amount{
+				Denom:  item.Denom,
+				Amount: item.Amount,
+			}
+			listAmount = append(listAmount, c)
+		}
+	}
+	return listAmount
+}
+
+func formatTotalDepostForModel(totalDeposit []Amount) (td []*model.Amount) {
+	if len(totalDeposit) > 0 {
+		for _, item := range totalDeposit {
+			d := &model.Amount{
+				Denom:  item.Denom,
+				Amount: item.Amount,
+			}
+			td = append(td, d)
+		}
+	}
+	return td
 }
 
 func formatChangesForModel(content Content) (listChange []*model.Change) {
@@ -103,35 +143,6 @@ func formatChangesForModel(content Content) (listChange []*model.Change) {
 	}
 	return listChange
 }
-
-// func formatDepositForModel(proposal Proposal) (listDeposit []*model.Deposit) {
-// 	if len(proposal.Deposit) > 0 {
-// 		for _, item := range proposal.Deposit {
-// 			d := &model.Deposit{
-// 				ProposalID: item.ProposalID,
-// 				Depositor:  item.Depositor,
-// 				Amount:     []*model.Amount{},
-// 			}
-// 			d.Amount = formatAmountForModel(item)
-// 			listDeposit = append(listDeposit, d)
-// 		}
-// 	}
-// 	return listDeposit
-// }
-
-// func formatVoteForModel(proposal Proposal) (listVote []*model.Vote) {
-// 	if len(proposal.Deposit) > 0 {
-// 		for _, item := range proposal.Vote {
-// 			v := &model.Vote{
-// 				ProposalID: item.ProposalId,
-// 				Voter:      item.Voter,
-// 				Option:     item.Option,
-// 			}
-// 			listVote = append(listVote, v)
-// 		}
-// 	}
-// 	return listVote
-// }
 
 func formatAmountForModel(deposit Deposit) (listAmount []*model.Amount) {
 	if len(deposit.Amount) > 0 {
