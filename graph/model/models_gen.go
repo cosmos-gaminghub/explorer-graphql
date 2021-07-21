@@ -52,6 +52,7 @@ type Content struct {
 	Description string    `json:"description"`
 	Amount      []*Amount `json:"amount"`
 	Changes     []*Change `json:"changes"`
+	Plan        *Plan     `json:"plan"`
 }
 
 type Delegation struct {
@@ -82,6 +83,14 @@ type Entry struct {
 
 type Inflation struct {
 	Inflation string `json:"inflation"`
+}
+
+type Plan struct {
+	Name                string `json:"name"`
+	Time                string `json:"time"`
+	Height              string `json:"height"`
+	Info                string `json:"info"`
+	UpgradedClientState string `json:"upgraded_client_state"`
 }
 
 type PowerEvent struct {

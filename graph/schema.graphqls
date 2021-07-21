@@ -106,6 +106,7 @@ type Content {
   description: String!
   amount: [Amount!]!
   changes: [Change!]!
+  plan: Plan!
 }
 
 type Amount {
@@ -117,6 +118,14 @@ type Change {
   key: String!
   value: String!
   subspace: String!
+}
+
+type Plan {
+  name: String!
+  time: String!
+  height: String!
+  info: String!
+  upgraded_client_state: String!
 }
 
 type Status {
