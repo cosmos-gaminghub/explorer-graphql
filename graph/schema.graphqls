@@ -1,188 +1,189 @@
 type Block {
-	height: Int!
-	hash: String!
-	proposer_addr: String!
-	num_txs: Int!
-	time: String!
-	moniker: String!
-	operator_address: String!
-	total_records: Int!
+  height: Int!
+  hash: String!
+  proposer_addr: String!
+  num_txs: Int!
+  time: String!
+  moniker: String!
+  operator_address: String!
+  total_records: Int!
 }
 
 type Validator {
-	moniker: String!
-	voting_power: Int!
-	cumulative_share: String! 
-	uptime: Int!
-	over_blocks: Int!
-	commission: Float!
-	operator_address: String!
-	acc_address: String!
-	jailed: Boolean!
-	status: String!
-	website: String!
-	rank: Int!
-	details: String!
+  moniker: String!
+  voting_power: Int!
+  cumulative_share: String!
+  uptime: Int!
+  over_blocks: Int!
+  commission: Float!
+  operator_address: String!
+  acc_address: String!
+  jailed: Boolean!
+  status: String!
+  website: String!
+  rank: Int!
+  details: String!
 }
 
 type UptimeResult {
-	last_height: Int!
-	uptime: [Uptime!]!
+  last_height: Int!
+  uptime: [Uptime!]!
 }
 type Uptime {
-	height: Int!
-	timestamp: String!
+  height: Int!
+  timestamp: String!
 }
 
 type PowerEvent {
-	height: Int!
-	tx_hash: String!
-	timestamp: String!
-	amount: Int!
-	type: String!
-	total_records: Int!
+  height: Int!
+  tx_hash: String!
+  timestamp: String!
+  amount: Int!
+  type: String!
+  total_records: Int!
 }
 
 type Delegation {
-	moniker: String!
-	delegator_address: String!
-	validator_address: String!
-	amount: Int!
+  moniker: String!
+  delegator_address: String!
+  validator_address: String!
+  amount: Int!
 }
 
 type Tx {
-	tx_hash: String!
-	status: Int!
-	fee: String!
-	height: Int!
-	timestamp: String!,
-	messages: String!
-	logs: String!,
-	memo: String!
-	gas_used: Int!
-	gas_wanted: Int!
+  tx_hash: String!
+  status: Int!
+  fee: String!
+  height: Int!
+  timestamp: String!
+  messages: String!
+  logs: String!
+  memo: String!
+  gas_used: Int!
+  gas_wanted: Int!
+  raw_log: String!
 }
 
 type Proposal {
-	id: Int!
-	status: String!
-	voting_start: String!
-	voting_end: String!
-	submit_time: String!
-	tally: Tally!
-	content: Content!
-	proposer: String!
+  id: Int!
+  status: String!
+  voting_start: String!
+  voting_end: String!
+  submit_time: String!
+  tally: Tally!
+  content: Content!
+  proposer: String!
 }
 
 type Tally {
-	yes: String!
-	abstain: String!
-	no: String!
-	no_with_veto: String!
+  yes: String!
+  abstain: String!
+  no: String!
+  no_with_veto: String!
 }
 
 type Deposit {
-	depositor: String!
-	amount: String
-	tx_hash: String!,
-	time: String!
+  depositor: String!
+  amount: String
+  tx_hash: String!
+  time: String!
 }
 
 type Vote {
-	voter: String!
-	option: String!
-	tx_hash: String!,
-	time: String!
+  voter: String!
+  option: String!
+  tx_hash: String!
+  time: String!
 }
 
 type Content {
-	title: String!
-	type: String!
-	description: String!
-	changes: [Change!]!
+  title: String!
+  type: String!
+  description: String!
+  changes: [Change!]!
 }
 
 type Amount {
-	denom: String!
-	amount: String!
+  denom: String!
+  amount: String!
 }
 
 type Change {
-	key:      String!
-	value:    String!
-	subspace: String!
+  key: String!
+  value: String!
+  subspace: String!
 }
 
 type Status {
-	block_height: Int!
-	block_time: String!,
-	total_txs_num: Int!
-	bonded_tokens: Int!
-	total_supply_tokens: TotalSupplyTokens
+  block_height: Int!
+  block_time: String!
+  total_txs_num: Int!
+  bonded_tokens: Int!
+  total_supply_tokens: TotalSupplyTokens
 }
 type TotalSupplyTokens {
-	supply: [Supply!]!
+  supply: [Supply!]!
 }
 type Supply {
-	denom: String,
-	amount: String,
+  denom: String
+  amount: String
 }
 
 type Inflation {
-	inflation: String!
+  inflation: String!
 }
 
 type Balance {
-	denom: String!,
-	amount: String!
+  denom: String!
+  amount: String!
 }
 
 type Balances {
-	balances: [Balance!]!
+  balances: [Balance!]!
 }
 
-type RewardInfo{
-	denom: String!,
-	amount: String!
+type RewardInfo {
+  denom: String!
+  amount: String!
 }
 
 type Reward {
-	validator_address: String!
-	reward: [RewardInfo!]!
+  validator_address: String!
+  reward: [RewardInfo!]!
 }
 
 type Rewards {
-	rewards: [Reward!]!
+  rewards: [Reward!]!
 }
 
 type CommissionInfo {
-	denom: String!,
-	amount: String!
+  denom: String!
+  amount: String!
 }
 
 type Commissions {
-	commission: [CommissionInfo!]!
+  commission: [CommissionInfo!]!
 }
 
 type Commission {
-	commission: Commissions
+  commission: Commissions
 }
 
 type UnbondingResponse {
-	delegator_address: String,
-	validator_address: String,
-	entries: [Entry!]!
+  delegator_address: String
+  validator_address: String
+  entries: [Entry!]!
 }
 
 type Unbonding {
-	unbonding_responses: [UnbondingResponse!]!
+  unbonding_responses: [UnbondingResponse!]!
 }
 
 type Entry {
-	creation_height: String,
-	completion_time: String,
-	initial_balance: String,
-	balance: String
+  creation_height: String
+  completion_time: String
+  initial_balance: String
+  balance: String
 }
 
 type Query {
@@ -197,8 +198,11 @@ type Query {
   validator_detail(operator_address: String): Validator!
   uptimes(operator_address: String): UptimeResult!
   proposed_blocks(before: Int, size: Int, operator_address: String!): [Block!]!
-  power_events(before: Int, size: Int, operator_address: String!): [PowerEvent!]!
-  
+  power_events(
+    before: Int
+    size: Int
+    operator_address: String!
+  ): [PowerEvent!]!
 
   account_transactions(acc_address: String): [Tx!]!
 
@@ -208,29 +212,29 @@ type Query {
   status: Status!
   inflation: Inflation!
 
-	"""
-		Get avaiable in account detail
-	"""
-  balances(acc_address: String!):  Balances!
+  """
+  Get avaiable in account detail
+  """
+  balances(acc_address: String!): Balances!
 
-  	"""
-		Get rewardss in account detail
-	"""
-  rewards(acc_address: String!):  Rewards!
+  """
+  Get rewardss in account detail
+  """
+  rewards(acc_address: String!): Rewards!
 
-  	"""
-		Get commisions in account detail
-	"""
-  commission(operator_address: String!):  Commission!
+  """
+  Get commisions in account detail
+  """
+  commission(operator_address: String!): Commission!
 
-	"""
-		Get delegate in account detail
-	"""
+  """
+  Get delegate in account detail
+  """
   delegations(acc_address: String): [Delegation!]!
 
-  	"""
-		Get unbonding in account detail
-	"""
+  """
+  Get unbonding in account detail
+  """
   unbonding(acc_address: String): Unbonding!
 
   deposit(proposal_id: Int!): [Deposit!]!
