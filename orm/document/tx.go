@@ -407,6 +407,7 @@ func (_ CommonTx) QueryProposalDeposit(id int) ([]CommonTx, error) {
 		SetCollection(CollectionNmCommonTx).
 		PipeQuery(
 			[]bson.M{
+				{"$sort": bson.M{Tx_Field_Time: -1}},
 				{
 					"$match": condition,
 				},
@@ -430,6 +431,7 @@ func (_ CommonTx) QueryProposalVote(before int, size int, id int) ([]CommonTx, e
 		SetCollection(CollectionNmCommonTx).
 		PipeQuery(
 			[]bson.M{
+				{"$sort": bson.M{Tx_Field_Time: -1}},
 				{
 					"$match": condition,
 				},
