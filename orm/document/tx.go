@@ -357,62 +357,6 @@ func (cArr Counter) String() string {
 	return res
 }
 
-// func (_ CommonTx) CountByType(query bson.M) (Counter, error) {
-
-// 	var typeArr []string
-// 	typeArr = append(typeArr, types.BankList...)
-// 	typeArr = append(typeArr, types.DeclarationList...)
-// 	typeArr = append(typeArr, types.StakeList...)
-// 	typeArr = append(typeArr, types.GovernanceList...)
-// 	query[Tx_Field_Type] = bson.M{
-// 		"$in": typeArr,
-// 	}
-// 	query = FilterUnknownTxs(query)
-
-// 	counter := Counter{}
-
-// 	c := getDb().C(CollectionNmCommonTx)
-// 	defer c.Database.Session.Close()
-
-// 	pipe := c.Pipe(
-// 		[]bson.M{
-// 			{"$match": query},
-// 			{"$group": bson.M{
-// 				"_id":   "$type",
-// 				"count": bson.M{"$sum": 1},
-// 			}},
-// 		},
-// 	)
-
-// 	err := pipe.All(&counter)
-
-// 	return counter, err
-// }
-
-// func (_ CommonTx) GetTxlistByDuration(startTime, endTime string) ([]TxNumStat, error) {
-
-// 	query := bson.M{}
-// 	query[TxNumStat_Field_Date] = bson.M{"$gte": startTime, "$lt": endTime}
-
-// 	var selector = bson.M{
-// 		TxNumStat_Field_Date: 1, TxNumStat_Field_Num: 1,
-// 		TNSFieldTotalAccNum: 1, TNSFieldDelegatorNum: 1,
-// 		TNSFieldTokenStat: 1,
-// 	}
-// 	var txNumStatList []TxNumStat
-
-// 	q := orm.NewQuery()
-// 	q.SetCollection(CollectionTxNumStat)
-// 	q.SetCondition(query)
-// 	q.SetSelector(selector).SetSort(TxNumStat_Field_Date)
-// 	q.SetResult(&txNumStatList)
-
-// 	defer q.Release()
-
-// 	err := q.Exec()
-// 	return txNumStatList, err
-// }
-
 func (_ CommonTx) GetTxCountByDuration(startTime, endTime time.Time) (int, error) {
 
 	db := orm.GetDatabase()
@@ -427,29 +371,6 @@ func (_ CommonTx) GetTxCountByDuration(startTime, endTime time.Time) (int, error
 	return txStore.Find(query).Count()
 }
 
-// func (_ CommonTx) GetTxsByDurationAddress(startTime, endTime time.Time, address string) ([]CommonTx, error) {
-
-// 	db := orm.GetDatabase()
-// 	defer db.Session.Close()
-
-// 	txStore := db.C(CollectionNmCommonTx)
-// 	var res []CommonTx
-
-// 	query := bson.M{}
-// 	query = FilterUnknownTxs(query)
-// 	query[Tx_Field_Time] = bson.M{"$gte": startTime, "$lt": endTime}
-// 	query[Tx_Field_Status] = types.Success
-// 	if address != "" {
-// 		query["signers.addr_bech32"] = address
-
-// 	}
-
-// 	if err := txStore.Find(query).All(&res); err != nil {
-// 		return nil, err
-// 	}
-// 	return res, nil
-// }
-
 func (_ CommonTx) GetTxsByType(txtype string, status string) ([]CommonTx, error) {
 	condition := bson.M{Tx_Field_Type: txtype, Tx_Field_Status: status}
 	var txs []CommonTx
@@ -459,24 +380,6 @@ func (_ CommonTx) GetTxsByType(txtype string, status string) ([]CommonTx, error)
 	}
 	return txs, nil
 }
-
-// func (_ CommonTx) QueryProposalTxFromById(idArr []uint64) (map[uint64]string, error) {
-
-// 	selector := bson.M{Tx_Field_From: 1, Tx_Field_ProposalId: 1}
-// 	condition := bson.M{Tx_Field_Type: "SubmitProposal", Tx_Field_Status: "success", Tx_Field_ProposalId: bson.M{"$in": idArr}}
-// 	var txs []CommonTx
-// 	condition = FilterUnknownTxs(condition)
-
-// 	err := queryAll(CollectionNmCommonTx, selector, condition, desc(Tx_Field_Time), 0, &txs)
-
-// 	proposerById := map[uint64]string{}
-
-// 	for _, v := range txs {
-// 		proposerById[v.ProposalId] = v.From
-// 	}
-
-// 	return proposerById, err
-// }
 
 func (_ CommonTx) QueryProposalTxListById(idArr []uint64) ([]CommonTx, error) {
 
@@ -491,32 +394,49 @@ func (_ CommonTx) QueryProposalTxListById(idArr []uint64) ([]CommonTx, error) {
 }
 
 func (_ CommonTx) QueryProposalDeposit(id int) ([]CommonTx, error) {
+	var result []CommonTx
+	var query = orm.NewQuery()
+	defer query.Release()
+
 	condition := bson.M{}
+	condition[Tx_Field_Event_Type] = TypeForDeposit
 	condition[Tx_Field_Event_Key] = "proposal_id"
 	condition[Tx_Field_Event_Value] = strconv.Itoa(id)
-	condition[Tx_Field_Event_Type] = TypeForDeposit
-	var txs []CommonTx
 
-	err := queryAll(CollectionNmCommonTx, nil, condition, desc(Tx_Field_Time), 0, &txs)
+	query.SetResult(&result).
+		SetCollection(CollectionNmCommonTx).
+		PipeQuery(
+			[]bson.M{
+				{
+					"$match": condition,
+				},
+			},
+		)
 
-	return txs, err
+	return result, nil
 }
 
 func (_ CommonTx) QueryProposalVote(before int, size int, id int) ([]CommonTx, error) {
+	var result []CommonTx
+	var query = orm.NewQuery()
+	defer query.Release()
+
 	condition := bson.M{}
-	if before != 0 {
-		condition[Tx_Field_Height] = bson.M{
-			"$lt": before,
-		}
-	}
+	condition[Tx_Field_Event_Type] = TypeForVote
 	condition[Tx_Field_Event_Key] = "proposal_id"
 	condition[Tx_Field_Event_Value] = strconv.Itoa(id)
-	condition[Tx_Field_Event_Type] = TypeForVote
-	var txs []CommonTx
 
-	err := queryAll(CollectionNmCommonTx, nil, condition, desc(Tx_Field_Time), 0, &txs)
+	query.SetResult(&result).
+		SetCollection(CollectionNmCommonTx).
+		PipeQuery(
+			[]bson.M{
+				{
+					"$match": condition,
+				},
+			},
+		)
 
-	return txs, err
+	return result, nil
 }
 
 func (_ CommonTx) GetValueOfLog(logs []Log, eventType string, key string) (amount string) {
@@ -532,121 +452,6 @@ func (_ CommonTx) GetValueOfLog(logs []Log, eventType string, key string) (amoun
 	}
 	return amount
 }
-
-// func (_ CommonTx) QueryProposalTxById(proposalId int64, page, size int, total bool, iaaAddrs []string) (int, []CommonTx, error) {
-
-// 	txs := []CommonTx{}
-
-// 	selector := bson.M{
-// 		Tx_Field_Height: 1,
-// 		Tx_Field_Time:   1,
-// 		Tx_Field_Hash:   1,
-// 		Tx_Field_From:   1,
-// 	}
-// 	condition := bson.M{
-// 		Tx_Field_Status:     types.TxTypeStatus,
-// 		Tx_Field_ProposalId: proposalId,
-// 		Tx_Field_Type:       types.TxTypeVote,
-// 		Tx_Field_From:       bson.M{"$in": iaaAddrs},
-// 	}
-// 	condition = FilterUnknownTxs(condition)
-// 	sort := fmt.Sprintf("-%v", Tx_Field_Height)
-
-// 	num, err := pageQuery(CollectionNmCommonTx, selector, condition, sort, page, size, total, &txs)
-
-// 	return num, txs, err
-// }
-
-// func (_ CommonTx) QueryDepositedProposalTxByValidatorWithSubmitOrDepositType(validatorAddrAcc string, page, size int, total bool) (int, []CommonTx, error) {
-
-// 	txs := []CommonTx{}
-// 	selector := bson.M{
-// 		Tx_Field_Hash:       1,
-// 		Tx_Field_From:       1,
-// 		Tx_Field_Amount:     1,
-// 		Tx_Field_Type:       1,
-// 		Tx_Field_ProposalId: 1,
-// 	}
-// 	condition := bson.M{
-// 		Tx_Field_Status: types.TxTypeStatus,
-// 		Tx_Field_From:   validatorAddrAcc,
-// 		Tx_Field_Type: bson.M{
-// 			"$in": []string{types.TxTypeSubmitProposal, types.TxTypeDeposit},
-// 		},
-// 	}
-// 	condition = FilterUnknownTxs(condition)
-// 	sort := fmt.Sprintf("-%v", Tx_Field_Height)
-// 	num, err := pageQuery(CollectionNmCommonTx, selector, condition, sort, page, size, total, &txs)
-
-// 	return num, txs, err
-// }
-
-// func (_ CommonTx) QueryProposalTxByIdWithSubmitOrDepositType(proposalId int64, page, size int, total bool) (int, []CommonTx, error) {
-
-// 	txs := []CommonTx{}
-// 	selector := bson.M{
-// 		Tx_Field_Hash:   1,
-// 		Tx_Field_From:   1,
-// 		Tx_Field_Amount: 1,
-// 		Tx_Field_Type:   1,
-// 		Tx_Field_Time:   1,
-// 	}
-// 	condition := bson.M{
-// 		Tx_Field_Status:     types.TxTypeStatus,
-// 		Tx_Field_ProposalId: proposalId,
-// 		Tx_Field_Type: bson.M{
-// 			"$in": []string{types.TxTypeSubmitProposal, types.TxTypeDeposit},
-// 		},
-// 	}
-// 	condition = FilterUnknownTxs(condition)
-// 	sort := fmt.Sprintf("-%v", Tx_Field_Height)
-// 	num, err := pageQuery(CollectionNmCommonTx, selector, condition, sort, page, size, total, &txs)
-
-// 	return num, txs, err
-// }
-
-// func (_ CommonTx) QueryTxAsset(assetType, tokenType, symbol, gateway string, page, size int, total bool) (int, []CommonTx, error) {
-// 	txs := []CommonTx{}
-// 	selector := bson.M{
-// 		Tx_Field_Hash:      1,
-// 		Tx_Field_Height:    1,
-// 		Tx_Field_From:      1,
-// 		Tx_Field_To:        1,
-// 		Tx_Field_Amount:    1,
-// 		Tx_Field_Type:      1,
-// 		Tx_Field_Status:    1,
-// 		Tx_Field_ActualFee: 1,
-// 		Tx_Field_Tags:      1,
-// 		Tx_Field_Msgs:      1,
-// 		Tx_Field_Time:      1,
-// 	}
-// 	condition := bson.M{
-// 		Tx_Field_Msgs_UdInfo: assetType,
-// 	}
-// 	condition = FilterUnknownTxs(condition)
-// 	if tokenType != "" {
-// 		condition[Tx_Field_Type] = tokenType
-// 	} else {
-// 		condition[Tx_Field_Type] = bson.M{
-// 			"$in": []string{types.TxTypeIssueToken, types.TxTypeEditToken, types.TxTypeMintToken, types.TxTypeTransferTokenOwner},
-// 		}
-// 	}
-// 	if symbol != "" {
-// 		condition[Tx_Field_Msgs_UdInfo_Symbol] = bson.M{
-// 			"$regex":   symbol,
-// 			"$options": "$i",
-// 		}
-// 	}
-// 	if gateway != "" {
-// 		condition[Tx_Field_Msgs_UdInfo_Gateway] = bson.M{
-// 			"$regex":   gateway,
-// 			"$options": "$i",
-// 		}
-// 	}
-// 	sort := fmt.Sprintf("-%v", Tx_Field_Height)
-// 	num, err := pageQuery(CollectionNmCommonTx, selector, condition, sort, page, size, total, &txs)
-// 	return num, txs, err
-// }
 
 func (_ CommonTx) QueryTxTransferGatewayOwner(moniker string, page, size int, total bool) (int, []CommonTx, error) {
 	txs := []CommonTx{}
