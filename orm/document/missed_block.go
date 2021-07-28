@@ -70,7 +70,7 @@ func (_ MissedBlock) GetMissedBlockCount(listOperatorAddress []string) (map[stri
 			},
 		)
 	for _, missedBlock := range result {
-		upTimeMap[missedBlock.Id] = overBlock - missedBlock.Count
+		upTimeMap[missedBlock.Id] = missedBlock.Count
 	}
 	return upTimeMap, overBlock
 }
