@@ -331,6 +331,9 @@ func (_ Block) GetCountTxs() (int64, error) {
 				}},
 			},
 		)
+	if result["count"] == nil {
+		return 0, nil
+	}
 	return result["count"].(int64), nil
 }
 
