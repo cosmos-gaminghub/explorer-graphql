@@ -401,7 +401,7 @@ func (_ CommonTx) QueryByListByTxhash(listTxHash []string) ([]CommonTx, error) {
 
 	condition := bson.M{Tx_Field_Hash: bson.M{"$in": listTxHash}}
 	var txs []CommonTx
-	err := queryAll(CollectionNmCommonTx, nil, condition, "", 0, &txs)
+	err := queryAll(CollectionNmCommonTx, nil, condition, desc(Tx_Field_Time), 0, &txs)
 
 	return txs, err
 }
