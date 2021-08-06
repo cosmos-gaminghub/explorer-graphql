@@ -31,8 +31,7 @@ func (_ AccountTransaction) GetListTxsByAddress(before int, size int, address st
 		}
 	}
 
-	err = querylistByOffsetAndSize(CollectionAccountTransaction, selector, query, "", 0, size, &data)
-
+	err = querylistByOffsetAndSize(CollectionAccountTransaction, selector, query, desc(AccountTransaction_Field_Height), 0, size, &data)
 	for _, item := range data {
 		listTxHash = append(listTxHash, item.TxHash)
 	}
