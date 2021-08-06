@@ -167,8 +167,12 @@ func (r *queryResolver) PowerEvents(ctx context.Context, before *int, size *int,
 	return document.CommonTx{}.FormatListTxsForModelPowerEvent(txs, operatorAddress)
 }
 
-func (r *queryResolver) AccountTransactions(ctx context.Context, accAddress *string) ([]*model.Tx, error) {
-	txs, err := document.CommonTx{}.GetListTxByAccountAddress(*accAddress)
+func (r *queryResolver) AccountTransactions(ctx context.Context, accAddress string, before int, size int) ([]*model.Tx, error) {
+	listTxHash, err := document.AccountTransaction{}.GetListTxsByAddress(before, size, accAddress)
+	if err != nil {
+		return []*model.Tx{}, nil
+	}
+	txs, err := document.CommonTx{}.QueryByListByTxhash(listTxHash)
 	if err != nil {
 		return []*model.Tx{}, nil
 	}

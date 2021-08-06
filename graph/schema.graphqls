@@ -264,7 +264,7 @@ type Query {
     operator_address: String!
   ): [PowerEvent!]!
 
-  account_transactions(acc_address: String): [Tx!]!
+  account_transactions(acc_address: String!, before: Int!, size: Int!): [Tx!]!
 
   proposals: [Proposal!]!
   proposal_detail(proposal_id: Int!): Proposal!
