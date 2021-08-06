@@ -164,7 +164,7 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
-		AccountTransactions func(childComplexity int, accAddress *string) int
+		AccountTransactions func(childComplexity int, accAddress string, before int, size int) int
 		Balances            func(childComplexity int, accAddress string) int
 		BlockDetail         func(childComplexity int, height *int) int
 		BlockTxs            func(childComplexity int, height *int) int
@@ -333,7 +333,7 @@ type QueryResolver interface {
 	Uptimes(ctx context.Context, operatorAddress *string) (*model.UptimeResult, error)
 	ProposedBlocks(ctx context.Context, before *int, size *int, operatorAddress string) ([]*model.Block, error)
 	PowerEvents(ctx context.Context, before *int, size *int, operatorAddress string) ([]*model.PowerEvent, error)
-	AccountTransactions(ctx context.Context, accAddress *string) ([]*model.Tx, error)
+	AccountTransactions(ctx context.Context, accAddress string, before int, size int) ([]*model.Tx, error)
 	Proposals(ctx context.Context) ([]*model.Proposal, error)
 	ProposalDetail(ctx context.Context, proposalID int) (*model.Proposal, error)
 	Status(ctx context.Context) (*model.Status, error)
@@ -844,7 +844,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.AccountTransactions(childComplexity, args["acc_address"].(*string)), true
+		return e.complexity.Query.AccountTransactions(childComplexity, args["acc_address"].(string), args["before"].(int), args["size"].(int)), true
 
 	case "Query.balances":
 		if e.complexity.Query.Balances == nil {
@@ -1936,7 +1936,7 @@ type Query {
     operator_address: String!
   ): [PowerEvent!]!
 
-  account_transactions(acc_address: String): [Tx!]!
+  account_transactions(acc_address: String!, before: Int!, size: Int!): [Tx!]!
 
   proposals: [Proposal!]!
   proposal_detail(proposal_id: Int!): Proposal!
@@ -2011,15 +2011,33 @@ func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs
 func (ec *executionContext) field_Query_account_transactions_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 *string
+	var arg0 string
 	if tmp, ok := rawArgs["acc_address"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("acc_address"))
-		arg0, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
 	args["acc_address"] = arg0
+	var arg1 int
+	if tmp, ok := rawArgs["before"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("before"))
+		arg1, err = ec.unmarshalNInt2int(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["before"] = arg1
+	var arg2 int
+	if tmp, ok := rawArgs["size"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("size"))
+		arg2, err = ec.unmarshalNInt2int(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["size"] = arg2
 	return args, nil
 }
 
@@ -5174,7 +5192,7 @@ func (ec *executionContext) _Query_account_transactions(ctx context.Context, fie
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().AccountTransactions(rctx, args["acc_address"].(*string))
+		return ec.resolvers.Query().AccountTransactions(rctx, args["acc_address"].(string), args["before"].(int), args["size"].(int))
 	})
 	if err != nil {
 		ec.Error(ctx, err)

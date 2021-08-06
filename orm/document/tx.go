@@ -397,6 +397,15 @@ func (_ CommonTx) QueryProposalTxListById(idArr []uint64) ([]CommonTx, error) {
 	return txs, err
 }
 
+func (_ CommonTx) QueryByListByTxhash(listTxHash []string) ([]CommonTx, error) {
+
+	condition := bson.M{Tx_Field_Hash: bson.M{"$in": listTxHash}}
+	var txs []CommonTx
+	err := queryAll(CollectionNmCommonTx, nil, condition, "", 0, &txs)
+
+	return txs, err
+}
+
 func (_ CommonTx) QueryProposalDeposit(id int) ([]CommonTx, error) {
 	var result []CommonTx
 	var query = orm.NewQuery()
