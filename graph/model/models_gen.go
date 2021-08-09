@@ -2,6 +2,10 @@
 
 package model
 
+type AccountDetail struct {
+	IsValidator bool `json:"is_validator"`
+}
+
 type Amount struct {
 	Denom  string `json:"denom"`
 	Amount string `json:"amount"`
