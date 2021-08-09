@@ -179,6 +179,18 @@ func (r *queryResolver) AccountTransactions(ctx context.Context, accAddress stri
 	return document.CommonTx{}.FormatListTxsForModel(txs)
 }
 
+func (r *queryResolver) AccountDetail(ctx context.Context, accAddress string) (*model.AccountDetail, error) {
+	_, err := document.Validator{}.QueryValidatorDetailByAccAddr(accAddress)
+	if err != nil {
+		return &model.AccountDetail{
+			IsValidator: false,
+		}, nil
+	}
+	return &model.AccountDetail{
+		IsValidator: true,
+	}, nil
+}
+
 func (r *queryResolver) Proposals(ctx context.Context) ([]*model.Proposal, error) {
 	proposals, err := document.Proposal{}.GetList()
 	if err != nil {

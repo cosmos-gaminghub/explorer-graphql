@@ -246,6 +246,10 @@ type RedelegationEntry {
   shares_dst: String!
 }
 
+type AccountDetail {
+  is_validator: Boolean!
+}
+
 type Query {
   blocks(offset: Int, size: Int): [Block!]!
   block_detail(height: Int): Block!
@@ -265,6 +269,7 @@ type Query {
   ): [PowerEvent!]!
 
   account_transactions(acc_address: String!, before: Int!, size: Int!): [Tx!]!
+  account_detail(acc_address: String!): AccountDetail!
 
   proposals: [Proposal!]!
   proposal_detail(proposal_id: Int!): Proposal!

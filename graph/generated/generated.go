@@ -42,6 +42,10 @@ type DirectiveRoot struct {
 }
 
 type ComplexityRoot struct {
+	AccountDetail struct {
+		IsValidator func(childComplexity int) int
+	}
+
 	Amount struct {
 		Amount func(childComplexity int) int
 		Denom  func(childComplexity int) int
@@ -164,6 +168,7 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
+		AccountDetail       func(childComplexity int, accAddress string) int
 		AccountTransactions func(childComplexity int, accAddress string, before int, size int) int
 		Balances            func(childComplexity int, accAddress string) int
 		BlockDetail         func(childComplexity int, height *int) int
@@ -334,6 +339,7 @@ type QueryResolver interface {
 	ProposedBlocks(ctx context.Context, before *int, size *int, operatorAddress string) ([]*model.Block, error)
 	PowerEvents(ctx context.Context, before *int, size *int, operatorAddress string) ([]*model.PowerEvent, error)
 	AccountTransactions(ctx context.Context, accAddress string, before int, size int) ([]*model.Tx, error)
+	AccountDetail(ctx context.Context, accAddress string) (*model.AccountDetail, error)
 	Proposals(ctx context.Context) ([]*model.Proposal, error)
 	ProposalDetail(ctx context.Context, proposalID int) (*model.Proposal, error)
 	Status(ctx context.Context) (*model.Status, error)
@@ -364,6 +370,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 	ec := executionContext{nil, e}
 	_ = ec
 	switch typeName + "." + field {
+
+	case "AccountDetail.is_validator":
+		if e.complexity.AccountDetail.IsValidator == nil {
+			break
+		}
+
+		return e.complexity.AccountDetail.IsValidator(childComplexity), true
 
 	case "Amount.amount":
 		if e.complexity.Amount.Amount == nil {
@@ -833,6 +846,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Proposal.VotingStart(childComplexity), true
+
+	case "Query.account_detail":
+		if e.complexity.Query.AccountDetail == nil {
+			break
+		}
+
+		args, err := ec.field_Query_account_detail_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.AccountDetail(childComplexity, args["acc_address"].(string)), true
 
 	case "Query.account_transactions":
 		if e.complexity.Query.AccountTransactions == nil {
@@ -1918,6 +1943,10 @@ type RedelegationEntry {
   shares_dst: String!
 }
 
+type AccountDetail {
+  is_validator: Boolean!
+}
+
 type Query {
   blocks(offset: Int, size: Int): [Block!]!
   block_detail(height: Int): Block!
@@ -1937,6 +1966,7 @@ type Query {
   ): [PowerEvent!]!
 
   account_transactions(acc_address: String!, before: Int!, size: Int!): [Tx!]!
+  account_detail(acc_address: String!): AccountDetail!
 
   proposals: [Proposal!]!
   proposal_detail(proposal_id: Int!): Proposal!
@@ -2005,6 +2035,21 @@ func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs
 		}
 	}
 	args["name"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_account_detail_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["acc_address"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("acc_address"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["acc_address"] = arg0
 	return args, nil
 }
 
@@ -2426,6 +2471,41 @@ func (ec *executionContext) field___Type_fields_args(ctx context.Context, rawArg
 // endregion ************************** directives.gotpl **************************
 
 // region    **************************** field.gotpl *****************************
+
+func (ec *executionContext) _AccountDetail_is_validator(ctx context.Context, field graphql.CollectedField, obj *model.AccountDetail) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "AccountDetail",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.IsValidator, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
 
 func (ec *executionContext) _Amount_denom(ctx context.Context, field graphql.CollectedField, obj *model.Amount) (ret graphql.Marshaler) {
 	defer func() {
@@ -5207,6 +5287,48 @@ func (ec *executionContext) _Query_account_transactions(ctx context.Context, fie
 	res := resTmp.([]*model.Tx)
 	fc.Result = res
 	return ec.marshalNTx2ᚕᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐTxᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_account_detail(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_account_detail_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().AccountDetail(rctx, args["acc_address"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.AccountDetail)
+	fc.Result = res
+	return ec.marshalNAccountDetail2ᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐAccountDetail(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_proposals(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -9481,6 +9603,33 @@ func (ec *executionContext) ___Type_ofType(ctx context.Context, field graphql.Co
 
 // region    **************************** object.gotpl ****************************
 
+var accountDetailImplementors = []string{"AccountDetail"}
+
+func (ec *executionContext) _AccountDetail(ctx context.Context, sel ast.SelectionSet, obj *model.AccountDetail) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, accountDetailImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("AccountDetail")
+		case "is_validator":
+			out.Values[i] = ec._AccountDetail_is_validator(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
 var amountImplementors = []string{"Amount"}
 
 func (ec *executionContext) _Amount(ctx context.Context, sel ast.SelectionSet, obj *model.Amount) graphql.Marshaler {
@@ -10358,6 +10507,20 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_account_transactions(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
+		case "account_detail":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_account_detail(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}
@@ -11592,6 +11755,20 @@ func (ec *executionContext) ___Type(ctx context.Context, sel ast.SelectionSet, o
 // endregion **************************** object.gotpl ****************************
 
 // region    ***************************** type.gotpl *****************************
+
+func (ec *executionContext) marshalNAccountDetail2githubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐAccountDetail(ctx context.Context, sel ast.SelectionSet, v model.AccountDetail) graphql.Marshaler {
+	return ec._AccountDetail(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNAccountDetail2ᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐAccountDetail(ctx context.Context, sel ast.SelectionSet, v *model.AccountDetail) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._AccountDetail(ctx, sel, v)
+}
 
 func (ec *executionContext) marshalNAmount2ᚕᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐAmountᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Amount) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
