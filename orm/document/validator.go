@@ -120,6 +120,7 @@ func (v Validator) GetValidatorByProposerAddr(addr string) (Validator, error) {
 }
 
 type Description struct {
+	ImageUrl string `bson:"imageurl" json:"imageurl"`
 	Moniker  string `bson:"moniker" json:"moniker"`
 	Identity string `bson:"identity" json:"identity"`
 	Website  string `bson:"website" json:"website"`
