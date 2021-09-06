@@ -86,6 +86,7 @@ func (r *queryResolver) Validators(ctx context.Context) ([]*model.Validator, err
 			OverBlocks:      overBlocks,
 			Website:         validator.Description.Website,
 			Rank:            index + 1,
+			ImageURL:        validator.Description.ImageUrl,
 		}
 		listValidator = append(listValidator, t)
 	}
@@ -124,6 +125,7 @@ func (r *queryResolver) ValidatorDetail(ctx context.Context, operatorAddress *st
 		Website:         validator.Description.Website,
 		Details:         validator.Description.Details,
 		Rank:            rank,
+		ImageURL:        validator.Description.ImageUrl,
 	}, nil
 }
 

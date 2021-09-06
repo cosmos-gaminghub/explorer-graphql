@@ -23,6 +23,7 @@ type Validator {
   website: String!
   rank: Int!
   details: String!
+  image_url: String!
 }
 
 type UptimeResult {
