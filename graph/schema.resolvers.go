@@ -8,6 +8,7 @@ import (
 	"fmt"
 
 	"github.com/cosmos-gaminghub/exploder-graphql/client"
+	"github.com/cosmos-gaminghub/exploder-graphql/conf"
 	"github.com/cosmos-gaminghub/exploder-graphql/graph/generated"
 	"github.com/cosmos-gaminghub/exploder-graphql/graph/model"
 	"github.com/cosmos-gaminghub/exploder-graphql/orm/document"
@@ -183,13 +184,16 @@ func (r *queryResolver) AccountTransactions(ctx context.Context, accAddress stri
 
 func (r *queryResolver) AccountDetail(ctx context.Context, accAddress string) (*model.AccountDetail, error) {
 	_, err := document.Validator{}.QueryValidatorDetailByAccAddr(accAddress)
+	operatorAddress := utils.Convert(conf.Get().AddresPrefix+"valoper", accAddress)
 	if err != nil {
 		return &model.AccountDetail{
-			IsValidator: false,
+			IsValidator:     false,
+			OperatorAddress: operatorAddress,
 		}, nil
 	}
 	return &model.AccountDetail{
-		IsValidator: true,
+		IsValidator:     true,
+		OperatorAddress: operatorAddress,
 	}, nil
 }
 
