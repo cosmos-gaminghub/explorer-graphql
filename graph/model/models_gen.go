@@ -3,7 +3,8 @@
 package model
 
 type AccountDetail struct {
-	IsValidator bool `json:"is_validator"`
+	IsValidator     bool   `json:"is_validator"`
+	OperatorAddress string `json:"operator_address"`
 }
 
 type Amount struct {

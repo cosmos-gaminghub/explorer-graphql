@@ -10,11 +10,12 @@ import (
 )
 
 const (
-	KeyDbAddr      = "DB_ADDR"
-	KeyDATABASE    = "DB_DATABASE"
-	KeyDbUser      = "DB_USER"
-	KeyDbPwd       = "DB_PASSWORD"
-	KeyDbPoolLimit = "DB_POOL_LIMIT"
+	KeyDbAddr        = "DB_ADDR"
+	KeyDATABASE      = "DB_DATABASE"
+	KeyDbUser        = "DB_USER"
+	KeyDbPwd         = "DB_PASSWORD"
+	KeyDbPoolLimit   = "DB_POOL_LIMIT"
+	KeyAddressPrefix = "ADDRESS_PREFIX"
 
 	KeyLcd              = "LCD"
 	KeyCoinMarketApiKey = "COINMARKET_API_KEY"
@@ -33,6 +34,7 @@ func Get() Config {
 		PoolLimit:    getEnvInt(KeyDbPoolLimit, DefaultEnvironment),
 		LcdUrl:       getEnv(KeyLcd, DefaultEnvironment),
 		MarketApiKey: getEnv(KeyCoinMarketApiKey, EnvironmentDevelop),
+		AddresPrefix: getEnv(KeyAddressPrefix, DefaultEnvironment),
 	}
 }
 
@@ -45,6 +47,8 @@ type Config struct {
 
 	LcdUrl       string
 	MarketApiKey string
+
+	AddresPrefix string
 }
 
 func getEnv(key string, environment string) string {

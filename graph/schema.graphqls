@@ -248,6 +248,7 @@ type RedelegationEntry {
 
 type AccountDetail {
   is_validator: Boolean!
+  operator_address: String!
 }
 
 type Query {
