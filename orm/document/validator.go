@@ -449,3 +449,7 @@ func (_ Validator) GetIndexFromFormatListValidator(validators []Validator, opera
 	}
 	return rank
 }
+
+func IsActiveValidator(validator Validator) bool {
+	return !validator.Jailed && validator.Status == Bonded
+}

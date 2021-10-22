@@ -71,12 +71,8 @@ func (r *queryResolver) Validators(ctx context.Context) ([]*model.Validator, err
 	var listValidator []*model.Validator
 	for index, validator := range validatorFormat {
 		uptime := overBlocks
-		if value, found := upTimeCount[validator.OperatorAddr]; found {
-			if !validator.Jailed && validator.Status == document.Bonded {
-				uptime = 100 - value
-			} else {
-				uptime = 0
-			}
+		if document.IsActiveValidator(validator) {
+			uptime = upTimeCount[validator.OperatorAddr]
 		}
 
 		commision, _ := utils.ParseStringToFloat(validator.Commission.CommissionRate.Rate)
@@ -116,12 +112,8 @@ func (r *queryResolver) ValidatorDetail(ctx context.Context, operatorAddress *st
 	}
 
 	uptime := overBlocks
-	if value, found := upTimeCount[validator.OperatorAddr]; found {
-		if !validator.Jailed && validator.Status == document.Bonded {
-			uptime = 100 - value
-		} else {
-			uptime = 0
-		}
+	if document.IsActiveValidator(validator) {
+		uptime = upTimeCount[validator.OperatorAddr]
 	}
 	return &model.Validator{
 		Moniker:          validator.Description.Moniker,
