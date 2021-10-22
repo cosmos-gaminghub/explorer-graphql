@@ -70,9 +70,10 @@ func (r *queryResolver) Validators(ctx context.Context) ([]*model.Validator, err
 	var listValidator []*model.Validator
 	for index, validator := range validatorFormat {
 		uptime := overBlocks
-		if index < 125 {
-			uptime = upTimeCount[validator.OperatorAddr]
+		if value, found := upTimeCount[validator.OperatorAddr]; found {
+			uptime = 100 - value
 		}
+
 		commision, _ := utils.ParseStringToFloat(validator.Commission.CommissionRate.Rate)
 		t := &model.Validator{
 			Moniker:         validator.Description.Moniker,
@@ -108,8 +109,8 @@ func (r *queryResolver) ValidatorDetail(ctx context.Context, operatorAddress *st
 	}
 
 	uptime := overBlocks
-	if rank <= 125 {
-		uptime = upTimeCount[validator.OperatorAddr]
+	if value, found := upTimeCount[validator.OperatorAddr]; found {
+		uptime = 100 - value
 	}
 	return &model.Validator{
 		Moniker:         validator.Description.Moniker,
