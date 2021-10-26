@@ -243,6 +243,7 @@ type Validator struct {
 	Website         string  `json:"website"`
 	Rank            int     `json:"rank"`
 	Details         string  `json:"details"`
+	Identity        string  `json:"identity"`
 }
 
 type Vote struct {
