@@ -85,20 +85,21 @@ type (
 )
 
 type Validator struct {
-	OperatorAddr    string      `bson:"operator_address"`
-	ConsensusPubkey string      `bson:"consensus_pubkey"`
-	ConsensusAddres string      `bson:"consensus_address"`
-	AccountAddr     string      `bson:"account_address"`
-	Jailed          bool        `bson:"jailed"`
-	Status          string      `bson:"status"`
-	Tokens          int64       `bson:"tokens" json:"tokens"`
-	DelegatorShares string      `bson:"delegator_shares"`
-	Description     Description `bson:"description" json:"description"`
-	UnbondingHeight string      `bson:"unbonding_height"`
-	UnbondingTime   time.Time   `bson:"unbonding_time"`
-	Commission      Commission  `bson:"commission" json:"commission"`
-	ProposerAddr    string      `bson:"proposer_addr"`
-	Icons           string      `bson:"icons"`
+	OperatorAddr     string      `bson:"operator_address"`
+	ConsensusPubkey  string      `bson:"consensus_pubkey"`
+	ConsensusAddres  string      `bson:"consensus_address"`
+	AccountAddr      string      `bson:"account_address"`
+	Jailed           bool        `bson:"jailed"`
+	Status           string      `bson:"status"`
+	Tokens           int64       `bson:"tokens" json:"tokens"`
+	DelegatorShares  string      `bson:"delegator_shares"`
+	Description      Description `bson:"description" json:"description"`
+	UnbondingHeight  string      `bson:"unbonding_height"`
+	UnbondingTime    time.Time   `bson:"unbonding_time"`
+	Commission       Commission  `bson:"commission" json:"commission"`
+	ProposerAddr     string      `bson:"proposer_addr"`
+	Icons            string      `bson:"icons"`
+	TotalMissedBlock int64       `bson:"total_missed_block"`
 }
 
 func (v Validator) GetValidatorList() ([]Validator, error) {
@@ -106,7 +107,8 @@ func (v Validator) GetValidatorList() ([]Validator, error) {
 	var query = orm.NewQuery()
 	defer query.Release()
 
-	var selector = bson.M{"description.moniker": 1, "description.identity": 1, "operator_address": 1, "tokens": 1, "commission": 1, "jailed": 1, "status": 1}
+	var selector = bson.M{"description.moniker": 1, "description.identity": 1, "total_missed_block": 1, "operator_address": 1, "tokens": 1, "commission": 1, "jailed": 1, "status": 1}
+
 	err := queryAll(CollectionNmValidator, selector, nil, desc(ValidatorFieldTokens), 0, &validatorsDocArr)
 	return validatorsDocArr, err
 }
@@ -120,6 +122,7 @@ func (v Validator) GetValidatorByProposerAddr(addr string) (Validator, error) {
 }
 
 type Description struct {
+	ImageUrl string `bson:"imageurl" json:"imageurl"`
 	Moniker  string `bson:"moniker" json:"moniker"`
 	Identity string `bson:"identity" json:"identity"`
 	Website  string `bson:"website" json:"website"`

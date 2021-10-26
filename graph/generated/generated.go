@@ -42,6 +42,11 @@ type DirectiveRoot struct {
 }
 
 type ComplexityRoot struct {
+	AccountDetail struct {
+		IsValidator     func(childComplexity int) int
+		OperatorAddress func(childComplexity int) int
+	}
+
 	Amount struct {
 		Amount func(childComplexity int) int
 		Denom  func(childComplexity int) int
@@ -164,7 +169,8 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
-		AccountTransactions func(childComplexity int, accAddress *string) int
+		AccountDetail       func(childComplexity int, accAddress string) int
+		AccountTransactions func(childComplexity int, accAddress string, before int, size int) int
 		Balances            func(childComplexity int, accAddress string) int
 		BlockDetail         func(childComplexity int, height *int) int
 		BlockTxs            func(childComplexity int, height *int) int
@@ -298,20 +304,21 @@ type ComplexityRoot struct {
 	}
 
 	Validator struct {
-		AccAddress      func(childComplexity int) int
-		Commission      func(childComplexity int) int
-		CumulativeShare func(childComplexity int) int
-		Details         func(childComplexity int) int
-		Identity        func(childComplexity int) int
-		Jailed          func(childComplexity int) int
-		Moniker         func(childComplexity int) int
-		OperatorAddress func(childComplexity int) int
-		OverBlocks      func(childComplexity int) int
-		Rank            func(childComplexity int) int
-		Status          func(childComplexity int) int
-		Uptime          func(childComplexity int) int
-		VotingPower     func(childComplexity int) int
-		Website         func(childComplexity int) int
+		AccAddress       func(childComplexity int) int
+		Commission       func(childComplexity int) int
+		CumulativeShare  func(childComplexity int) int
+		Details          func(childComplexity int) int
+		ImageURL         func(childComplexity int) int
+		Jailed           func(childComplexity int) int
+		Moniker          func(childComplexity int) int
+		OperatorAddress  func(childComplexity int) int
+		OverBlocks       func(childComplexity int) int
+		Rank             func(childComplexity int) int
+		Status           func(childComplexity int) int
+		TotalMissedBlock func(childComplexity int) int
+		Uptime           func(childComplexity int) int
+		VotingPower      func(childComplexity int) int
+		Website          func(childComplexity int) int
 	}
 
 	Vote struct {
@@ -334,7 +341,8 @@ type QueryResolver interface {
 	Uptimes(ctx context.Context, operatorAddress *string) (*model.UptimeResult, error)
 	ProposedBlocks(ctx context.Context, before *int, size *int, operatorAddress string) ([]*model.Block, error)
 	PowerEvents(ctx context.Context, before *int, size *int, operatorAddress string) ([]*model.PowerEvent, error)
-	AccountTransactions(ctx context.Context, accAddress *string) ([]*model.Tx, error)
+	AccountTransactions(ctx context.Context, accAddress string, before int, size int) ([]*model.Tx, error)
+	AccountDetail(ctx context.Context, accAddress string) (*model.AccountDetail, error)
 	Proposals(ctx context.Context) ([]*model.Proposal, error)
 	ProposalDetail(ctx context.Context, proposalID int) (*model.Proposal, error)
 	Status(ctx context.Context) (*model.Status, error)
@@ -365,6 +373,20 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 	ec := executionContext{nil, e}
 	_ = ec
 	switch typeName + "." + field {
+
+	case "AccountDetail.is_validator":
+		if e.complexity.AccountDetail.IsValidator == nil {
+			break
+		}
+
+		return e.complexity.AccountDetail.IsValidator(childComplexity), true
+
+	case "AccountDetail.operator_address":
+		if e.complexity.AccountDetail.OperatorAddress == nil {
+			break
+		}
+
+		return e.complexity.AccountDetail.OperatorAddress(childComplexity), true
 
 	case "Amount.amount":
 		if e.complexity.Amount.Amount == nil {
@@ -835,6 +857,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Proposal.VotingStart(childComplexity), true
 
+	case "Query.account_detail":
+		if e.complexity.Query.AccountDetail == nil {
+			break
+		}
+
+		args, err := ec.field_Query_account_detail_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.AccountDetail(childComplexity, args["acc_address"].(string)), true
+
 	case "Query.account_transactions":
 		if e.complexity.Query.AccountTransactions == nil {
 			break
@@ -845,7 +879,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.AccountTransactions(childComplexity, args["acc_address"].(*string)), true
+		return e.complexity.Query.AccountTransactions(childComplexity, args["acc_address"].(string), args["before"].(int), args["size"].(int)), true
 
 	case "Query.balances":
 		if e.complexity.Query.Balances == nil {
@@ -1523,12 +1557,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Validator.Details(childComplexity), true
 
-	case "Validator.identity":
-		if e.complexity.Validator.Identity == nil {
+	case "Validator.image_url":
+		if e.complexity.Validator.ImageURL == nil {
 			break
 		}
 
-		return e.complexity.Validator.Identity(childComplexity), true
+		return e.complexity.Validator.ImageURL(childComplexity), true
 
 	case "Validator.jailed":
 		if e.complexity.Validator.Jailed == nil {
@@ -1571,6 +1605,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Validator.Status(childComplexity), true
+
+	case "Validator.total_missed_block":
+		if e.complexity.Validator.TotalMissedBlock == nil {
+			break
+		}
+
+		return e.complexity.Validator.TotalMissedBlock(childComplexity), true
 
 	case "Validator.uptime":
 		if e.complexity.Validator.Uptime == nil {
@@ -1703,7 +1744,8 @@ type Validator {
   website: String!
   rank: Int!
   details: String!
-  identity: String!
+  image_url: String!
+  total_missed_block: Int!
 }
 
 type UptimeResult {
@@ -1927,6 +1969,11 @@ type RedelegationEntry {
   shares_dst: String!
 }
 
+type AccountDetail {
+  is_validator: Boolean!
+  operator_address: String!
+}
+
 type Query {
   blocks(offset: Int, size: Int): [Block!]!
   block_detail(height: Int): Block!
@@ -1945,7 +1992,8 @@ type Query {
     operator_address: String!
   ): [PowerEvent!]!
 
-  account_transactions(acc_address: String): [Tx!]!
+  account_transactions(acc_address: String!, before: Int!, size: Int!): [Tx!]!
+  account_detail(acc_address: String!): AccountDetail!
 
   proposals: [Proposal!]!
   proposal_detail(proposal_id: Int!): Proposal!
@@ -2017,18 +2065,51 @@ func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs
 	return args, nil
 }
 
-func (ec *executionContext) field_Query_account_transactions_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Query_account_detail_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 *string
+	var arg0 string
 	if tmp, ok := rawArgs["acc_address"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("acc_address"))
-		arg0, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
 	args["acc_address"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_account_transactions_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["acc_address"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("acc_address"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["acc_address"] = arg0
+	var arg1 int
+	if tmp, ok := rawArgs["before"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("before"))
+		arg1, err = ec.unmarshalNInt2int(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["before"] = arg1
+	var arg2 int
+	if tmp, ok := rawArgs["size"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("size"))
+		arg2, err = ec.unmarshalNInt2int(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["size"] = arg2
 	return args, nil
 }
 
@@ -2417,6 +2498,76 @@ func (ec *executionContext) field___Type_fields_args(ctx context.Context, rawArg
 // endregion ************************** directives.gotpl **************************
 
 // region    **************************** field.gotpl *****************************
+
+func (ec *executionContext) _AccountDetail_is_validator(ctx context.Context, field graphql.CollectedField, obj *model.AccountDetail) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "AccountDetail",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.IsValidator, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _AccountDetail_operator_address(ctx context.Context, field graphql.CollectedField, obj *model.AccountDetail) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "AccountDetail",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.OperatorAddress, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
 
 func (ec *executionContext) _Amount_denom(ctx context.Context, field graphql.CollectedField, obj *model.Amount) (ret graphql.Marshaler) {
 	defer func() {
@@ -5183,7 +5334,7 @@ func (ec *executionContext) _Query_account_transactions(ctx context.Context, fie
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().AccountTransactions(rctx, args["acc_address"].(*string))
+		return ec.resolvers.Query().AccountTransactions(rctx, args["acc_address"].(string), args["before"].(int), args["size"].(int))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -5198,6 +5349,48 @@ func (ec *executionContext) _Query_account_transactions(ctx context.Context, fie
 	res := resTmp.([]*model.Tx)
 	fc.Result = res
 	return ec.marshalNTx2ᚕᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐTxᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_account_detail(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_account_detail_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().AccountDetail(rctx, args["acc_address"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.AccountDetail)
+	fc.Result = res
+	return ec.marshalNAccountDetail2ᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐAccountDetail(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_proposals(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -8202,7 +8395,7 @@ func (ec *executionContext) _Validator_details(ctx context.Context, field graphq
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Validator_identity(ctx context.Context, field graphql.CollectedField, obj *model.Validator) (ret graphql.Marshaler) {
+func (ec *executionContext) _Validator_image_url(ctx context.Context, field graphql.CollectedField, obj *model.Validator) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -8220,7 +8413,7 @@ func (ec *executionContext) _Validator_identity(ctx context.Context, field graph
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Identity, nil
+		return obj.ImageURL, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -8235,6 +8428,41 @@ func (ec *executionContext) _Validator_identity(ctx context.Context, field graph
 	res := resTmp.(string)
 	fc.Result = res
 	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Validator_total_missed_block(ctx context.Context, field graphql.CollectedField, obj *model.Validator) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Validator",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.TotalMissedBlock, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Vote_voter(ctx context.Context, field graphql.CollectedField, obj *model.Vote) (ret graphql.Marshaler) {
@@ -9507,6 +9735,38 @@ func (ec *executionContext) ___Type_ofType(ctx context.Context, field graphql.Co
 
 // region    **************************** object.gotpl ****************************
 
+var accountDetailImplementors = []string{"AccountDetail"}
+
+func (ec *executionContext) _AccountDetail(ctx context.Context, sel ast.SelectionSet, obj *model.AccountDetail) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, accountDetailImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("AccountDetail")
+		case "is_validator":
+			out.Values[i] = ec._AccountDetail_is_validator(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "operator_address":
+			out.Values[i] = ec._AccountDetail_operator_address(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
 var amountImplementors = []string{"Amount"}
 
 func (ec *executionContext) _Amount(ctx context.Context, sel ast.SelectionSet, obj *model.Amount) graphql.Marshaler {
@@ -10384,6 +10644,20 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_account_transactions(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
+		case "account_detail":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_account_detail(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}
@@ -11316,8 +11590,13 @@ func (ec *executionContext) _Validator(ctx context.Context, sel ast.SelectionSet
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "identity":
-			out.Values[i] = ec._Validator_identity(ctx, field, obj)
+		case "image_url":
+			out.Values[i] = ec._Validator_image_url(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "total_missed_block":
+			out.Values[i] = ec._Validator_total_missed_block(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
@@ -11623,6 +11902,20 @@ func (ec *executionContext) ___Type(ctx context.Context, sel ast.SelectionSet, o
 // endregion **************************** object.gotpl ****************************
 
 // region    ***************************** type.gotpl *****************************
+
+func (ec *executionContext) marshalNAccountDetail2githubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐAccountDetail(ctx context.Context, sel ast.SelectionSet, v model.AccountDetail) graphql.Marshaler {
+	return ec._AccountDetail(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNAccountDetail2ᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐAccountDetail(ctx context.Context, sel ast.SelectionSet, v *model.AccountDetail) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._AccountDetail(ctx, sel, v)
+}
 
 func (ec *executionContext) marshalNAmount2ᚕᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐAmountᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Amount) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))

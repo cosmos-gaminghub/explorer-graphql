@@ -230,7 +230,7 @@ func (_ Block) QueryBlockOrderByHeightDesc(size int) ([]Block, error) {
 	var blocks []Block
 
 	sort := desc(Block_Field_Height)
-	err := queryAll(CollectionNmBlock, nil, nil, sort, size, &blocks)
+	err := querylistByOffsetAndSize(CollectionNmBlock, nil, nil, sort, 0, size, &blocks)
 	return blocks, err
 }
 
@@ -320,12 +320,20 @@ func (_ Block) GetCountTxs() (int64, error) {
 		SetCollection(CollectionNmBlock).
 		PipeQuery(
 			[]bson.M{
+				{
+					"$match": bson.M{
+						Block_Field_NumTxs: bson.M{"$gt": 0},
+					},
+				},
 				{"$group": bson.M{
-					"_id":   "",
+					"_id":   nil,
 					"count": bson.M{"$sum": "$num_txs"},
 				}},
 			},
 		)
+	if result["count"] == nil {
+		return 0, nil
+	}
 	return result["count"].(int64), nil
 }
 

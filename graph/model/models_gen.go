@@ -2,6 +2,11 @@
 
 package model
 
+type AccountDetail struct {
+	IsValidator     bool   `json:"is_validator"`
+	OperatorAddress string `json:"operator_address"`
+}
+
 type Amount struct {
 	Denom  string `json:"denom"`
 	Amount string `json:"amount"`
@@ -230,20 +235,21 @@ type UptimeResult struct {
 }
 
 type Validator struct {
-	Moniker         string  `json:"moniker"`
-	VotingPower     int     `json:"voting_power"`
-	CumulativeShare string  `json:"cumulative_share"`
-	Uptime          int     `json:"uptime"`
-	OverBlocks      int     `json:"over_blocks"`
-	Commission      float64 `json:"commission"`
-	OperatorAddress string  `json:"operator_address"`
-	AccAddress      string  `json:"acc_address"`
-	Jailed          bool    `json:"jailed"`
-	Status          string  `json:"status"`
-	Website         string  `json:"website"`
-	Rank            int     `json:"rank"`
-	Details         string  `json:"details"`
-	Identity        string  `json:"identity"`
+	Moniker          string  `json:"moniker"`
+	VotingPower      int     `json:"voting_power"`
+	CumulativeShare  string  `json:"cumulative_share"`
+	Uptime           int     `json:"uptime"`
+	OverBlocks       int     `json:"over_blocks"`
+	Commission       float64 `json:"commission"`
+	OperatorAddress  string  `json:"operator_address"`
+	AccAddress       string  `json:"acc_address"`
+	Jailed           bool    `json:"jailed"`
+	Status           string  `json:"status"`
+	Website          string  `json:"website"`
+	Rank             int     `json:"rank"`
+	Details          string  `json:"details"`
+	ImageURL         string  `json:"image_url"`
+	TotalMissedBlock int     `json:"total_missed_block"`
 }
 
 type Vote struct {

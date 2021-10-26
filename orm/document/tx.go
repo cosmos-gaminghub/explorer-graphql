@@ -156,16 +156,20 @@ func (_ CommonTx) GetListTxBy(size int) ([]CommonTx, error) {
 
 func (_ CommonTx) GetListTxByAddress(before int, size int, operatorAddress string) ([]CommonTx, error) {
 	var data []CommonTx
-	query := bson.M{"messages": bson.RegEx{operatorAddress + ".*", ""}}
-	typeArr := []string{TypeDelegate, TypeUnBond, TypeReDelegate}
-	query[Tx_Field_Type] = bson.M{
-		"$in": typeArr,
-	}
+
+	query := bson.M{}
 	if before != 0 {
 		query[Tx_Field_Height] = bson.M{
 			"$lt": before,
 		}
 	}
+
+	typeArr := []string{TypeDelegate, TypeUnBond, TypeReDelegate}
+	query[Tx_Field_Type] = bson.M{
+		"$in": typeArr,
+	}
+
+	query["messages"] = bson.RegEx{operatorAddress + ".*", ""}
 
 	err := querylistByOffsetAndSize(CollectionNmCommonTx, nil, query, desc(Tx_Field_Time), 0, size, &data)
 	return data, err
@@ -389,6 +393,15 @@ func (_ CommonTx) QueryProposalTxListById(idArr []uint64) ([]CommonTx, error) {
 	condition = FilterUnknownTxs(condition)
 
 	err := queryAll(CollectionNmCommonTx, selector, condition, desc(Tx_Field_Time), 0, &txs)
+
+	return txs, err
+}
+
+func (_ CommonTx) QueryByListByTxhash(listTxHash []string) ([]CommonTx, error) {
+
+	condition := bson.M{Tx_Field_Hash: bson.M{"$in": listTxHash}}
+	var txs []CommonTx
+	err := queryAll(CollectionNmCommonTx, nil, condition, desc(Tx_Field_Time), 0, &txs)
 
 	return txs, err
 }
