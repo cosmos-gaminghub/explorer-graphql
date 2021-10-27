@@ -23,6 +23,7 @@ type Validator {
   website: String!
   rank: Int!
   details: String!
+  identity: String!
   image_url: String!
   total_missed_block: Int!
 }
