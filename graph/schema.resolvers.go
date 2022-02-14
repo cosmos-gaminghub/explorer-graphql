@@ -77,19 +77,18 @@ func (r *queryResolver) Validators(ctx context.Context) ([]*model.Validator, err
 
 		commision, _ := utils.ParseStringToFloat(validator.Commission.CommissionRate.Rate)
 		t := &model.Validator{
-			Moniker:          validator.Description.Moniker,
-			OperatorAddress:  validator.OperatorAddr,
-			AccAddress:       validator.AccountAddr,
-			VotingPower:      int(validator.Tokens),
-			Commission:       commision,
-			Jailed:           validator.Jailed,
-			Status:           validator.Status,
-			Uptime:           uptime,
-			OverBlocks:       overBlocks,
-			Website:          validator.Description.Website,
-			Rank:             index + 1,
-			Identity:         validator.Description.Identity,
-			TotalMissedBlock: int(validator.TotalMissedBlock),
+			Moniker:         validator.Description.Moniker,
+			OperatorAddress: validator.OperatorAddr,
+			AccAddress:      validator.AccountAddr,
+			VotingPower:     int(validator.Tokens),
+			Commission:      commision,
+			Jailed:          validator.Jailed,
+			Status:          validator.Status,
+			Uptime:          uptime,
+			OverBlocks:      overBlocks,
+			Website:         validator.Description.Website,
+			Rank:            index + 1,
+			Identity:        validator.Description.Identity,
 		}
 		listValidator = append(listValidator, t)
 	}
@@ -116,20 +115,19 @@ func (r *queryResolver) ValidatorDetail(ctx context.Context, operatorAddress *st
 		uptime = upTimeCount[validator.OperatorAddr]
 	}
 	return &model.Validator{
-		Moniker:          validator.Description.Moniker,
-		OperatorAddress:  validator.OperatorAddr,
-		AccAddress:       validator.AccountAddr,
-		VotingPower:      int(validator.Tokens),
-		Commission:       commision,
-		Jailed:           validator.Jailed,
-		Status:           validator.Status,
-		Uptime:           uptime,
-		OverBlocks:       overBlocks,
-		Website:          validator.Description.Website,
-		Details:          validator.Description.Details,
-		Rank:             rank,
-		Identity:         validator.Description.Identity,
-		TotalMissedBlock: int(validator.TotalMissedBlock),
+		Moniker:         validator.Description.Moniker,
+		OperatorAddress: validator.OperatorAddr,
+		AccAddress:      validator.AccountAddr,
+		VotingPower:     int(validator.Tokens),
+		Commission:      commision,
+		Jailed:          validator.Jailed,
+		Status:          validator.Status,
+		Uptime:          uptime,
+		OverBlocks:      overBlocks,
+		Website:         validator.Description.Website,
+		Details:         validator.Description.Details,
+		Rank:            rank,
+		Identity:        validator.Description.Identity,
 	}, nil
 }
 

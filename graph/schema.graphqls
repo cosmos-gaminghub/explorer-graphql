@@ -25,7 +25,6 @@ type Validator {
   details: String!
   identity: String!
   image_url: String!
-  total_missed_block: Int!
 }
 
 type UptimeResult {
