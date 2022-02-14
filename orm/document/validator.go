@@ -85,21 +85,20 @@ type (
 )
 
 type Validator struct {
-	OperatorAddr     string      `bson:"operator_address"`
-	ConsensusPubkey  string      `bson:"consensus_pubkey"`
-	ConsensusAddres  string      `bson:"consensus_address"`
-	AccountAddr      string      `bson:"account_address"`
-	Jailed           bool        `bson:"jailed"`
-	Status           string      `bson:"status"`
-	Tokens           int64       `bson:"tokens" json:"tokens"`
-	DelegatorShares  string      `bson:"delegator_shares"`
-	Description      Description `bson:"description" json:"description"`
-	UnbondingHeight  string      `bson:"unbonding_height"`
-	UnbondingTime    time.Time   `bson:"unbonding_time"`
-	Commission       Commission  `bson:"commission" json:"commission"`
-	ProposerAddr     string      `bson:"proposer_addr"`
-	Icons            string      `bson:"icons"`
-	TotalMissedBlock int64       `bson:"total_missed_block"`
+	OperatorAddr    string      `bson:"operator_address"`
+	ConsensusPubkey string      `bson:"consensus_pubkey"`
+	ConsensusAddres string      `bson:"consensus_address"`
+	AccountAddr     string      `bson:"account_address"`
+	Jailed          bool        `bson:"jailed"`
+	Status          string      `bson:"status"`
+	Tokens          int64       `bson:"tokens" json:"tokens"`
+	DelegatorShares string      `bson:"delegator_shares"`
+	Description     Description `bson:"description" json:"description"`
+	UnbondingHeight string      `bson:"unbonding_height"`
+	UnbondingTime   time.Time   `bson:"unbonding_time"`
+	Commission      Commission  `bson:"commission" json:"commission"`
+	ProposerAddr    string      `bson:"proposer_addr"`
+	Icons           string      `bson:"icons"`
 }
 
 func (v Validator) GetValidatorList() ([]Validator, error) {

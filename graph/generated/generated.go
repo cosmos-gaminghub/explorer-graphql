@@ -304,22 +304,21 @@ type ComplexityRoot struct {
 	}
 
 	Validator struct {
-		AccAddress       func(childComplexity int) int
-		Commission       func(childComplexity int) int
-		CumulativeShare  func(childComplexity int) int
-		Details          func(childComplexity int) int
-		Identity         func(childComplexity int) int
-		ImageURL         func(childComplexity int) int
-		Jailed           func(childComplexity int) int
-		Moniker          func(childComplexity int) int
-		OperatorAddress  func(childComplexity int) int
-		OverBlocks       func(childComplexity int) int
-		Rank             func(childComplexity int) int
-		Status           func(childComplexity int) int
-		TotalMissedBlock func(childComplexity int) int
-		Uptime           func(childComplexity int) int
-		VotingPower      func(childComplexity int) int
-		Website          func(childComplexity int) int
+		AccAddress      func(childComplexity int) int
+		Commission      func(childComplexity int) int
+		CumulativeShare func(childComplexity int) int
+		Details         func(childComplexity int) int
+		Identity        func(childComplexity int) int
+		ImageURL        func(childComplexity int) int
+		Jailed          func(childComplexity int) int
+		Moniker         func(childComplexity int) int
+		OperatorAddress func(childComplexity int) int
+		OverBlocks      func(childComplexity int) int
+		Rank            func(childComplexity int) int
+		Status          func(childComplexity int) int
+		Uptime          func(childComplexity int) int
+		VotingPower     func(childComplexity int) int
+		Website         func(childComplexity int) int
 	}
 
 	Vote struct {
@@ -1614,13 +1613,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Validator.Status(childComplexity), true
 
-	case "Validator.total_missed_block":
-		if e.complexity.Validator.TotalMissedBlock == nil {
-			break
-		}
-
-		return e.complexity.Validator.TotalMissedBlock(childComplexity), true
-
 	case "Validator.uptime":
 		if e.complexity.Validator.Uptime == nil {
 			break
@@ -1754,7 +1746,6 @@ type Validator {
   details: String!
   identity: String!
   image_url: String!
-  total_missed_block: Int!
 }
 
 type UptimeResult {
@@ -8474,41 +8465,6 @@ func (ec *executionContext) _Validator_image_url(ctx context.Context, field grap
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Validator_total_missed_block(ctx context.Context, field graphql.CollectedField, obj *model.Validator) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "Validator",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   false,
-		IsResolver: false,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.TotalMissedBlock, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(int)
-	fc.Result = res
-	return ec.marshalNInt2int(ctx, field.Selections, res)
-}
-
 func (ec *executionContext) _Vote_voter(ctx context.Context, field graphql.CollectedField, obj *model.Vote) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -11641,11 +11597,6 @@ func (ec *executionContext) _Validator(ctx context.Context, sel ast.SelectionSet
 			}
 		case "image_url":
 			out.Values[i] = ec._Validator_image_url(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		case "total_missed_block":
-			out.Values[i] = ec._Validator_total_missed_block(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
