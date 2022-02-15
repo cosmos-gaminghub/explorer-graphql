@@ -26,22 +26,24 @@ const (
 func Get() Config {
 	addrs := strings.Split(getEnv(KeyDbAddr, DefaultEnvironment), ",")
 	return Config{
-		Addrs:        addrs,
-		Database:     getEnv(KeyDATABASE, DefaultEnvironment),
-		UserName:     getEnv(KeyDbUser, DefaultEnvironment),
-		Password:     getEnv(KeyDbPwd, DefaultEnvironment),
-		PoolLimit:    getEnvInt(KeyDbPoolLimit, DefaultEnvironment),
-		LcdUrl:       getEnv(KeyLcd, DefaultEnvironment),
-		MarketApiKey: getEnv(KeyCoinMarketApiKey, EnvironmentDevelop),
+		Addrs:            addrs,
+		Database:         getEnv(KeyDATABASE, DefaultEnvironment),
+		UserName:         getEnv(KeyDbUser, DefaultEnvironment),
+		Password:         getEnv(KeyDbPwd, DefaultEnvironment),
+		PoolLimit:        getEnvInt(KeyDbPoolLimit, DefaultEnvironment),
+		LcdUrl:           getEnv(KeyLcd, DefaultEnvironment),
+		MarketApiKey:     getEnv(KeyCoinMarketApiKey, EnvironmentDevelop),
+		CoinMinimalDenom: getEnv(KeyCoinMarketApiKey, DefaultEnvironment),
 	}
 }
 
 type Config struct {
-	Addrs     []string
-	Database  string
-	UserName  string
-	Password  string
-	PoolLimit int
+	Addrs            []string
+	Database         string
+	UserName         string
+	Password         string
+	PoolLimit        int
+	CoinMinimalDenom string
 
 	LcdUrl       string
 	MarketApiKey string
