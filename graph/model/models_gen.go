@@ -2,6 +2,11 @@
 
 package model
 
+type AccountDetail struct {
+	IsValidator     bool   `json:"is_validator"`
+	OperatorAddress string `json:"operator_address"`
+}
+
 type Amount struct {
 	Denom  string `json:"denom"`
 	Amount string `json:"amount"`
@@ -243,6 +248,8 @@ type Validator struct {
 	Website         string  `json:"website"`
 	Rank            int     `json:"rank"`
 	Details         string  `json:"details"`
+	Identity        string  `json:"identity"`
+	ImageURL        string  `json:"image_url"`
 }
 
 type Vote struct {

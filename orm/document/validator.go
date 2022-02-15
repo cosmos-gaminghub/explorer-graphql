@@ -106,7 +106,8 @@ func (v Validator) GetValidatorList() ([]Validator, error) {
 	var query = orm.NewQuery()
 	defer query.Release()
 
-	var selector = bson.M{"description.moniker": 1, "operator_address": 1, "tokens": 1, "commission": 1, "jailed": 1, "status": 1}
+	var selector = bson.M{"description.moniker": 1, "description.identity": 1, "total_missed_block": 1, "operator_address": 1, "tokens": 1, "commission": 1, "jailed": 1, "status": 1}
+
 	err := queryAll(CollectionNmValidator, selector, nil, desc(ValidatorFieldTokens), 0, &validatorsDocArr)
 	return validatorsDocArr, err
 }
@@ -120,6 +121,7 @@ func (v Validator) GetValidatorByProposerAddr(addr string) (Validator, error) {
 }
 
 type Description struct {
+	ImageUrl string `bson:"imageurl" json:"imageurl"`
 	Moniker  string `bson:"moniker" json:"moniker"`
 	Identity string `bson:"identity" json:"identity"`
 	Website  string `bson:"website" json:"website"`
@@ -446,4 +448,8 @@ func (_ Validator) GetIndexFromFormatListValidator(validators []Validator, opera
 		}
 	}
 	return rank
+}
+
+func IsActiveValidator(validator Validator) bool {
+	return !validator.Jailed && validator.Status == Bonded
 }

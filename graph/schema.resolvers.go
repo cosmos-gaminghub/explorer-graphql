@@ -8,6 +8,7 @@ import (
 	"fmt"
 
 	"github.com/cosmos-gaminghub/exploder-graphql/client"
+	"github.com/cosmos-gaminghub/exploder-graphql/conf"
 	"github.com/cosmos-gaminghub/exploder-graphql/graph/generated"
 	"github.com/cosmos-gaminghub/exploder-graphql/graph/model"
 	"github.com/cosmos-gaminghub/exploder-graphql/orm/document"
@@ -70,9 +71,10 @@ func (r *queryResolver) Validators(ctx context.Context) ([]*model.Validator, err
 	var listValidator []*model.Validator
 	for index, validator := range validatorFormat {
 		uptime := overBlocks
-		if index < 125 {
+		if document.IsActiveValidator(validator) {
 			uptime = upTimeCount[validator.OperatorAddr]
 		}
+
 		commision, _ := utils.ParseStringToFloat(validator.Commission.CommissionRate.Rate)
 		t := &model.Validator{
 			Moniker:         validator.Description.Moniker,
@@ -86,6 +88,7 @@ func (r *queryResolver) Validators(ctx context.Context) ([]*model.Validator, err
 			OverBlocks:      overBlocks,
 			Website:         validator.Description.Website,
 			Rank:            index + 1,
+			Identity:        validator.Description.Identity,
 		}
 		listValidator = append(listValidator, t)
 	}
@@ -108,7 +111,7 @@ func (r *queryResolver) ValidatorDetail(ctx context.Context, operatorAddress *st
 	}
 
 	uptime := overBlocks
-	if rank <= 125 {
+	if document.IsActiveValidator(validator) {
 		uptime = upTimeCount[validator.OperatorAddr]
 	}
 	return &model.Validator{
@@ -124,6 +127,7 @@ func (r *queryResolver) ValidatorDetail(ctx context.Context, operatorAddress *st
 		Website:         validator.Description.Website,
 		Details:         validator.Description.Details,
 		Rank:            rank,
+		Identity:        validator.Description.Identity,
 	}, nil
 }
 
@@ -167,12 +171,31 @@ func (r *queryResolver) PowerEvents(ctx context.Context, before *int, size *int,
 	return document.CommonTx{}.FormatListTxsForModelPowerEvent(txs, operatorAddress)
 }
 
-func (r *queryResolver) AccountTransactions(ctx context.Context, accAddress *string) ([]*model.Tx, error) {
-	txs, err := document.CommonTx{}.GetListTxByAccountAddress(*accAddress)
+func (r *queryResolver) AccountTransactions(ctx context.Context, accAddress string, before int, size int) ([]*model.Tx, error) {
+	listTxHash, err := document.AccountTransaction{}.GetListTxsByAddress(before, size, accAddress)
+	if err != nil {
+		return []*model.Tx{}, nil
+	}
+	txs, err := document.CommonTx{}.QueryByListByTxhash(listTxHash)
 	if err != nil {
 		return []*model.Tx{}, nil
 	}
 	return document.CommonTx{}.FormatListTxsForModel(txs)
+}
+
+func (r *queryResolver) AccountDetail(ctx context.Context, accAddress string) (*model.AccountDetail, error) {
+	_, err := document.Validator{}.QueryValidatorDetailByAccAddr(accAddress)
+	operatorAddress := utils.Convert(conf.Get().AddresPrefix+"valoper", accAddress)
+	if err != nil {
+		return &model.AccountDetail{
+			IsValidator:     false,
+			OperatorAddress: operatorAddress,
+		}, nil
+	}
+	return &model.AccountDetail{
+		IsValidator:     true,
+		OperatorAddress: operatorAddress,
+	}, nil
 }
 
 func (r *queryResolver) Proposals(ctx context.Context) ([]*model.Proposal, error) {
