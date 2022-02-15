@@ -4,8 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"strconv"
+	"strings"
 	"time"
 
+	"github.com/cosmos-gaminghub/exploder-graphql/conf"
 	"github.com/cosmos-gaminghub/exploder-graphql/graph/model"
 	"github.com/cosmos-gaminghub/exploder-graphql/orm"
 	"github.com/cosmos-gaminghub/exploder-graphql/utils"
@@ -191,7 +193,7 @@ func (_ CommonTx) GetAmountFromLogs(logs []Log, operatorAddress string) int64 {
 			if utils.Contains(typeArr, event.Type) {
 				for _, attribute := range event.Attributes {
 					if attribute.Key == "amount" {
-						amount, _ = utils.ParseInt(attribute.Value)
+						amount, _ = utils.ParseInt(strings.ReplaceAll(attribute.Value, conf.Get().CoinMinimalDenom, ""))
 						break
 					}
 				}
