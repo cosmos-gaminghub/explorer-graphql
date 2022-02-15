@@ -6,6 +6,10 @@ type DelegationResult struct {
 		Delegation Delegation `json:"delegation"`
 		Balance    Balance    `json:"balance"`
 	} `json:"delegation_responses"`
+	Pagination struct {
+		NextKey string `json:"next_key"`
+		Total   string `json:"total"`
+	} `json:"pagination"`
 }
 
 type Delegation struct {

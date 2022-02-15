@@ -107,6 +107,16 @@ type ComplexityRoot struct {
 		ValidatorAddress func(childComplexity int) int
 	}
 
+	Delegator struct {
+		Amount           func(childComplexity int) int
+		DelegatorAddress func(childComplexity int) int
+	}
+
+	DelegatorResponse struct {
+		Delegators func(childComplexity int) int
+		TotalCount func(childComplexity int) int
+	}
+
 	Deposit struct {
 		Amount    func(childComplexity int) int
 		Depositor func(childComplexity int) int
@@ -177,6 +187,7 @@ type ComplexityRoot struct {
 		Blocks              func(childComplexity int, offset *int, size *int) int
 		Commission          func(childComplexity int, operatorAddress string) int
 		Delegations         func(childComplexity int, accAddress string) int
+		Delegators          func(childComplexity int, operatorAddress string, limit int, offset int) int
 		Deposit             func(childComplexity int, proposalID int) int
 		Inflation           func(childComplexity int) int
 		PowerEvents         func(childComplexity int, before *int, size *int, operatorAddress string) int
@@ -357,6 +368,7 @@ type QueryResolver interface {
 	Vote(ctx context.Context, before *int, size *int, proposalID int) ([]*model.Vote, error)
 	Price(ctx context.Context, slug string) (*model.Price, error)
 	StatsAssets(ctx context.Context) ([]*model.StatsAsset, error)
+	Delegators(ctx context.Context, operatorAddress string, limit int, offset int) (*model.DelegatorResponse, error)
 }
 
 type executableSchema struct {
@@ -597,6 +609,34 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Delegation.ValidatorAddress(childComplexity), true
+
+	case "Delegator.amount":
+		if e.complexity.Delegator.Amount == nil {
+			break
+		}
+
+		return e.complexity.Delegator.Amount(childComplexity), true
+
+	case "Delegator.delegator_address":
+		if e.complexity.Delegator.DelegatorAddress == nil {
+			break
+		}
+
+		return e.complexity.Delegator.DelegatorAddress(childComplexity), true
+
+	case "DelegatorResponse.delegators":
+		if e.complexity.DelegatorResponse.Delegators == nil {
+			break
+		}
+
+		return e.complexity.DelegatorResponse.Delegators(childComplexity), true
+
+	case "DelegatorResponse.total_count":
+		if e.complexity.DelegatorResponse.TotalCount == nil {
+			break
+		}
+
+		return e.complexity.DelegatorResponse.TotalCount(childComplexity), true
 
 	case "Deposit.amount":
 		if e.complexity.Deposit.Amount == nil {
@@ -952,6 +992,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.Delegations(childComplexity, args["acc_address"].(string)), true
+
+	case "Query.delegators":
+		if e.complexity.Query.Delegators == nil {
+			break
+		}
+
+		args, err := ec.field_Query_delegators_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.Delegators(childComplexity, args["operator_address"].(string), args["limit"].(int), args["offset"].(int)), true
 
 	case "Query.deposit":
 		if e.complexity.Query.Deposit == nil {
@@ -1974,6 +2026,16 @@ type AccountDetail {
   operator_address: String!
 }
 
+type Delegator {
+  delegator_address: String!
+  amount: String!
+}
+
+type DelegatorResponse {
+  delegators: [Delegator!]!
+  total_count: Int!
+}
+
 type Query {
   blocks(offset: Int, size: Int): [Block!]!
   block_detail(height: Int): Block!
@@ -2041,6 +2103,11 @@ type Query {
   price(slug: String!): Price!
 
   stats_assets: [StatsAsset!]!
+
+  """
+  Get delegators in validator detail
+  """
+  delegators(operator_address: String!, limit: Int!, offset: Int!): DelegatorResponse!
 }
 `, BuiltIn: false},
 }
@@ -2209,6 +2276,39 @@ func (ec *executionContext) field_Query_delegations_args(ctx context.Context, ra
 		}
 	}
 	args["acc_address"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_delegators_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["operator_address"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("operator_address"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["operator_address"] = arg0
+	var arg1 int
+	if tmp, ok := rawArgs["limit"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("limit"))
+		arg1, err = ec.unmarshalNInt2int(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["limit"] = arg1
+	var arg2 int
+	if tmp, ok := rawArgs["offset"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("offset"))
+		arg2, err = ec.unmarshalNInt2int(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["offset"] = arg2
 	return args, nil
 }
 
@@ -3600,6 +3700,146 @@ func (ec *executionContext) _Delegation_amount(ctx context.Context, field graphq
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Amount, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Delegator_delegator_address(ctx context.Context, field graphql.CollectedField, obj *model.Delegator) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Delegator",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.DelegatorAddress, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Delegator_amount(ctx context.Context, field graphql.CollectedField, obj *model.Delegator) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Delegator",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Amount, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _DelegatorResponse_delegators(ctx context.Context, field graphql.CollectedField, obj *model.DelegatorResponse) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "DelegatorResponse",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Delegators, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Delegator)
+	fc.Result = res
+	return ec.marshalNDelegator2ᚕᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐDelegatorᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _DelegatorResponse_total_count(ctx context.Context, field graphql.CollectedField, obj *model.DelegatorResponse) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "DelegatorResponse",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.TotalCount, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -5951,6 +6191,48 @@ func (ec *executionContext) _Query_stats_assets(ctx context.Context, field graph
 	res := resTmp.([]*model.StatsAsset)
 	fc.Result = res
 	return ec.marshalNStatsAsset2ᚕᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐStatsAssetᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_delegators(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_delegators_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().Delegators(rctx, args["operator_address"].(string), args["limit"].(int), args["offset"].(int))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.DelegatorResponse)
+	fc.Result = res
+	return ec.marshalNDelegatorResponse2ᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐDelegatorResponse(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query___type(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -10134,6 +10416,70 @@ func (ec *executionContext) _Delegation(ctx context.Context, sel ast.SelectionSe
 	return out
 }
 
+var delegatorImplementors = []string{"Delegator"}
+
+func (ec *executionContext) _Delegator(ctx context.Context, sel ast.SelectionSet, obj *model.Delegator) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, delegatorImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Delegator")
+		case "delegator_address":
+			out.Values[i] = ec._Delegator_delegator_address(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "amount":
+			out.Values[i] = ec._Delegator_amount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var delegatorResponseImplementors = []string{"DelegatorResponse"}
+
+func (ec *executionContext) _DelegatorResponse(ctx context.Context, sel ast.SelectionSet, obj *model.DelegatorResponse) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, delegatorResponseImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("DelegatorResponse")
+		case "delegators":
+			out.Values[i] = ec._DelegatorResponse_delegators(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "total_count":
+			out.Values[i] = ec._DelegatorResponse_total_count(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
 var depositImplementors = []string{"Deposit"}
 
 func (ec *executionContext) _Deposit(ctx context.Context, sel ast.SelectionSet, obj *model.Deposit) graphql.Marshaler {
@@ -10854,6 +11200,20 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_stats_assets(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
+		case "delegators":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_delegators(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}
@@ -12254,6 +12614,67 @@ func (ec *executionContext) marshalNDelegation2ᚖgithubᚗcomᚋcosmosᚑgaming
 		return graphql.Null
 	}
 	return ec._Delegation(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNDelegator2ᚕᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐDelegatorᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Delegator) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNDelegator2ᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐDelegator(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+	return ret
+}
+
+func (ec *executionContext) marshalNDelegator2ᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐDelegator(ctx context.Context, sel ast.SelectionSet, v *model.Delegator) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._Delegator(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNDelegatorResponse2githubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐDelegatorResponse(ctx context.Context, sel ast.SelectionSet, v model.DelegatorResponse) graphql.Marshaler {
+	return ec._DelegatorResponse(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNDelegatorResponse2ᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐDelegatorResponse(ctx context.Context, sel ast.SelectionSet, v *model.DelegatorResponse) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._DelegatorResponse(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNDeposit2ᚕᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐDepositᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Deposit) graphql.Marshaler {
