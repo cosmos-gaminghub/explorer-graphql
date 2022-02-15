@@ -34,7 +34,7 @@ func Get() Config {
 		PoolLimit:        getEnvInt(KeyDbPoolLimit, DefaultEnvironment),
 		LcdUrl:           getEnv(KeyLcd, DefaultEnvironment),
 		MarketApiKey:     getEnv(KeyCoinMarketApiKey, EnvironmentDevelop),
-    AddresPrefix: getEnv(KeyAddressPrefix, DefaultEnvironment),
+		AddresPrefix:     getEnv(KeyAddressPrefix, DefaultEnvironment),
 		CoinMinimalDenom: getEnv(KeyCoinMarketApiKey, DefaultEnvironment),
 	}
 }
