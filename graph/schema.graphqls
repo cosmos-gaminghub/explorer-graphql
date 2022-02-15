@@ -253,6 +253,16 @@ type AccountDetail {
   operator_address: String!
 }
 
+type Delegator {
+  delegator_address: String!
+  amount: String!
+}
+
+type DelegatorResponse {
+  delegators: [Delegator!]!
+  total_count: Int!
+}
+
 type Query {
   blocks(offset: Int, size: Int): [Block!]!
   block_detail(height: Int): Block!
@@ -320,4 +330,9 @@ type Query {
   price(slug: String!): Price!
 
   stats_assets: [StatsAsset!]!
+
+  """
+  Get delegators in validator detail
+  """
+  delegators(operator_address: String!, limit: Int!, offset: Int!): DelegatorResponse!
 }

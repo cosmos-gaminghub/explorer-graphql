@@ -67,6 +67,16 @@ type Delegation struct {
 	Amount           int    `json:"amount"`
 }
 
+type Delegator struct {
+	DelegatorAddress string `json:"delegator_address"`
+	Amount           string `json:"amount"`
+}
+
+type DelegatorResponse struct {
+	Delegators []*Delegator `json:"delegators"`
+	TotalCount int          `json:"total_count"`
+}
+
 type Deposit struct {
 	Depositor string  `json:"depositor"`
 	Amount    *string `json:"amount"`

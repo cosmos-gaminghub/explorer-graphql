@@ -410,6 +410,32 @@ func (r *queryResolver) StatsAssets(ctx context.Context) ([]*model.StatsAsset, e
 	return listAssets, nil
 }
 
+func (r *queryResolver) Delegators(ctx context.Context, operatorAddress string, limit int, offset int) (*model.DelegatorResponse, error) {
+	delegationResult, err := client.GetDelegators(operatorAddress, offset, limit)
+	if err != nil {
+		return &model.DelegatorResponse{}, nil
+	}
+
+	var delegators []*model.Delegator
+	for _, delegation := range delegationResult.DelegationResponses {
+		t := &model.Delegator{
+			DelegatorAddress: delegation.Delegation.DelegatorAdrress,
+			Amount:           delegation.Balance.Amount,
+		}
+		delegators = append(delegators, t)
+	}
+
+	totalCount, bError := utils.ParseIntBase(delegationResult.Pagination.Total)
+	if !bError {
+		fmt.Println("Can not parse amount delegations from string to int")
+		totalCount = 0
+	}
+	return &model.DelegatorResponse{
+		TotalCount: totalCount,
+		Delegators: delegators,
+	}, nil
+}
+
 // Query returns generated.QueryResolver implementation.
 func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 
