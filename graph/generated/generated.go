@@ -187,7 +187,7 @@ type ComplexityRoot struct {
 		Blocks              func(childComplexity int, offset *int, size *int) int
 		Commission          func(childComplexity int, operatorAddress string) int
 		Delegations         func(childComplexity int, accAddress string) int
-		Delegators          func(childComplexity int, operatorAddress string, limit int, offset int) int
+		Delegators          func(childComplexity int, operatorAddress string, offset int) int
 		Deposit             func(childComplexity int, proposalID int) int
 		Inflation           func(childComplexity int) int
 		PowerEvents         func(childComplexity int, before *int, size *int, operatorAddress string) int
@@ -368,7 +368,7 @@ type QueryResolver interface {
 	Vote(ctx context.Context, before *int, size *int, proposalID int) ([]*model.Vote, error)
 	Price(ctx context.Context, slug string) (*model.Price, error)
 	StatsAssets(ctx context.Context) ([]*model.StatsAsset, error)
-	Delegators(ctx context.Context, operatorAddress string, limit int, offset int) (*model.DelegatorResponse, error)
+	Delegators(ctx context.Context, operatorAddress string, offset int) (*model.DelegatorResponse, error)
 }
 
 type executableSchema struct {
@@ -1003,7 +1003,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.Delegators(childComplexity, args["operator_address"].(string), args["limit"].(int), args["offset"].(int)), true
+		return e.complexity.Query.Delegators(childComplexity, args["operator_address"].(string), args["offset"].(int)), true
 
 	case "Query.deposit":
 		if e.complexity.Query.Deposit == nil {
@@ -2107,7 +2107,7 @@ type Query {
   """
   Get delegators in validator detail
   """
-  delegators(operator_address: String!, limit: Int!, offset: Int!): DelegatorResponse!
+  delegators(operator_address: String!, offset: Int!): DelegatorResponse!
 }
 `, BuiltIn: false},
 }
@@ -2292,23 +2292,14 @@ func (ec *executionContext) field_Query_delegators_args(ctx context.Context, raw
 	}
 	args["operator_address"] = arg0
 	var arg1 int
-	if tmp, ok := rawArgs["limit"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("limit"))
+	if tmp, ok := rawArgs["offset"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("offset"))
 		arg1, err = ec.unmarshalNInt2int(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["limit"] = arg1
-	var arg2 int
-	if tmp, ok := rawArgs["offset"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("offset"))
-		arg2, err = ec.unmarshalNInt2int(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["offset"] = arg2
+	args["offset"] = arg1
 	return args, nil
 }
 
@@ -6218,7 +6209,7 @@ func (ec *executionContext) _Query_delegators(ctx context.Context, field graphql
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().Delegators(rctx, args["operator_address"].(string), args["limit"].(int), args["offset"].(int))
+		return ec.resolvers.Query().Delegators(rctx, args["operator_address"].(string), args["offset"].(int))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
