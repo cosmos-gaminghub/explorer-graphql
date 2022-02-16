@@ -334,5 +334,5 @@ type Query {
   """
   Get delegators in validator detail
   """
-  delegators(operator_address: String!, limit: Int!, offset: Int!): DelegatorResponse!
+  delegators(operator_address: String!, offset: Int!): DelegatorResponse!
 }

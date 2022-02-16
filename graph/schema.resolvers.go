@@ -410,8 +410,8 @@ func (r *queryResolver) StatsAssets(ctx context.Context) ([]*model.StatsAsset, e
 	return listAssets, nil
 }
 
-func (r *queryResolver) Delegators(ctx context.Context, operatorAddress string, limit int, offset int) (*model.DelegatorResponse, error) {
-	delegationResult, err := client.GetDelegators(operatorAddress, offset, limit)
+func (r *queryResolver) Delegators(ctx context.Context, operatorAddress string, offset int) (*model.DelegatorResponse, error) {
+	delegationResult, err := client.GetDelegators(operatorAddress, offset)
 	if err != nil {
 		return &model.DelegatorResponse{}, nil
 	}

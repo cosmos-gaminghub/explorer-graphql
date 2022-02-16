@@ -12,14 +12,14 @@ import (
 
 const (
 	DelegationUrl          = "%s/cosmos/staking/v1beta1/delegations/%s"
-	CommissionUrl          = "%s/cosmos/distribution/v1beta1/validators/%s/commission"                                      // for commission
-	RewardUrl              = "%s/cosmos/distribution/v1beta1/delegators/%s/rewards"                                         // for Reward
-	UnbondingDelegationUrl = "%s/cosmos/staking/v1beta1/delegators/%s/unbonding_delegations"                                // for unbonding
-	BalanceUrl             = "%s/cosmos/bank/v1beta1/balances/%s"                                                           // for avaiable
-	SupplyUrl              = "%s/cosmos/bank/v1beta1/supply"                                                                // for supply tokens
-	InflationUrl           = "%s/cosmos/mint/v1beta1/inflation"                                                             // for inflation
-	RedelegationUrl        = "%s/cosmos/staking/v1beta1/delegators/%s/redelegations"                                        // for Redelegation
-	DelegatorUrl           = "%s/cosmos/staking/v1beta1/validators/%s/delegations?pagination.offset=%d&pagination.limit=%d" // for Delegators
+	CommissionUrl          = "%s/cosmos/distribution/v1beta1/validators/%s/commission"                  // for commission
+	RewardUrl              = "%s/cosmos/distribution/v1beta1/delegators/%s/rewards"                     // for Reward
+	UnbondingDelegationUrl = "%s/cosmos/staking/v1beta1/delegators/%s/unbonding_delegations"            // for unbonding
+	BalanceUrl             = "%s/cosmos/bank/v1beta1/balances/%s"                                       // for avaiable
+	SupplyUrl              = "%s/cosmos/bank/v1beta1/supply"                                            // for supply tokens
+	InflationUrl           = "%s/cosmos/mint/v1beta1/inflation"                                         // for inflation
+	RedelegationUrl        = "%s/cosmos/staking/v1beta1/delegators/%s/redelegations"                    // for Redelegation
+	DelegatorUrl           = "%s/cosmos/staking/v1beta1/validators/%s/delegations?pagination.offset=%d" // for Delegators
 )
 
 // GetDelegation from lcd api
@@ -156,8 +156,8 @@ func GetListAccAddressFromUnbonding(result *model.Unbonding) (listAccAddress []s
 }
 
 // GetDelegators from lcd api
-func GetDelegators(valAddress string, offset int, limit int) (DelegationResult, error) {
-	url := fmt.Sprintf(DelegatorUrl, conf.Get().LcdUrl, valAddress, offset, limit)
+func GetDelegators(valAddress string, offset int) (DelegationResult, error) {
+	url := fmt.Sprintf(DelegatorUrl, conf.Get().LcdUrl, valAddress, offset)
 	resBytes, err := utils.Get(url)
 	if err != nil {
 		return DelegationResult{}, errors.New("Get delegation error")
