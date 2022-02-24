@@ -100,7 +100,8 @@ func (r *queryResolver) ValidatorDetail(ctx context.Context, operatorAddress *st
 	if err != nil {
 		return &model.Validator{}, nil
 	}
-	upTimeCount, overBlocks := document.MissedBlock{}.GetMissedBlockCount([]string{validator.OperatorAddr})
+
+	upTimeCount, overBlocks := document.MissedBlock{}.GetMissedBlockCount([]string{validator.ConsensusAddres})
 	commision, _ := utils.ParseStringToFloat(validator.Commission.CommissionRate.Rate)
 
 	var rank int
@@ -112,7 +113,7 @@ func (r *queryResolver) ValidatorDetail(ctx context.Context, operatorAddress *st
 
 	uptime := overBlocks
 	if document.IsActiveValidator(validator) {
-		uptime = upTimeCount[validator.OperatorAddr]
+		uptime = upTimeCount[validator.ConsensusAddres]
 	}
 	return &model.Validator{
 		Moniker:         validator.Description.Moniker,
