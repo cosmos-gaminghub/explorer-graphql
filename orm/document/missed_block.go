@@ -8,9 +8,9 @@ import (
 )
 
 type MissedBlock struct {
-	Height       int64     `bson:"height"`
-	OperatorAddr string    `bson:"operator_address"`
-	Timestamp    time.Time `bson:"timestamp"`
+	Height          int64     `bson:"height"`
+	ConsensusAddres string    `bson:"consensus_address"`
+	Timestamp       time.Time `bson:"timestamp"`
 }
 
 type Uptime struct {
@@ -21,14 +21,14 @@ type Uptime struct {
 const (
 	CollectionNmMissedBlock = "missed_block"
 
-	MissedBlockFieldOperatorAddress = "operator_address"
-	MissedBlockFieldHeight          = "height"
-	MissedBlockFieldTimeStamp       = "timestamp"
+	MissedBlockFieldConsensusAddress = "consensus_address"
+	MissedBlockFieldHeight           = "height"
+	MissedBlockFieldTimeStamp        = "timestamp"
 
 	DefaultOverBlocks = 100
 )
 
-func (_ MissedBlock) GetMissedBlockCount(listOperatorAddress []string) (map[string]int, int) {
+func (_ MissedBlock) GetMissedBlockCount(listConsensusAddress []string) (map[string]int, int) {
 	var result []Uptime
 	var query = orm.NewQuery()
 	defer query.Release()
@@ -47,14 +47,14 @@ func (_ MissedBlock) GetMissedBlockCount(listOperatorAddress []string) (map[stri
 	overBlock := int(toHeight - fromHeight)
 
 	condition := bson.M{
-		MissedBlockFieldOperatorAddress: bson.M{"$in": listOperatorAddress},
+		MissedBlockFieldConsensusAddress: bson.M{"$in": listConsensusAddress},
 		MissedBlockFieldHeight: bson.M{
 			"$gt":  fromHeight,
 			"$lte": toHeight,
 		},
 	}
 
-	selector := bson.M{MissedBlockFieldOperatorAddress: 1, MissedBlockFieldHeight: 1}
+	selector := bson.M{MissedBlockFieldConsensusAddress: 1, MissedBlockFieldHeight: 1}
 
 	query.Reset().
 		SetResult(&result).
@@ -64,7 +64,7 @@ func (_ MissedBlock) GetMissedBlockCount(listOperatorAddress []string) (map[stri
 			[]bson.M{
 				{"$match": condition},
 				{"$group": bson.M{
-					"_id":   "$operator_address",
+					"_id":   "$consensus_address",
 					"count": bson.M{"$sum": 1},
 				}},
 			},
@@ -75,7 +75,7 @@ func (_ MissedBlock) GetMissedBlockCount(listOperatorAddress []string) (map[stri
 	return upTimeMap, overBlock
 }
 
-func (_ MissedBlock) GetListMissedBlock(Height int64, OperatorAddr string) ([]MissedBlock, error) {
+func (_ MissedBlock) GetListMissedBlock(Height int64, ConsensusAddress string) ([]MissedBlock, error) {
 	var result []MissedBlock
 
 	toHeight := Height
@@ -85,7 +85,7 @@ func (_ MissedBlock) GetListMissedBlock(Height int64, OperatorAddr string) ([]Mi
 	}
 
 	condition := bson.M{
-		MissedBlockFieldOperatorAddress: OperatorAddr,
+		MissedBlockFieldConsensusAddress: ConsensusAddress,
 		MissedBlockFieldHeight: bson.M{
 			"$gt":  fromHeight,
 			"$lte": toHeight,

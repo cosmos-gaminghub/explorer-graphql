@@ -64,8 +64,8 @@ func (r *queryResolver) Validators(ctx context.Context) ([]*model.Validator, err
 		return []*model.Validator{}, nil
 	}
 
-	listOperatorAddress := document.Validator{}.GetListOperatorAdress(validators)
-	upTimeCount, overBlocks := document.MissedBlock{}.GetMissedBlockCount(listOperatorAddress)
+	listConsensusAddress := document.Validator{}.GetListConsensusAddress(validators)
+	upTimeCount, overBlocks := document.MissedBlock{}.GetMissedBlockCount(listConsensusAddress)
 
 	validatorFormat := document.Validator{}.FormatListValidator(validators)
 	var listValidator []*model.Validator
@@ -136,7 +136,13 @@ func (r *queryResolver) Uptimes(ctx context.Context, operatorAddress *string) (*
 	if err != nil {
 		return &model.UptimeResult{}, nil
 	}
-	missedBlocks, err := document.MissedBlock{}.GetListMissedBlock(block.Height, *operatorAddress)
+
+	validator, err := document.GetValidatorByAddr(*operatorAddress)
+	if err != nil {
+		return &model.UptimeResult{}, nil
+	}
+
+	missedBlocks, err := document.MissedBlock{}.GetListMissedBlock(block.Height, validator.ConsensusAddres)
 	if err != nil {
 		return &model.UptimeResult{}, nil
 	}

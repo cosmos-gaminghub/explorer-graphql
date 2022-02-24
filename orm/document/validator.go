@@ -354,6 +354,14 @@ func (_ Validator) GetListOperatorAdress(validators []Validator) []string {
 	return list
 }
 
+func (_ Validator) GetListConsensusAddress(validators []Validator) []string {
+	var list []string
+	for _, validator := range validators {
+		list = append(list, validator.ConsensusAddres)
+	}
+	return list
+}
+
 func (_ Validator) GetListMapOperatorAndMoniker(delegationResult client.DelegationResult) map[string]string {
 	var listOperatorAddress []string
 	for _, validator := range delegationResult.DelegationResponses {
