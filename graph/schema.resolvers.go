@@ -72,7 +72,7 @@ func (r *queryResolver) Validators(ctx context.Context) ([]*model.Validator, err
 	for index, validator := range validatorFormat {
 		uptime := overBlocks
 		if document.IsActiveValidator(validator) {
-			uptime = upTimeCount[validator.OperatorAddr]
+			uptime = upTimeCount[validator.ConsensusAddres]
 		}
 
 		commision, _ := utils.ParseStringToFloat(validator.Commission.CommissionRate.Rate)
