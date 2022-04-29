@@ -442,6 +442,30 @@ func (r *queryResolver) Delegators(ctx context.Context, operatorAddress string, 
 	}, nil
 }
 
+func (r *queryResolver) Codes(ctx context.Context, after int, size int) ([]*model.Code, error) {
+	result, err := document.Code{}.GetCodeListByOffsetAndSize(after, size)
+	if err != nil {
+		return []*model.Code{}, nil
+	}
+	return document.Code{}.FormatForModel(result)
+}
+
+func (r *queryResolver) CodeDetail(ctx context.Context, codeID int) (*model.Code, error) {
+	code, err := document.Code{}.FindByCodeId(codeID)
+	if err != nil {
+		return &model.Code{}, nil
+	}
+	return document.Code{}.FormatModelCodeItem(code), nil
+}
+
+func (r *queryResolver) Contracts(ctx context.Context, offset int, size int, keyword *string) ([]*model.Contract, error) {
+	result, err := document.Contract{}.GetContractByLimitAndOffset(offset, size, keyword)
+	if err != nil {
+		return []*model.Contract{}, nil
+	}
+	return document.Contract{}.FormatForModel(result)
+}
+
 // Query returns generated.QueryResolver implementation.
 func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 

@@ -38,6 +38,19 @@ type Change struct {
 	Subspace string `json:"subspace"`
 }
 
+type Code struct {
+	CodeID           int    `json:"code_id"`
+	Contract         string `json:"contract"`
+	DataHash         string `json:"data_hash"`
+	CreatedAt        string `json:"created_at"`
+	Creator          string `json:"creator"`
+	InstantiateCount int    `json:"instantiate_count"`
+	Permission       string `json:"permission"`
+	PermittedAddress string `json:"permitted_address"`
+	Txhash           string `json:"txhash"`
+	Version          string `json:"version"`
+}
+
 type Commission struct {
 	Commission *Commissions `json:"commission"`
 }
@@ -58,6 +71,22 @@ type Content struct {
 	Amount      []*Amount `json:"amount"`
 	Changes     []*Change `json:"changes"`
 	Plan        *Plan     `json:"plan"`
+}
+
+type Contract struct {
+	CodeID           int    `json:"code_id"`
+	Contract         string `json:"contract"`
+	ContractAddress  string `json:"contract_address"`
+	Admin            string `json:"admin"`
+	Creator          string `json:"creator"`
+	ExecutedCount    int    `json:"executed_count"`
+	InstantiatedAt   string `json:"instantiated_at"`
+	Label            string `json:"label"`
+	LastExecutedAt   string `json:"last_executed_at"`
+	Permission       string `json:"permission"`
+	PermittedAddress string `json:"permitted_address"`
+	Txhash           string `json:"txhash"`
+	Version          string `json:"version"`
 }
 
 type Delegation struct {
