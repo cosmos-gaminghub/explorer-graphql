@@ -290,6 +290,7 @@ type Contract {
 	permitted_address: String!
 	txhash: String!
 	version: String!
+  messages: String!
 }
 
 type Query {
@@ -379,4 +380,9 @@ type Query {
   Get list contract
   """
   contracts(offset: Int!, size: Int!, keyword: String): [Contract!]!
+
+  """
+  Get contract detail
+  """
+  contract_detail(contract_address: String!): Contract!
 }

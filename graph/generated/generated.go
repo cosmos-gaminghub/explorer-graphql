@@ -123,6 +123,7 @@ type ComplexityRoot struct {
 		InstantiatedAt   func(childComplexity int) int
 		Label            func(childComplexity int) int
 		LastExecutedAt   func(childComplexity int) int
+		Messages         func(childComplexity int) int
 		Permission       func(childComplexity int) int
 		PermittedAddress func(childComplexity int) int
 		Txhash           func(childComplexity int) int
@@ -217,6 +218,7 @@ type ComplexityRoot struct {
 		CodeDetail          func(childComplexity int, codeID int) int
 		Codes               func(childComplexity int, after int, size int) int
 		Commission          func(childComplexity int, operatorAddress string) int
+		ContractDetail      func(childComplexity int, contractAddress string) int
 		Contracts           func(childComplexity int, offset int, size int, keyword *string) int
 		Delegations         func(childComplexity int, accAddress string) int
 		Delegators          func(childComplexity int, operatorAddress string, offset int) int
@@ -404,6 +406,7 @@ type QueryResolver interface {
 	Codes(ctx context.Context, after int, size int) ([]*model.Code, error)
 	CodeDetail(ctx context.Context, codeID int) (*model.Code, error)
 	Contracts(ctx context.Context, offset int, size int, keyword *string) ([]*model.Contract, error)
+	ContractDetail(ctx context.Context, contractAddress string) (*model.Contract, error)
 }
 
 type executableSchema struct {
@@ -749,6 +752,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Contract.LastExecutedAt(childComplexity), true
+
+	case "Contract.messages":
+		if e.complexity.Contract.Messages == nil {
+			break
+		}
+
+		return e.complexity.Contract.Messages(childComplexity), true
 
 	case "Contract.permission":
 		if e.complexity.Contract.Permission == nil {
@@ -1200,6 +1210,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.Commission(childComplexity, args["operator_address"].(string)), true
+
+	case "Query.contract_detail":
+		if e.complexity.Query.ContractDetail == nil {
+			break
+		}
+
+		args, err := ec.field_Query_contract_detail_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.ContractDetail(childComplexity, args["contract_address"].(string)), true
 
 	case "Query.contracts":
 		if e.complexity.Query.Contracts == nil {
@@ -2295,6 +2317,7 @@ type Contract {
 	permitted_address: String!
 	txhash: String!
 	version: String!
+  messages: String!
 }
 
 type Query {
@@ -2384,6 +2407,11 @@ type Query {
   Get list contract
   """
   contracts(offset: Int!, size: Int!, keyword: String): [Contract!]!
+
+  """
+  Get contract detail
+  """
+  contract_detail(contract_address: String!): Contract!
 }
 `, BuiltIn: false},
 }
@@ -2576,6 +2604,21 @@ func (ec *executionContext) field_Query_commission_args(ctx context.Context, raw
 		}
 	}
 	args["operator_address"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_contract_detail_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["contract_address"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("contract_address"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["contract_address"] = arg0
 	return args, nil
 }
 
@@ -4704,6 +4747,41 @@ func (ec *executionContext) _Contract_version(ctx context.Context, field graphql
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Version, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Contract_messages(ctx context.Context, field graphql.CollectedField, obj *model.Contract) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Contract",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Messages, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -7503,6 +7581,48 @@ func (ec *executionContext) _Query_contracts(ctx context.Context, field graphql.
 	res := resTmp.([]*model.Contract)
 	fc.Result = res
 	return ec.marshalNContract2ᚕᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐContractᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_contract_detail(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_contract_detail_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().ContractDetail(rctx, args["contract_address"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Contract)
+	fc.Result = res
+	return ec.marshalNContract2ᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐContract(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query___type(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -11792,6 +11912,11 @@ func (ec *executionContext) _Contract(ctx context.Context, sel ast.SelectionSet,
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
+		case "messages":
+			out.Values[i] = ec._Contract_messages(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -12685,6 +12810,20 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_contracts(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
+		case "contract_detail":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_contract_detail(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}
@@ -14089,6 +14228,10 @@ func (ec *executionContext) marshalNContent2ᚖgithubᚗcomᚋcosmosᚑgaminghub
 		return graphql.Null
 	}
 	return ec._Content(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNContract2githubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐContract(ctx context.Context, sel ast.SelectionSet, v model.Contract) graphql.Marshaler {
+	return ec._Contract(ctx, sel, &v)
 }
 
 func (ec *executionContext) marshalNContract2ᚕᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐContractᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Contract) graphql.Marshaler {

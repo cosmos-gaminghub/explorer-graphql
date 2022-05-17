@@ -87,6 +87,7 @@ type Contract struct {
 	PermittedAddress string `json:"permitted_address"`
 	Txhash           string `json:"txhash"`
 	Version          string `json:"version"`
+	Messages         string `json:"messages"`
 }
 
 type Delegation struct {
