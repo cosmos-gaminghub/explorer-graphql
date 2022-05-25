@@ -115,6 +115,17 @@ func (_ Contract) GetContractByLimitAndOffset(offset int, size int, keyword *str
 	return data, err
 }
 
+// Get contract with offset and size by code id
+func (_ Contract) GetContractPaginationByCodeId(offset int, size int, codeId int) ([]Contract, error) {
+	query := bson.M{}
+	query[ContractCodeIdFieled] = codeId
+
+	data := []Contract{}
+	err := querylistByOffsetAndSize(CollectionContract, nil, query, "", offset, size, &data)
+	return data, err
+}
+
+// Get only contract address by code id
 func (_ Contract) GetContractByCodeId(codeId int) ([]bson.M, error) {
 	query := bson.M{}
 	query[ContractCodeIdFieled] = codeId
@@ -127,6 +138,7 @@ func (_ Contract) GetContractByCodeId(codeId int) ([]bson.M, error) {
 	return data, err
 }
 
+// Get list contract address from list bson.M
 func (_ Contract) GetListContractAddressFromBson(bson []bson.M) (result []string) {
 	for _, item := range bson {
 		result = append(result, item[ContractAddressField].(string))

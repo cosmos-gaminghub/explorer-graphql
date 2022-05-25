@@ -476,6 +476,14 @@ func (r *queryResolver) CodeTransactions(ctx context.Context, codeID int, before
 	return document.CommonTx{}.FormatListTxsForModel(txs)
 }
 
+func (r *queryResolver) CodeContracts(ctx context.Context, codeID int, offset int, size int) ([]*model.Contract, error) {
+	result, err := document.Contract{}.GetContractPaginationByCodeId(offset, size, codeID)
+	if err != nil {
+		return []*model.Contract{}, err
+	}
+	return document.Contract{}.FormatForModel(result)
+}
+
 func (r *queryResolver) Contracts(ctx context.Context, offset int, size int, keyword *string) ([]*model.Contract, error) {
 	result, err := document.Contract{}.GetContractByLimitAndOffset(offset, size, keyword)
 	if err != nil {
