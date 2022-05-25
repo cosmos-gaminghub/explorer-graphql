@@ -115,6 +115,25 @@ func (_ Contract) GetContractByLimitAndOffset(offset int, size int, keyword *str
 	return data, err
 }
 
+func (_ Contract) GetContractByCodeId(codeId int) ([]bson.M, error) {
+	query := bson.M{}
+	query[ContractCodeIdFieled] = codeId
+
+	data := []bson.M{}
+	var selector = bson.M{
+		ContractAddressField: 1,
+	}
+	err := queryAll(CollectionContract, selector, query, "", 0, &data)
+	return data, err
+}
+
+func (_ Contract) GetListContractAddressFromBson(bson []bson.M) (result []string) {
+	for _, item := range bson {
+		result = append(result, item[ContractAddressField].(string))
+	}
+	return result
+}
+
 func (_ Contract) FormatForModel(result []Contract) ([]*model.Contract, error) {
 	var listContract []*model.Contract
 	for _, item := range result {
