@@ -216,6 +216,7 @@ type ComplexityRoot struct {
 		BlockTxs            func(childComplexity int, height *int) int
 		Blocks              func(childComplexity int, offset *int, size *int) int
 		CodeDetail          func(childComplexity int, codeID int) int
+		CodeTransactions    func(childComplexity int, codeID int, before int, size int) int
 		Codes               func(childComplexity int, after int, size int) int
 		Commission          func(childComplexity int, operatorAddress string) int
 		ContractDetail      func(childComplexity int, contractAddress string) int
@@ -405,6 +406,7 @@ type QueryResolver interface {
 	Delegators(ctx context.Context, operatorAddress string, offset int) (*model.DelegatorResponse, error)
 	Codes(ctx context.Context, after int, size int) ([]*model.Code, error)
 	CodeDetail(ctx context.Context, codeID int) (*model.Code, error)
+	CodeTransactions(ctx context.Context, codeID int, before int, size int) ([]*model.Tx, error)
 	Contracts(ctx context.Context, offset int, size int, keyword *string) ([]*model.Contract, error)
 	ContractDetail(ctx context.Context, contractAddress string) (*model.Contract, error)
 }
@@ -1186,6 +1188,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.CodeDetail(childComplexity, args["code_id"].(int)), true
+
+	case "Query.code_transactions":
+		if e.complexity.Query.CodeTransactions == nil {
+			break
+		}
+
+		args, err := ec.field_Query_code_transactions_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.CodeTransactions(childComplexity, args["code_id"].(int), args["before"].(int), args["size"].(int)), true
 
 	case "Query.codes":
 		if e.complexity.Query.Codes == nil {
@@ -2404,6 +2418,11 @@ type Query {
   code_detail(code_id: Int!): Code!
 
   """
+  Get code transactions
+  """
+  code_transactions(code_id: Int!, before: Int!, size: Int!): [Tx!]!
+
+  """
   Get list contract
   """
   contracts(offset: Int!, size: Int!, keyword: String): [Contract!]!
@@ -2565,6 +2584,39 @@ func (ec *executionContext) field_Query_code_detail_args(ctx context.Context, ra
 		}
 	}
 	args["code_id"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_code_transactions_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 int
+	if tmp, ok := rawArgs["code_id"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("code_id"))
+		arg0, err = ec.unmarshalNInt2int(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["code_id"] = arg0
+	var arg1 int
+	if tmp, ok := rawArgs["before"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("before"))
+		arg1, err = ec.unmarshalNInt2int(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["before"] = arg1
+	var arg2 int
+	if tmp, ok := rawArgs["size"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("size"))
+		arg2, err = ec.unmarshalNInt2int(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["size"] = arg2
 	return args, nil
 }
 
@@ -7539,6 +7591,48 @@ func (ec *executionContext) _Query_code_detail(ctx context.Context, field graphq
 	res := resTmp.(*model.Code)
 	fc.Result = res
 	return ec.marshalNCode2ᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐCode(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_code_transactions(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_code_transactions_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().CodeTransactions(rctx, args["code_id"].(int), args["before"].(int), args["size"].(int))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Tx)
+	fc.Result = res
+	return ec.marshalNTx2ᚕᚖgithubᚗcomᚋcosmosᚑgaminghubᚋexploderᚑgraphqlᚋgraphᚋmodelᚐTxᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_contracts(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -12796,6 +12890,20 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_code_detail(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
+		case "code_transactions":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_code_transactions(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}

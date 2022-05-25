@@ -457,6 +457,25 @@ func (r *queryResolver) CodeDetail(ctx context.Context, codeID int) (*model.Code
 	return document.Code{}.FormatModelCodeItem(code), nil
 }
 
+func (r *queryResolver) CodeTransactions(ctx context.Context, codeID int, before int, size int) ([]*model.Tx, error) {
+	contracts, err := document.Contract{}.GetContractByCodeId(codeID)
+	if err != nil {
+		return []*model.Tx{}, err
+	}
+
+	listContractAddress := document.Contract{}.GetListContractAddressFromBson(contracts)
+	listTxHash, err := document.AccountTransaction{}.GetListTxsInAddress(before, size, listContractAddress)
+	if err != nil {
+		return []*model.Tx{}, err
+	}
+
+	txs, err := document.CommonTx{}.QueryByListByTxhash(listTxHash)
+	if err != nil {
+		return []*model.Tx{}, err
+	}
+	return document.CommonTx{}.FormatListTxsForModel(txs)
+}
+
 func (r *queryResolver) Contracts(ctx context.Context, offset int, size int, keyword *string) ([]*model.Contract, error) {
 	result, err := document.Contract{}.GetContractByLimitAndOffset(offset, size, keyword)
 	if err != nil {

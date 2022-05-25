@@ -377,6 +377,11 @@ type Query {
   code_detail(code_id: Int!): Code!
 
   """
+  Get code transactions
+  """
+  code_transactions(code_id: Int!, before: Int!, size: Int!): [Tx!]!
+
+  """
   Get list contract
   """
   contracts(offset: Int!, size: Int!, keyword: String): [Contract!]!
