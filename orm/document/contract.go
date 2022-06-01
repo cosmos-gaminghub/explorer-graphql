@@ -28,7 +28,7 @@ const (
 	ContractVersionField          = "version"
 	ContractMessagesField         = "messages"
 
-	Contract_Field_Tx = "txs"
+	Contract_Tx_Collection = "txs"
 )
 
 type Contract struct {
@@ -66,15 +66,12 @@ func (_ Contract) FindByContractAddress(contractAddress string) (bson.M, error) 
 				"from":         CollectionNmCommonTx,
 				"localField":   ContractTxhashField,
 				"foreignField": Tx_Field_Hash,
-				"as":           Contract_Field_Tx,
+				"as":           Contract_Tx_Collection,
 			},
 		},
 		{
-			"$unwind": "$" + Contract_Field_Tx,
-		},
-		{
 			"$project": bson.M{
-				"messages":          "$" + Contract_Field_Tx + ".messages",
+				"messages":          "$" + Contract_Tx_Collection + ".messages",
 				"code_id":           1,
 				"contract":          1,
 				"contract_address":  1,
