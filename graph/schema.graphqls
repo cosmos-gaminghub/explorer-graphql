@@ -263,6 +263,36 @@ type DelegatorResponse {
   total_count: Int!
 }
 
+type Code {
+  code_id: Int!
+	contract: String!
+	data_hash: String!
+	created_at: String!
+	creator: String!
+	instantiate_count: Int!
+	permission: String!
+	permitted_address: String!
+	txhash: String!
+	version: String!
+}
+
+type Contract {
+  code_id: Int!
+	contract: String!
+	contract_address: String!
+	admin: String!
+	creator: String!
+	executed_count: Int!
+	instantiated_at: String!
+	label: String!
+	last_executed_at: String!
+	permission: String!
+	permitted_address: String!
+	txhash: String!
+	version: String!
+  messages: String!
+}
+
 type Query {
   blocks(offset: Int, size: Int): [Block!]!
   block_detail(height: Int): Block!
@@ -335,4 +365,34 @@ type Query {
   Get delegators in validator detail
   """
   delegators(operator_address: String!, offset: Int!): DelegatorResponse!
+
+  """
+  Get list code
+  """
+  codes(after: Int!, size: Int!): [Code!]!
+
+  """
+  Get code detail
+  """
+  code_detail(code_id: Int!): Code!
+
+  """
+  Get code transactions
+  """
+  code_transactions(code_id: Int!, before: Int!, size: Int!): [Tx!]!
+
+  """
+  Get code contracts
+  """
+  code_contracts(code_id: Int!, offset: Int!, size: Int!): [Contract!]!
+
+  """
+  Get list contract
+  """
+  contracts(offset: Int!, size: Int!, keyword: String): [Contract!]!
+
+  """
+  Get contract detail
+  """
+  contract_detail(contract_address: String!): Contract!
 }

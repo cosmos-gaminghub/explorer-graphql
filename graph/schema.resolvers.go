@@ -18,7 +18,7 @@ import (
 func (r *queryResolver) Blocks(ctx context.Context, offset *int, size *int) ([]*model.Block, error) {
 	results, err := document.Block{}.GetBlockListByOffsetAndSize(*offset, *size)
 	if err != nil {
-		return []*model.Block{}, nil
+		return []*model.Block{}, err
 	}
 	return document.Block{}.FormatBsonMForModel(results)
 }
@@ -26,7 +26,7 @@ func (r *queryResolver) Blocks(ctx context.Context, offset *int, size *int) ([]*
 func (r *queryResolver) BlockDetail(ctx context.Context, height *int) (*model.Block, error) {
 	result, err := document.Block{}.QueryBlockByHeight(int64(*height))
 	if err != nil {
-		return &model.Block{}, nil
+		return &model.Block{}, err
 	}
 	return document.Block{}.FormatBsonMForModelBlockDetail(result)
 }
@@ -34,7 +34,7 @@ func (r *queryResolver) BlockDetail(ctx context.Context, height *int) (*model.Bl
 func (r *queryResolver) BlockTxs(ctx context.Context, height *int) ([]*model.Tx, error) {
 	txs, err := document.CommonTx{}.QueryTxByHeight(int64(*height))
 	if err != nil {
-		return []*model.Tx{}, nil
+		return []*model.Tx{}, err
 	}
 	return document.CommonTx{}.FormatListTxsForModel(txs)
 }
@@ -42,7 +42,7 @@ func (r *queryResolver) BlockTxs(ctx context.Context, height *int) ([]*model.Tx,
 func (r *queryResolver) Txs(ctx context.Context, size *int) ([]*model.Tx, error) {
 	txs, err := document.CommonTx{}.GetListTxBy(*size)
 	if err != nil {
-		return []*model.Tx{}, nil
+		return []*model.Tx{}, err
 	}
 	return document.CommonTx{}.FormatListTxsForModel(txs)
 }
@@ -51,8 +51,7 @@ func (r *queryResolver) TxDetail(ctx context.Context, txHash *string) (*model.Tx
 	tx, err := document.CommonTx{}.QueryTxByHash(*txHash)
 
 	if err != nil {
-		fmt.Print(err.Error())
-		return &model.Tx{}, nil
+		return &model.Tx{}, err
 	}
 
 	return document.CommonTx{}.FormatTxForModel(tx)
@@ -61,7 +60,7 @@ func (r *queryResolver) TxDetail(ctx context.Context, txHash *string) (*model.Tx
 func (r *queryResolver) Validators(ctx context.Context) ([]*model.Validator, error) {
 	validators, err := document.Validator{}.GetValidatorList()
 	if err != nil {
-		return []*model.Validator{}, nil
+		return []*model.Validator{}, err
 	}
 
 	listConsensusAddress := document.Validator{}.GetListConsensusAddress(validators)
@@ -98,7 +97,7 @@ func (r *queryResolver) Validators(ctx context.Context) ([]*model.Validator, err
 func (r *queryResolver) ValidatorDetail(ctx context.Context, operatorAddress *string) (*model.Validator, error) {
 	validator, err := document.Validator{}.QueryValidatorDetailByOperatorAddr(*operatorAddress)
 	if err != nil {
-		return &model.Validator{}, nil
+		return &model.Validator{}, err
 	}
 	upTimeCount, overBlocks := document.MissedBlock{}.GetMissedBlockCount([]string{validator.ConsensusAddres})
 	commision, _ := utils.ParseStringToFloat(validator.Commission.CommissionRate.Rate)
@@ -134,17 +133,17 @@ func (r *queryResolver) ValidatorDetail(ctx context.Context, operatorAddress *st
 func (r *queryResolver) Uptimes(ctx context.Context, operatorAddress *string) (*model.UptimeResult, error) {
 	block, err := document.Block{}.QueryLatestBlockFromDB()
 	if err != nil {
-		return &model.UptimeResult{}, nil
+		return &model.UptimeResult{}, err
 	}
 
 	validator, err := document.GetValidatorByAddr(*operatorAddress)
 	if err != nil {
-		return &model.UptimeResult{}, nil
+		return &model.UptimeResult{}, err
 	}
 
 	missedBlocks, err := document.MissedBlock{}.GetListMissedBlock(block.Height, validator.ConsensusAddres)
 	if err != nil {
-		return &model.UptimeResult{}, nil
+		return &model.UptimeResult{}, err
 	}
 	var uptimeList []*model.Uptime
 	for _, missedBlock := range missedBlocks {
@@ -164,7 +163,7 @@ func (r *queryResolver) Uptimes(ctx context.Context, operatorAddress *string) (*
 func (r *queryResolver) ProposedBlocks(ctx context.Context, before *int, size *int, operatorAddress string) ([]*model.Block, error) {
 	blocks, totalRecord, err := document.Block{}.GetBlockListByOffsetAndSizeByOperatorAddress(*before, *size, operatorAddress)
 	if err != nil {
-		return []*model.Block{}, nil
+		return []*model.Block{}, err
 	}
 	return document.Block{}.FormatListBlockForModel(blocks, totalRecord)
 }
@@ -172,7 +171,7 @@ func (r *queryResolver) ProposedBlocks(ctx context.Context, before *int, size *i
 func (r *queryResolver) PowerEvents(ctx context.Context, before *int, size *int, operatorAddress string) ([]*model.PowerEvent, error) {
 	txs, err := document.CommonTx{}.GetListTxByAddress(*before, *size, operatorAddress)
 	if err != nil {
-		return []*model.PowerEvent{}, nil
+		return []*model.PowerEvent{}, err
 	}
 	return document.CommonTx{}.FormatListTxsForModelPowerEvent(txs, operatorAddress)
 }
@@ -180,11 +179,11 @@ func (r *queryResolver) PowerEvents(ctx context.Context, before *int, size *int,
 func (r *queryResolver) AccountTransactions(ctx context.Context, accAddress string, before int, size int) ([]*model.Tx, error) {
 	listTxHash, err := document.AccountTransaction{}.GetListTxsByAddress(before, size, accAddress)
 	if err != nil {
-		return []*model.Tx{}, nil
+		return []*model.Tx{}, err
 	}
 	txs, err := document.CommonTx{}.QueryByListByTxhash(listTxHash)
 	if err != nil {
-		return []*model.Tx{}, nil
+		return []*model.Tx{}, err
 	}
 	return document.CommonTx{}.FormatListTxsForModel(txs)
 }
@@ -196,18 +195,18 @@ func (r *queryResolver) AccountDetail(ctx context.Context, accAddress string) (*
 		return &model.AccountDetail{
 			IsValidator:     false,
 			OperatorAddress: operatorAddress,
-		}, nil
+		}, err
 	}
 	return &model.AccountDetail{
 		IsValidator:     true,
 		OperatorAddress: operatorAddress,
-	}, nil
+	}, err
 }
 
 func (r *queryResolver) Proposals(ctx context.Context) ([]*model.Proposal, error) {
 	proposals, err := document.Proposal{}.GetList()
 	if err != nil {
-		return []*model.Proposal{}, nil
+		return []*model.Proposal{}, err
 	}
 	return document.Proposal{}.FormatListProposalForModel(proposals)
 }
@@ -230,22 +229,22 @@ func (r *queryResolver) ProposalDetail(ctx context.Context, proposalID int) (*mo
 func (r *queryResolver) Status(ctx context.Context) (*model.Status, error) {
 	blocks, err := document.Block{}.QueryBlockOrderByHeightDesc(2)
 	if err != nil {
-		return &model.Status{}, nil
+		return &model.Status{}, err
 	}
 
 	bondedToken, err := document.Validator{}.GetSumBondedToken()
 	if err != nil {
-		return &model.Status{}, nil
+		return &model.Status{}, err
 	}
 
 	totalNumTxs, err := document.Block{}.GetCountTxs()
 	if err != nil {
-		return &model.Status{}, nil
+		return &model.Status{}, err
 	}
 
 	totalSupplyToken, err := client.GetSupply()
 	if err != nil {
-		return &model.Status{}, nil
+		return &model.Status{}, err
 	}
 
 	BlockTime := blocks[0].Time.UnixNano() - blocks[1].Time.UnixNano()
@@ -279,7 +278,7 @@ func (r *queryResolver) Commission(ctx context.Context, operatorAddress string) 
 func (r *queryResolver) Delegations(ctx context.Context, accAddress string) ([]*model.Delegation, error) {
 	delegationResult, err := client.GetDelegation(accAddress)
 	if err != nil {
-		return []*model.Delegation{}, nil
+		return []*model.Delegation{}, err
 	}
 
 	var listDelegation []*model.Delegation
@@ -400,7 +399,7 @@ func (r *queryResolver) StatsAssets(ctx context.Context) ([]*model.StatsAsset, e
 	statsAssets, err := document.StatAssetInfoList20Minute{}.GetList()
 
 	if err != nil {
-		return []*model.StatsAsset{}, nil
+		return []*model.StatsAsset{}, err
 	}
 	var listAssets []*model.StatsAsset
 	for _, item := range statsAssets {
@@ -419,7 +418,7 @@ func (r *queryResolver) StatsAssets(ctx context.Context) ([]*model.StatsAsset, e
 func (r *queryResolver) Delegators(ctx context.Context, operatorAddress string, offset int) (*model.DelegatorResponse, error) {
 	delegationResult, err := client.GetDelegators(operatorAddress, offset)
 	if err != nil {
-		return &model.DelegatorResponse{}, nil
+		return &model.DelegatorResponse{}, err
 	}
 
 	var delegators []*model.Delegator
@@ -440,6 +439,65 @@ func (r *queryResolver) Delegators(ctx context.Context, operatorAddress string, 
 		TotalCount: totalCount,
 		Delegators: delegators,
 	}, nil
+}
+
+func (r *queryResolver) Codes(ctx context.Context, after int, size int) ([]*model.Code, error) {
+	result, err := document.Code{}.GetCodeListByOffsetAndSize(after, size)
+	if err != nil {
+		return []*model.Code{}, err
+	}
+	return document.Code{}.FormatForModel(result)
+}
+
+func (r *queryResolver) CodeDetail(ctx context.Context, codeID int) (*model.Code, error) {
+	code, err := document.Code{}.FindByCodeId(codeID)
+	if err != nil {
+		return &model.Code{}, err
+	}
+	return document.Code{}.FormatModelCodeItem(code), nil
+}
+
+func (r *queryResolver) CodeTransactions(ctx context.Context, codeID int, before int, size int) ([]*model.Tx, error) {
+	contracts, err := document.Contract{}.GetContractByCodeId(codeID)
+	if err != nil {
+		return []*model.Tx{}, err
+	}
+
+	listContractAddress := document.Contract{}.GetListContractAddressFromBson(contracts)
+	listTxHash, err := document.AccountTransaction{}.GetListTxsInAddress(before, size, listContractAddress)
+	if err != nil {
+		return []*model.Tx{}, err
+	}
+
+	txs, err := document.CommonTx{}.QueryByListByTxhash(listTxHash)
+	if err != nil {
+		return []*model.Tx{}, err
+	}
+	return document.CommonTx{}.FormatListTxsForModel(txs)
+}
+
+func (r *queryResolver) CodeContracts(ctx context.Context, codeID int, offset int, size int) ([]*model.Contract, error) {
+	result, err := document.Contract{}.GetContractPaginationByCodeId(offset, size, codeID)
+	if err != nil {
+		return []*model.Contract{}, err
+	}
+	return document.Contract{}.FormatForModel(result)
+}
+
+func (r *queryResolver) Contracts(ctx context.Context, offset int, size int, keyword *string) ([]*model.Contract, error) {
+	result, err := document.Contract{}.GetContractByLimitAndOffset(offset, size, keyword)
+	if err != nil {
+		return []*model.Contract{}, err
+	}
+	return document.Contract{}.FormatForModel(result)
+}
+
+func (r *queryResolver) ContractDetail(ctx context.Context, contractAddress string) (*model.Contract, error) {
+	contract, err := document.Contract{}.FindByContractAddress(contractAddress)
+	if err != nil {
+		return &model.Contract{}, err
+	}
+	return document.Contract{}.FormatBsonMForModelContractDetail(contract)
 }
 
 // Query returns generated.QueryResolver implementation.

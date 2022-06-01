@@ -37,3 +37,25 @@ func (_ AccountTransaction) GetListTxsByAddress(before int, size int, address st
 	}
 	return listTxHash, err
 }
+
+func (_ AccountTransaction) GetListTxsInAddress(before int, size int, address []string) (listTxHash []string, err error) {
+	var data []AccountTransaction
+
+	selector := bson.M{
+		AccountTransaction_Txhash: 1,
+	}
+	query := bson.M{AccountTransaction_Account_Address: bson.M{
+		"$in": address,
+	}}
+	if before != 0 {
+		query[AccountTransaction_Field_Height] = bson.M{
+			"$lt": before,
+		}
+	}
+
+	err = querylistByOffsetAndSize(CollectionAccountTransaction, selector, query, desc(AccountTransaction_Field_Height), 0, size, &data)
+	for _, item := range data {
+		listTxHash = append(listTxHash, item.TxHash)
+	}
+	return listTxHash, err
+}
